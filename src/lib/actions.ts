@@ -16,12 +16,7 @@ const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().optional(),
   subject: z.enum(SUBJECTS),
-}).refine(data => {
-  const file = data.file as File | undefined;
-  return !!file && file.size > 0 || (data.description && data.description.length >= 10);
-}, {
-  message: "Description must be at least 10 characters long if no file is uploaded.",
-  path: ["description"],
+  file: z.instanceof(File).optional(),
 });
 
 const assignmentSchema = z.object({
@@ -30,6 +25,9 @@ const assignmentSchema = z.object({
 });
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 
 export type SuggestionFormState = {
   message: string;
@@ -56,23 +54,36 @@ export async function uploadSuggestion(
   }
   
   const file = formData.get('file') as File;
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const subject = formData.get('subject') as (typeof SUBJECTS)[number];
 
-  const validatedFields = suggestionSchema.safeParse({
-    title: formData.get('title'),
-    description: formData.get('description'),
-    subject: formData.get('subject'),
-    file: file, // Pass file to validation
-  });
 
-  if (!validatedFields.success) {
-    return {
-      message: 'Validation Error',
-      errors: validatedFields.error.flatten().fieldErrors,
-      success: false,
-    };
+  // Manual validation
+  const errors: SuggestionFormState['errors'] = {};
+  if (!title || title.length < 5) {
+    errors.title = ['Title must be at least 5 characters long.'];
+  }
+  if (!subject || !SUBJECTS.includes(subject)) {
+    errors.subject = ['Please select a valid subject.'];
+  }
+  if ((!file || file.size === 0) && (!description || description.trim() === '')) {
+      errors.description = ['A description is required when no file is uploaded.'];
+  }
+
+  if (file && file.size > 0) {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      errors.file = [`Invalid file type. Only JPG, PNG, and PDF are allowed.`];
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        errors.file = [`File is too large (max ${MAX_FILE_SIZE_MB}MB).`];
+    }
   }
   
-  const { title, description, subject } = validatedFields.data;
+  if (Object.keys(errors).length > 0) {
+    return { message: 'Validation Error', errors, success: false };
+  }
+
 
   // AI check for offensive language
   const offensiveCheck = await checkSuggestionForOffensiveLanguage({ title, description: description || '' });
@@ -92,12 +103,6 @@ export async function uploadSuggestion(
 
   try {
     if (file && file.size > 0) {
-      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        return { message: 'Invalid file type. Only JPG, PNG, and PDF are allowed.', errors: { file: ['Please upload a valid file type (JPG, PNG, PDF).'] }, success: false };
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        return { message: 'File is too large (max 5MB).', errors: { file: ['File must be 5MB or less.'] }, success: false };
-      }
       const storageRef = ref(storage, `suggestions/${user.uid}/${Date.now()}-${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       fileUrl = await getDownloadURL(snapshot.ref);
@@ -171,8 +176,8 @@ export type AssignmentFormState = {
       return { message: 'Invalid file type. Only JPG, PNG, and PDF are allowed.', errors: { file: ['Please upload a valid file type (JPG, PNG, PDF).'] }, success: false };
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        return { message: 'File is too large (max 10MB).', errors: { file: ['File must be 10MB or less.'] }, success: false };
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+        return { message: `File is too large (max ${MAX_FILE_SIZE_MB}MB).`, errors: { file: [`File must be ${MAX_FILE_SIZE_MB}MB or less.`] }, success: false };
     }
 
     const { description, subject } = validatedFields.data;
