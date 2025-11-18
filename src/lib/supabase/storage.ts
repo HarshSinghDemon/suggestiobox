@@ -1,5 +1,7 @@
 'use client';
 
+import { createSupabaseClient } from './client';
+
 /**
  * Reusable function to upload a file to Supabase Storage.
  *
@@ -7,13 +9,8 @@
  * @returns An object containing the public URL and the path of the uploaded file.
  */
 export async function uploadFileToSupabase(file: File) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabase = createSupabaseClient();
   const bucketName = 'uploads';
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL or Anon Key is not configured in environment variables.');
-  }
 
   // Sanitize the filename to be URL-friendly and unique.
   const fileExtension = file.name.split('.').pop();
@@ -22,44 +19,39 @@ export async function uploadFileToSupabase(file: File) {
     .replace(/[^a-zA-Z0-9.\-_]/g, '_');
   const filePath = `${sanitizedFileName}-${Date.now()}.${fileExtension}`;
 
-  const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(filePath, file);
 
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      'apikey': supabaseAnonKey,
-      'Authorization': `Bearer ${supabaseAnonKey}`,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    // If the response is not ok, it might be an HTML error page or an API error.
-    // We log the raw text to debug the exact issue.
-    const rawErrorText = await response.text();
-    console.error('Supabase upload failed. Raw response:', rawErrorText);
-    throw new Error(`Failed to upload file. Status: ${response.status}.`);
+  if (error) {
+    console.error('Supabase upload failed. Raw error:', error);
+    throw new Error(`Failed to upload file. Message: ${error.message}`);
   }
 
-  // --- Expected JSON response from Supabase on success ---
-  // {
-  //   "Key": "uploads/your-file-name.png",
-  //   "Id": "...",
-  //   "bucket": "uploads"
-  // }
-  const result = await response.json();
+  const { data: publicUrlData } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(filePath);
 
-  // --- Constructing the Public URL ---
-  // The pattern is: <supabase-url>/storage/v1/object/public/<bucket-name>/<file-path>
-  const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+  if (!publicUrlData) {
+    throw new Error('Could not get public URL for the uploaded file.');
+  }
 
   return {
-    url: publicUrl,
+    url: publicUrlData.publicUrl,
     path: filePath, // The full path within the bucket
     name: file.name,
     type: file.type,
   };
+}
+
+export async function deleteFileFromStorage(filePath: string) {
+    const supabase = createSupabaseClient();
+    const bucketName = 'uploads';
+
+    const { error } = await supabase.storage.from(bucketName).remove([filePath]);
+
+    if (error) {
+        console.error('Failed to delete file from Supabase Storage:', error);
+        throw new Error('Could not delete file from storage.');
+    }
 }

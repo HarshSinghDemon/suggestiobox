@@ -19,7 +19,7 @@ export type Suggestion = {
   userImage: string | null;
   fileUrl?: string;
   fileName?: string;
-  filePath?: string;
+  path?: string;
   fileType?: string;
 };
 
@@ -33,7 +33,7 @@ export type Assignment = {
   userImage: string | null;
   fileUrl: string;
   fileName: string;
-  filePath: string;
+  path: string;
   fileType: string;
 };
 

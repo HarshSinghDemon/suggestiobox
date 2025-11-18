@@ -101,7 +101,7 @@ export function SuggestionForm() {
         console.error('File upload failed:', error);
         setFileUpload({
             ...initialFileUploadState,
-            error: 'File upload failed. Please check console for details and ensure CORS rules are set in Supabase.',
+            error: `File upload failed: ${error.message}`,
         });
     }
   };
@@ -155,7 +155,7 @@ export function SuggestionForm() {
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || null,
         fileName: fileUpload.name || null,
-        filePath: fileUpload.path || null,
+        path: fileUpload.path || null,
         fileType: fileUpload.type || null,
       };
 

@@ -28,7 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { deleteFileFromStorage } from '@/lib/firebase/storage';
+import { deleteFileFromStorage } from '@/lib/supabase/storage';
 
 function TableSkeleton() {
   return (
@@ -61,11 +61,11 @@ export function AdminSuggestionsTable() {
   const handleDelete = async (suggestion: Suggestion) => {
     if (!firestore) return;
 
-    if (suggestion.filePath) {
+    if (suggestion.path) {
         try {
-            await deleteFileFromStorage(suggestion.filePath);
+            await deleteFileFromStorage(suggestion.path);
         } catch (error) {
-            console.error('Failed to delete file from Firebase Storage:', error);
+            console.error('Failed to delete file from Supabase Storage:', error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
