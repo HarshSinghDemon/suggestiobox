@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { Suggestion } from '@/lib/types';
 import {
   Table,
@@ -26,7 +26,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 function TableSkeleton() {
   return (
@@ -46,6 +47,7 @@ function TableSkeleton() {
 
 export function AdminSuggestionsTable() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
 
   const suggestionsQuery = useMemoFirebase(
@@ -55,22 +57,25 @@ export function AdminSuggestionsTable() {
 
   const { data: suggestions, isLoading } = useCollection<Suggestion>(suggestionsQuery);
 
-  const handleDelete = async (id: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'suggestions', id));
-      toast({
+  const handleDelete = (suggestion: Suggestion) => {
+    if (!firestore || !user) return;
+    
+    if(user.uid !== suggestion.userId) {
+        toast({
+            variant: 'destructive',
+            title: 'Unauthorized',
+            description: 'You do not have permission to delete this suggestion.',
+        });
+        return;
+    }
+    
+    const docRef = doc(firestore, 'suggestions', suggestion.id);
+    deleteDocumentNonBlocking(docRef);
+
+    toast({
         title: 'Success',
         description: 'Suggestion deleted successfully.',
-      });
-    } catch (error) {
-      console.error('Error deleting suggestion:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete suggestion.',
-      });
-    }
+    });
   };
 
   if (isLoading) {
@@ -113,7 +118,7 @@ export function AdminSuggestionsTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={!user || user.uid !== suggestion.userId}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -127,7 +132,7 @@ export function AdminSuggestionsTable() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(suggestion.id)}
+                          onClick={() => handleDelete(suggestion)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete

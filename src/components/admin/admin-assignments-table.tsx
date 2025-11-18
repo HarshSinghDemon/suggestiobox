@@ -26,6 +26,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/firebase';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 function TableSkeleton() {
   return (
@@ -45,6 +47,7 @@ function TableSkeleton() {
 
 export function AdminAssignmentsTable() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
 
   const assignmentsQuery = useMemoFirebase(
@@ -54,22 +57,25 @@ export function AdminAssignmentsTable() {
 
   const { data: assignments, isLoading } = useCollection<Assignment>(assignmentsQuery);
 
-  const handleDelete = async (id: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'assignments', id));
-      toast({
+  const handleDelete = async (assignment: Assignment) => {
+    if (!firestore || !user) return;
+
+    if(user.uid !== assignment.userId) {
+        toast({
+            variant: 'destructive',
+            title: 'Unauthorized',
+            description: 'You do not have permission to delete this assignment.',
+        });
+        return;
+    }
+
+    const docRef = doc(firestore, 'assignments', assignment.id);
+    deleteDocumentNonBlocking(docRef);
+    
+    toast({
         title: 'Success',
         description: 'Assignment deleted successfully.',
-      });
-    } catch (error) {
-      console.error('Error deleting assignment:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to delete assignment.',
-      });
-    }
+    });
   };
 
   if (isLoading) {
@@ -108,7 +114,7 @@ export function AdminAssignmentsTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={!user || user.uid !== assignment.userId}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -122,7 +128,7 @@ export function AdminAssignmentsTable() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(assignment.id)}
+                          onClick={() => handleDelete(assignment)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete

@@ -2,86 +2,57 @@
  * @fileoverview Firestore Security Rules for StudyShare Central.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model, ensuring that users can only access and modify data associated with their own accounts.
+ * This ruleset enforces a strict user-ownership model for writes and deletes,
+ * but allows public read access for browsing.
  *
  * Data Structure:
- * All user-specific data is nested under /users/{userId}, including suggestions and assignments.
+ * All suggestions and assignments are stored in root-level collections.
  *
  * Key Security Decisions:
- * - Users can only create, read, update, and delete their own suggestions and assignments.
- * - Listing of user documents is allowed only for the owner of the account.
- *
- * Denormalization for Authorization:
- * The 'userId' field is denormalized into both the 'suggestions' and 'assignments' collections to allow for simple and efficient ownership checks without additional reads. This enables rules to validate ownership (request.auth.uid == resource.data.userId) without needing to perform expensive `get()` operations to retrieve user data.
- *
- * Structural Segregation:
- * User-specific data (suggestions, assignments) are stored under the /users/{userId} path. This segregation ensures that all documents within a given user's subcollections share the same security requirements (i.e., only the user can create/modify/delete them).
+ * - Any authenticated user can read (get, list) suggestions and assignments.
+ * - Users can only create suggestions and assignments for themselves (uid must match).
+ * - Users can only update or delete their own suggestions and assignments.
+ * - User profile documents (/users/{userId}) are private to the owner.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Protects the /users/{userId} collection, ensuring only the user can read/write their own profile.
-     * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their profile if request.auth.uid == 'user_abc'.
-     * @allow (get, list) - User with UID 'user_abc' can read their profile.
-     * @deny (create) - User with UID 'user_xyz' cannot create a profile with ID 'user_abc'.
-     * @deny (update, delete) - User with UID 'user_xyz' cannot modify or delete the 'user_abc' profile.
-     * @principle Enforces document ownership for all operations.
+     * @description Protects user profile data. Only the owner can access their own document.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId); //Enforce immutability of id, the authorization field
-      allow delete: if isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     /**
-     * @description Protects the /users/{userId}/suggestions/{suggestionId} collection, ensuring only the user can manage their own suggestions.
-     * @path /users/{userId}/suggestions/{suggestionId}
-     * @allow (create) - User with UID 'user_abc' can create a suggestion under their profile if request.auth.uid == 'user_abc' and request.resource.data.userId == 'user_abc'.
-     * @allow (get, list) - User with UID 'user_abc' can read and list suggestions under their profile.
-     * @deny (create) - User with UID 'user_xyz' cannot create a suggestion under 'user_abc's profile.
-     * @deny (update, delete) - User with UID 'user_xyz' cannot modify or delete suggestions under 'user_abc's profile.
-     * @principle Enforces document ownership and validates relational integrity for writes.
+     * @description Secures the 'suggestions' collection.
+     * Allows public reads but restricts writes/deletes to owners.
      */
-    match /users/{userId}/suggestions/{suggestionId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+    match /suggestions/{suggestionId} {
+      // Any authenticated user can read suggestions.
+      allow get, list: if request.auth != null;
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && (request.resource.data.userId == userId);
-      allow update: if isOwner(userId) && (request.resource.data.userId == resource.data.userId); //Enforce immutability of userId, the authorization field
-      allow delete: if isOwner(userId);
+      // Only the owner can create a suggestion, and the userId must be correct.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Only the owner can update or delete their suggestion.
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
     /**
-     * @description Protects the /users/{userId}/assignments/{assignmentId} collection, ensuring only the user can manage their own assignments.
-     * @path /users/{userId}/assignments/{assignmentId}
-     * @allow (create) - User with UID 'user_abc' can create an assignment under their profile if request.auth.uid == 'user_abc' and request.resource.data.userId == 'user_abc'.
-     * @allow (get, list) - User with UID 'user_abc' can read and list assignments under their profile.
-     * @deny (create) - User with UID 'user_xyz' cannot create an assignment under 'user_abc's profile.
-     * @deny (update, delete) - User with UID 'user_xyz' cannot modify or delete assignments under 'user_abc's profile.
-     * @principle Enforces document ownership and validates relational integrity for writes.
+     * @description Secures the 'assignments' collection.
+     * Allows public reads but restricts writes/deletes to owners.
      */
-    match /users/{userId}/assignments/{assignmentId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
+    match /assignments/{assignmentId} {
+      // Any authenticated user can read assignments.
+      allow get, list: if request.auth != null;
 
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && (request.resource.data.userId == userId);
-      allow update: if isOwner(userId) && (request.resource.data.userId == resource.data.userId); //Enforce immutability of userId, the authorization field
-      allow delete: if isOwner(userId);
+      // Only the owner can create an assignment, and the userId must be correct.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Only the owner can update or delete their assignment.
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }
