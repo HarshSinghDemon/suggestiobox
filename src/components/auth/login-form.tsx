@@ -51,8 +51,7 @@ export function LoginForm() {
 
     signInWithEmailAndPassword(auth, values.email, values.password)
       .then(userCredential => {
-        // This block will execute on successful login.
-        // The onAuthStateChanged listener in the provider will handle the redirect.
+        router.push('/');
       })
       .catch(error => {
         // Handle specific auth errors

@@ -53,12 +53,6 @@ export function SignUpForm() {
     return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
   }, [nameValue]);
   
-  useEffect(() => {
-    if (user && !isUserLoading) {
-      router.push('/');
-    }
-  }, [user, isUserLoading, router]);
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     form.clearErrors();
@@ -68,7 +62,9 @@ export function SignUpForm() {
     
     try {
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
-        // The onAuthStateChanged listener will handle the redirect on success.
+        // The onAuthStateChanged listener in FirebaseProvider will handle user state,
+        // and the useEffect in the login form will handle the redirect.
+        router.push('/');
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');
@@ -155,9 +151,9 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSigningUp || form.formState.isSubmitting}>
-          {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {isSigningUp ? 'Creating account...' : 'Create account'}
+        <Button type="submit" className="w-full" disabled={isSigningUp || isUserLoading}>
+          {(isSigningUp || isUserLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {(isSigningUp || isUserLoading) ? 'Creating account...' : 'Create account'}
         </Button>
       </form>
     </Form>
