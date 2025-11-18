@@ -33,6 +33,7 @@ type FileUploadState = {
   progress: number;
   url: string | null;
   name: string | null;
+  id: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -41,6 +42,7 @@ const initialFileUploadState: FileUploadState = {
   progress: 0,
   url: null,
   name: null,
+  id: null,
   error: null,
   isUploading: false,
 };
@@ -118,6 +120,7 @@ export function SuggestionForm() {
               ...prev,
               url: result.url,
               name: result.name,
+              id: result.fileId,
               isUploading: false,
               progress: 100,
             }));
@@ -199,6 +202,7 @@ export function SuggestionForm() {
         fileUrl: fileUpload.url || null,
         fileName: fileUpload.name || null,
         fileType: fileUpload.name ? fileUpload.name.split('.').pop() : null,
+        fileId: fileUpload.id || null,
       };
 
       const docRef = await addDoc(collection(firestore, 'suggestions'), docData);

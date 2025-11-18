@@ -57,10 +57,34 @@ export function AdminAssignmentsTable() {
 
   const { data: assignments, isLoading } = useCollection<Assignment>(assignmentsQuery);
 
-  const handleDelete = async (assignmentId: string) => {
+  const handleDelete = async (assignment: Assignment) => {
     if (!firestore) return;
+    
+    if (assignment.fileId) {
+        try {
+            const response = await fetch('/api/imagekit/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId: assignment.fileId }),
+            });
 
-    const docRef = doc(firestore, 'assignments', assignmentId);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete file from ImageKit.');
+            }
+        } catch (error) {
+            console.error('Failed to delete file from ImageKit:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not delete the assignment file from storage. Please try again.',
+            });
+            // Stop here to avoid deleting the Firestore record without deleting the file
+            return;
+        }
+    }
+
+    const docRef = doc(firestore, 'assignments', assignment.id);
     deleteDocumentNonBlocking(docRef);
     
     toast({
@@ -113,13 +137,13 @@ export function AdminAssignmentsTable() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the assignment.
+                          This action cannot be undone. This will permanently delete the assignment and its file.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(assignment.id)}
+                          onClick={() => handleDelete(assignment)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete

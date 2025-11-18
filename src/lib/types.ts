@@ -20,6 +20,7 @@ export type Suggestion = {
   fileUrl?: string;
   fileName?: string;
   fileType?: string;
+  fileId?: string;
 };
 
 export type Assignment = {
@@ -33,6 +34,7 @@ export type Assignment = {
   fileUrl: string;
   fileName: string;
   fileType: string;
+  fileId: string;
 };
 
 export type Message = {

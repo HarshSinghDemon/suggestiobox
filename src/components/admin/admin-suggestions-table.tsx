@@ -57,10 +57,34 @@ export function AdminSuggestionsTable() {
 
   const { data: suggestions, isLoading } = useCollection<Suggestion>(suggestionsQuery);
 
-  const handleDelete = (suggestionId: string) => {
+  const handleDelete = async (suggestion: Suggestion) => {
     if (!firestore) return;
+
+    if (suggestion.fileId) {
+        try {
+            const response = await fetch('/api/imagekit/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId: suggestion.fileId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete file from ImageKit.');
+            }
+        } catch (error) {
+            console.error('Failed to delete file from ImageKit:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not delete the associated file from storage. Please try again.',
+            });
+            // We stop here to avoid deleting the Firestore record without deleting the file
+            return;
+        }
+    }
     
-    const docRef = doc(firestore, 'suggestions', suggestionId);
+    const docRef = doc(firestore, 'suggestions', suggestion.id);
     deleteDocumentNonBlocking(docRef);
 
     toast({
@@ -117,13 +141,13 @@ export function AdminSuggestionsTable() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the suggestion.
+                          This action cannot be undone. This will permanently delete the suggestion and its associated file if it exists.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(suggestion.id)}
+                          onClick={() => handleDelete(suggestion)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete
