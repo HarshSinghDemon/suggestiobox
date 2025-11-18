@@ -19,9 +19,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <LoginForm />
-          </div>
+          <LoginForm />
           <div className="mt-4 text-sm text-center">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">
