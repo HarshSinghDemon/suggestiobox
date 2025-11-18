@@ -9,13 +9,11 @@ const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().optional(),
   subject: z.enum(SUBJECTS),
-  file: z.any().optional(),
 });
 
 const assignmentSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   subject: z.enum(ASSIGNMENT_SUBJECTS),
-  file: z.any(),
 });
 
 export type SuggestionFormState = {
@@ -31,9 +29,9 @@ export type SuggestionFormState = {
 };
 
 export async function validateSuggestion(
-  formData: FormData
+  formData: FormData,
+  isFileUploaded: boolean
 ): Promise<SuggestionFormState> {
-  const file = formData.get('file') as File | null;
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   
@@ -41,7 +39,6 @@ export async function validateSuggestion(
     title: formData.get('title'),
     description: formData.get('description'),
     subject: formData.get('subject'),
-    file: file ?? undefined,
   });
 
   if (!validatedFields.success) {
@@ -52,20 +49,12 @@ export async function validateSuggestion(
     };
   }
 
-  if (!file?.size && (!description || description.trim() === '')) {
+  if (!isFileUploaded && (!description || description.trim() === '')) {
     return {
         message: 'Validation Error',
         errors: { description: ['A description is required when no file is uploaded.'] },
         success: false
     };
-  }
-
-  if(file && file.size > 10 * 1024 * 1024){ // 10MB limit
-    return {
-        message: 'Validation Error',
-        errors: { file: ['File size must be less than 10MB.'] },
-        success: false
-    }
   }
 
   // AI check for offensive language
@@ -96,7 +85,6 @@ export type AssignmentFormState = {
     errors?: {
       description?: string[];
       subject?: string[];
-      file?: string[];
     };
     success: boolean;
 };
@@ -105,12 +93,9 @@ export async function validateAssignment(
     formData: FormData
 ): Promise<AssignmentFormState> {
   
-    const file = formData.get('file') as File | null;
-
     const validatedFields = assignmentSchema.safeParse({
       description: formData.get('description'),
       subject: formData.get('subject'),
-      file: file ?? undefined,
     });
   
     if (!validatedFields.success) {
@@ -119,13 +104,6 @@ export async function validateAssignment(
         errors: validatedFields.error.flatten().fieldErrors,
         success: false,
       };
-    }
-    
-    if (!file || file.size === 0) {
-        return { message: 'File is required for assignments.', errors: { file: ['Please select a file to upload.'] }, success: false };
-    }
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        return { message: 'File size must be less than 10MB.', errors: { file: ['File size must be less than 10MB.'] }, success: false };
     }
     
     revalidatePath('/browse');
