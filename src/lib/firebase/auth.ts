@@ -7,6 +7,8 @@ import {
   updateProfile,
   Auth,
 } from 'firebase/auth';
+import { getFirestore, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase';
 
 export const signUpWithEmail = async (
   auth: Auth,
@@ -21,7 +23,18 @@ export const signUpWithEmail = async (
       password
     );
     await updateProfile(userCredential.user, { displayName });
-    // TODO: Create user profile in Firestore
+    
+    // Create user profile in Firestore
+    const userDocRef = doc(getFirestore(auth.app), 'users', userCredential.user.uid);
+    const userData = {
+      id: userCredential.user.uid,
+      email: userCredential.user.email,
+      displayName: displayName,
+    };
+    
+    // Use the non-blocking update with contextual error handling
+    setDocumentNonBlocking(userDocRef, userData, { merge: true });
+    
     return userCredential.user;
   } catch (error) {
     console.error('Error signing up: ', error);
