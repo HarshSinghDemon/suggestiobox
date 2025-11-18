@@ -15,26 +15,22 @@ import {
 import { Input } from '@/components/ui/input';
 import { signUpWithEmail } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import Image from 'next/image';
-import { CardDescription } from '../ui/card';
-import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
-import { Skeleton } from '../ui/skeleton';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  photoURL: z.string().url({ message: 'Please generate an avatar.' }).min(1, 'Please generate an avatar.'),
+  photoURL: z.string().url().optional(),
 });
 
 export function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const auth = useFirebaseAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -46,32 +42,20 @@ export function SignUpForm() {
       photoURL: '',
     },
   });
-  
-  const nameValue = form.watch('name');
-  const generatedAvatarUrl = form.watch('photoURL');
 
-  const handleGenerateAvatar = async () => {
-    if (!nameValue) {
-      form.setError('name', { type: 'manual', message: 'Please enter your name first.' });
-      return;
-    }
-    setIsGenerating(true);
-    setError(null);
-    try {
-      const avatarDataUri = await generateAvatar(nameValue);
-      form.setValue('photoURL', avatarDataUri, { shouldValidate: true });
-    } catch (e: any) {
-      console.error('Avatar generation failed:', e);
-      setError('Could not generate an avatar. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const nameValue = form.watch('name');
+
+  const avatarUrl = useMemo(() => {
+    if (!nameValue) return '';
+    const seed = encodeURIComponent(nameValue);
+    return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
+  }, [nameValue]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
+    const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
     try {
-      await signUpWithEmail(auth, values.email, values.password, values.name, values.photoURL);
+      await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
       router.push('/');
     } catch (e: any) {
       if (e.code === 'auth/email-already-in-use') {
@@ -108,34 +92,28 @@ export function SignUpForm() {
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="photoURL"
-          render={({ field }) => (
-            <FormItem>
-                <FormLabel>Your Unique Avatar</FormLabel>
-                <CardDescription>Generate a unique avatar based on your name.</CardDescription>
-                <div className="flex items-center gap-4 pt-2">
-                  <div className="relative w-24 h-24 rounded-full bg-muted/50">
-                    {isGenerating ? (
-                      <Skeleton className="w-full h-full rounded-full" />
-                    ) : generatedAvatarUrl ? (
-                      <Image src={generatedAvatarUrl} alt="Generated Avatar" fill className="object-cover rounded-full" />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full rounded-full bg-muted">
-                        <Sparkles className="w-8 h-8 text-muted-foreground" />
-                      </div>
-                    )}
+        <div className='space-y-2'>
+            <FormLabel>Your Unique Avatar</FormLabel>
+            <div className='flex items-center justify-center p-4 rounded-md bg-muted/50'>
+              <div className="relative w-24 h-24 rounded-full bg-background">
+                {avatarUrl ? (
+                  <Image 
+                    src={avatarUrl} 
+                    alt="Your generated avatar" 
+                    fill 
+                    className="object-cover rounded-full"
+                    unoptimized // Required for SVG images from external URLs
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                    <UserIcon className="w-12 h-12" />
                   </div>
-                  <Button type="button" onClick={handleGenerateAvatar} disabled={isGenerating || !nameValue}>
-                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    {isGenerating ? 'Generating...' : 'Generate Avatar'}
-                  </Button>
-                </div>
-                <FormMessage />
-            </FormItem>
-          )}
-        />
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">Your avatar is automatically generated based on your name.</p>
+        </div>
+
 
         <FormField
           control={form.control}
@@ -163,7 +141,7 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isGenerating}>
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {form.formState.isSubmitting ? 'Creating account...' : 'Create account'}
         </Button>

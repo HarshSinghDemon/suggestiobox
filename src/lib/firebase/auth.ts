@@ -25,7 +25,6 @@ export const signUpWithEmail = async (
       password
     );
     
-    // For AI-generated data URIs or external URLs
     await updateProfile(userCredential.user, { displayName, photoURL });
 
     const userDocRef = doc(
