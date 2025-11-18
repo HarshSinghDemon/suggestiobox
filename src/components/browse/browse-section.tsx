@@ -6,17 +6,15 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { SubjectFilter } from './subject-filter';
-import type { Subject } from '@/lib/constants';
 import { ItemCard } from './item-card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Suggestion, Assignment } from '@/lib/types';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
+import { useRouter, usePathname } from 'next/navigation';
 
 type BrowseSectionProps = {
   activeTab: 'suggestions' | 'assignments';
-  activeSubject?: string;
 };
 
 function ItemGridSkeleton() {
@@ -36,42 +34,37 @@ function ItemGridSkeleton() {
 
 export function BrowseSection({
   activeTab,
-  activeSubject,
 }: BrowseSectionProps) {
   const firestore = useFirestore();
-  const subjectTyped = activeSubject as Subject | undefined;
+  const router = useRouter();
+  const pathname = usePathname();
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    const baseQuery = query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc'), limit(50));
-    if (subjectTyped) {
-        return query(baseQuery, where('subject', '==', subjectTyped));
-    }
-    return baseQuery;
-  }, [firestore, subjectTyped]);
+    return query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc'), limit(50));
+  }, [firestore]);
 
   const assignmentsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    const baseQuery = query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc'), limit(50));
-    if (subjectTyped) {
-        return query(baseQuery, where('subject', '==', subjectTyped));
-    }
-    return baseQuery;
-  }, [firestore, subjectTyped]);
+    return query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc'), limit(50));
+  }, [firestore]);
 
   const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
   const { data: assignments, isLoading: assignmentsLoading } = useCollection<Assignment>(assignmentsQuery);
 
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams();
+    params.set('tab', value);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
-    <Tabs defaultValue={activeTab} className="w-full">
+    <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
       <div className="flex flex-col items-center gap-4 mb-8 md:flex-row">
         <TabsList>
           <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
         </TabsList>
-        <div className="w-full md:w-auto md:ml-auto">
-          <SubjectFilter activeTab={activeTab} activeSubject={activeSubject} />
-        </div>
       </div>
       <TabsContent value="suggestions">
         {suggestionsLoading ? (
@@ -84,7 +77,7 @@ export function BrowseSection({
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No suggestions found for this subject.
+            No suggestions found.
           </p>
         )}
       </TabsContent>
@@ -99,7 +92,7 @@ export function BrowseSection({
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No assignments found for this subject.
+            No assignments found.
           </p>
         )}
       </TabsContent>
