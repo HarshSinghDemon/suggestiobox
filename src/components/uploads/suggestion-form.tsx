@@ -78,6 +78,13 @@ export function SuggestionForm() {
       isUploading: true,
       name: file.name,
     });
+    
+    // Simulate upload progress
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress = Math.min(progress + Math.random() * 20, 90);
+        setFileUpload(prev => ({...prev, progress}));
+    }, 500);
 
     try {
       const authResponse = await fetch('/api/imagekit/auth');
@@ -93,7 +100,7 @@ export function SuggestionForm() {
         publicKey: authData.publicKey,
       });
 
-      const uploader = imagekit.upload(
+      imagekit.upload(
         {
           file: file,
           fileName: file.name,
@@ -103,6 +110,7 @@ export function SuggestionForm() {
           useUniqueFileName: true,
         },
         (err, result) => {
+          clearInterval(interval);
           if (err) {
             console.error('ImageKit upload error:', err);
             setFileUpload((prev) => ({
@@ -123,19 +131,8 @@ export function SuggestionForm() {
           }
         }
       );
-      
-      // This is a dummy progress for now, as imagekit-javascript SDK v2 doesn't support progress events easily without xhr.
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setFileUpload(prev => ({...prev, progress}));
-        if (progress >= 90) {
-          clearInterval(interval);
-        }
-      }, 200);
-
-
     } catch (error) {
+      clearInterval(interval);
       console.error('File upload process failed:', error);
       setFileUpload({
         ...initialFileUploadState,
@@ -212,7 +209,7 @@ export function SuggestionForm() {
         fileType: fileUpload.name ? fileUpload.name.split('.').pop() : null,
       };
 
-      await addDoc(collection(firestore, 'suggestions'), docData);
+      const docRef = await addDoc(collection(firestore, 'suggestions'), docData);
 
       toast({
         title: 'Success!',
@@ -223,9 +220,9 @@ export function SuggestionForm() {
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
       if (fileInputRef.current) {
-        fileInput.current.value = '';
+        fileInputRef.current.value = '';
       }
-      router.push('/browse');
+      router.push(`/suggestions/${docRef.id}`);
     } catch (error) {
       console.error('Submission error:', error);
       toast({
