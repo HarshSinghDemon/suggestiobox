@@ -27,6 +27,7 @@ type FileUploadState = {
   url: string | null;
   name: string | null;
   path: string | null;
+  type: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -36,6 +37,7 @@ const initialFileUploadState: FileUploadState = {
   url: null,
   name: null,
   path: null,
+  type: null,
   error: null,
   isUploading: false,
 };
@@ -73,6 +75,7 @@ export function AssignmentForm() {
       ...initialFileUploadState,
       isUploading: true,
       name: file.name,
+      type: file.type,
     });
 
     try {
@@ -187,9 +190,7 @@ export function AssignmentForm() {
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,
         filePath: fileUpload.path,
-        fileType: fileUpload.name
-          ? fileUpload.name.split('.').pop()
-          : 'unknown',
+        fileType: fileUpload.type,
       };
 
       await addDoc(collection(firestore, 'assignments'), docData);

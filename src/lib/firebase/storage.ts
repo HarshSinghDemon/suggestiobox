@@ -21,14 +21,14 @@ const storage = getStorage(firebaseApp);
  * @param onProgress Callback function for upload progress.
  * @param onError Callback function for errors.
  * @param onComplete Callback function for successful completion, receives URL and path.
- * @returns An object containing the upload task and the full path of the file.
+ * @returns An object containing the upload task.
  */
 export const uploadFile = (
   file: File,
   onProgress: (progress: number) => void,
   onError: (error: Error) => void,
   onComplete: (downloadURL: string, fullPath: string) => void
-): { task: UploadTask; fullPath: string } => {
+): { task: UploadTask } => {
   const fileId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   const fullPath = `uploads/${fileId}-${file.name}`;
   const storageRef = ref(storage, fullPath);
@@ -47,12 +47,12 @@ export const uploadFile = (
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-        onComplete(downloadURL, fullPath);
+        onComplete(downloadURL, fullPath); // Pass both the URL and the full path
       });
     }
   );
 
-  return { task: uploadTask, fullPath };
+  return { task: uploadTask };
 };
 
 
