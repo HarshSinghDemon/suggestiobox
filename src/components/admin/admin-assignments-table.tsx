@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import type { Assignment } from '@/lib/types';
 import {
@@ -26,8 +26,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/firebase';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { deleteFileFromStorage } from '@/lib/firebase/storage';
 
 function TableSkeleton() {
   return (
@@ -60,20 +60,11 @@ export function AdminAssignmentsTable() {
   const handleDelete = async (assignment: Assignment) => {
     if (!firestore) return;
     
-    if (assignment.fileId) {
+    if (assignment.filePath) {
         try {
-            const response = await fetch('/api/imagekit/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileId: assignment.fileId }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete file from ImageKit.');
-            }
+            await deleteFileFromStorage(assignment.filePath);
         } catch (error) {
-            console.error('Failed to delete file from ImageKit:', error);
+            console.error('Failed to delete file from Firebase Storage:', error);
             toast({
                 variant: 'destructive',
                 title: 'Error',

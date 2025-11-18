@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { validateSuggestion, getImageKitAuthenticator, type SuggestionFormState } from '@/lib/actions';
+import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
 import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +21,8 @@ import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
-import ImageKit from 'imagekit-javascript';
+import { uploadFile } from '@/lib/firebase/storage';
+import { UploadTask } from 'firebase/storage';
 
 const initialState: SuggestionFormState = {
   message: '',
@@ -33,7 +34,7 @@ type FileUploadState = {
   progress: number;
   url: string | null;
   name: string | null;
-  id: string | null;
+  path: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -42,15 +43,10 @@ const initialFileUploadState: FileUploadState = {
   progress: 0,
   url: null,
   name: null,
-  id: null,
+  path: null,
   error: null,
   isUploading: false,
 };
-
-const imagekit = new ImageKit({
-    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
-    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
-});
 
 export function SuggestionForm() {
   const firestore = useFirestore();
@@ -59,6 +55,7 @@ export function SuggestionForm() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
 
   const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,41 +84,32 @@ export function SuggestionForm() {
     });
     
     try {
-      imagekit.upload(
-        {
-          file: file,
-          fileName: file.name,
-          useUniqueFileName: true,
-          authenticator: async () => {
-            // Using a server action as the authenticator
-            return await getImageKitAuthenticator();
-          },
-          onUploadProgress: (progress) => {
-            setFileUpload(prev => ({...prev, progress: progress.loaded / progress.total * 100}));
-          }
+      const { task, fullPath } = uploadFile(
+        file,
+        (progress) => {
+          setFileUpload((prev) => ({...prev, progress}));
         },
-        (err, result) => {
-          if (err) {
-            console.error('ImageKit upload error:', err);
-            setFileUpload((prev) => ({
-              ...prev,
-              error: 'File upload failed. Please try again.',
-              isUploading: false,
-            }));
-            return;
-          }
-          if (result) {
-            setFileUpload((prev) => ({
-              ...prev,
-              url: result.url,
-              name: result.name,
-              id: result.fileId,
-              isUploading: false,
-              progress: 100,
-            }));
-          }
+        (error) => {
+          console.error('Firebase Storage upload error:', error);
+          setFileUpload((prev) => ({
+            ...prev,
+            error: 'File upload failed. Please try again.',
+            isUploading: false,
+          }));
+          setUploadTask(null);
+        },
+        (downloadURL) => {
+          setFileUpload((prev) => ({
+            ...prev,
+            url: downloadURL,
+            path: fullPath,
+            isUploading: false,
+            progress: 100,
+          }));
+          setUploadTask(null);
         }
       );
+      setUploadTask(task);
     } catch (error) {
       console.error('File upload process failed:', error);
       setFileUpload({
@@ -132,6 +120,9 @@ export function SuggestionForm() {
   };
 
   const handleRemoveFile = () => {
+    if (uploadTask) {
+        uploadTask.cancel();
+    }
     setFileUpload(initialFileUploadState);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -196,8 +187,8 @@ export function SuggestionForm() {
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || null,
         fileName: fileUpload.name || null,
+        filePath: fileUpload.path || null,
         fileType: fileUpload.name ? fileUpload.name.split('.').pop() : null,
-        fileId: fileUpload.id || null,
       };
 
       const docRef = await addDoc(collection(firestore, 'suggestions'), docData);

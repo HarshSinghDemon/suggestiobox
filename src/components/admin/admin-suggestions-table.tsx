@@ -28,6 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { deleteFileFromStorage } from '@/lib/firebase/storage';
 
 function TableSkeleton() {
   return (
@@ -60,20 +61,11 @@ export function AdminSuggestionsTable() {
   const handleDelete = async (suggestion: Suggestion) => {
     if (!firestore) return;
 
-    if (suggestion.fileId) {
+    if (suggestion.filePath) {
         try {
-            const response = await fetch('/api/imagekit/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileId: suggestion.fileId }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete file from ImageKit.');
-            }
+            await deleteFileFromStorage(suggestion.filePath);
         } catch (error) {
-            console.error('Failed to delete file from ImageKit:', error);
+            console.error('Failed to delete file from Firebase Storage:', error);
             toast({
                 variant: 'destructive',
                 title: 'Error',

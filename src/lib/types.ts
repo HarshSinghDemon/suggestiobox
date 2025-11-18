@@ -19,8 +19,8 @@ export type Suggestion = {
   userImage: string | null;
   fileUrl?: string;
   fileName?: string;
+  filePath?: string;
   fileType?: string;
-  fileId?: string;
 };
 
 export type Assignment = {
@@ -33,8 +33,8 @@ export type Assignment = {
   userImage: string | null;
   fileUrl: string;
   fileName: string;
+  filePath: string;
   fileType: string;
-  fileId: string;
 };
 
 export type Message = {
