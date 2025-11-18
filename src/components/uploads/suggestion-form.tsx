@@ -61,14 +61,15 @@ export function SuggestionForm() {
 
   useEffect(() => {
     const handleFileUpload = async () => {
+      // Case 1: A file needs to be uploaded
       if (state.success && state.uploadInfo && file) {
         try {
           const storage = getStorage();
           const storageRef = ref(storage, state.uploadInfo.uploadPath);
 
           // Upload file
-          const snapshot = await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(snapshot.ref);
+          await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(storageRef);
 
           // Update Firestore document with the file URL
           if (firestore) {
@@ -93,7 +94,9 @@ export function SuggestionForm() {
             description: "There was an error uploading your file. Please try again.",
           });
         }
-      } else if (state.success && !state.uploadInfo) {
+      } 
+      // Case 2: No file was uploaded, submission is complete
+      else if (state.success && !state.uploadInfo) {
         toast({
           title: 'Success!',
           description: state.message,

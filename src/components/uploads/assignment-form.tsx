@@ -29,7 +29,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending} className="w-full">
       {pending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-      {pending ? 'Uploading...' : 'Upload Assignment'}
+      {pending ? 'Submitting...' : 'Upload Assignment'}
     </Button>
   );
 }
@@ -64,8 +64,8 @@ export function AssignmentForm() {
           const storageRef = ref(storage, state.uploadInfo.uploadPath);
 
           // Upload file
-          const snapshot = await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(snapshot.ref);
+          await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(storageRef);
 
           // Update Firestore document
           if (firestore) {

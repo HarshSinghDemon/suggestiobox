@@ -4,9 +4,20 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeFirebaseForAdmin } from '@/lib/firebase/admin-init';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
+
+// Helper to initialize Admin SDK safely
+async function initializeAdminApp() {
+  if (getApps().length) {
+    return getApps()[0];
+  }
+  // In a managed environment like App Hosting, initializeApp() is sufficient.
+  // We avoid using service accounts which aren't available and cause crashes.
+  return initializeApp();
+}
+
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -40,9 +51,16 @@ export async function uploadSuggestion(
   prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
-  const app = await initializeFirebaseForAdmin();
-  const auth = getAuth(app);
-  const firestore = getFirestore(app);
+  let app;
+  try {
+    app = await initializeAdminApp();
+  } catch (error: any) {
+    console.error("Failed to initialize Firebase Admin:", error);
+    return { message: 'Server Configuration Error: Could not initialize Firebase.', errors: {}, success: false };
+  }
+
+  const auth = getAuth(app!);
+  const firestore = getFirestore(app!);
 
   const idToken = formData.get('idToken') as string;
   if (!idToken) {
@@ -84,15 +102,20 @@ export async function uploadSuggestion(
 
 
   // AI check for offensive language
-  const offensiveCheck = await checkSuggestionForOffensiveLanguage({ title, description: description || '' });
-  if (offensiveCheck.isOffensive) {
-      return {
-          message: 'AI Moderation Error',
-          errors: {
-              ai: `Your submission contains potentially offensive language. Please revise. Detected words: ${offensiveCheck.offensiveWords.join(', ')}`
-          },
-          success: false
-      };
+  try {
+    const offensiveCheck = await checkSuggestionForOffensiveLanguage({ title, description: description || '' });
+    if (offensiveCheck.isOffensive) {
+        return {
+            message: 'AI Moderation Error',
+            errors: {
+                ai: `Your submission contains potentially offensive language. Please revise. Detected words: ${offensiveCheck.offensiveWords.join(', ')}`
+            },
+            success: false
+        };
+    }
+  } catch (aiError) {
+    console.error("AI check failed:", aiError);
+    // Non-blocking, proceed with submission if AI fails
   }
   
   try {
@@ -156,9 +179,15 @@ export type AssignmentFormState = {
     prevState: AssignmentFormState,
     formData: FormData
   ): Promise<AssignmentFormState> {
-    const app = await initializeFirebaseForAdmin();
-    const auth = getAuth(app);
-    const firestore = getFirestore(app);
+    let app;
+    try {
+        app = await initializeAdminApp();
+    } catch (error: any) {
+        console.error("Failed to initialize Firebase Admin:", error);
+        return { message: 'Server Configuration Error: Could not initialize Firebase.', errors: {}, success: false };
+    }
+    const auth = getAuth(app!);
+    const firestore = getFirestore(app!);
 
     const idToken = formData.get('idToken') as string;
     if (!idToken) {
