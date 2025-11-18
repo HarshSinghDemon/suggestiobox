@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -112,12 +112,10 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    <span>Admin Panel</span>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem onClick={() => router.push('/browse')}>
+                  <Compass className="w-4 h-4 mr-2" />
+                  <span>Browse</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}>
                   <PlusCircle className="w-4 h-4 mr-2" />
                   <span>New Suggestion</span>
@@ -126,6 +124,13 @@ export function Header() {
                   <Upload className="w-4 h-4 mr-2" />
                   <span>New Assignment</span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => router.push('/admin')}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span>Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => router.push('/about-site')}>
                   <Info className="w-4 h-4 mr-2" />
                   <span>About This Site</span>
