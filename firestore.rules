@@ -3,7 +3,8 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for writes and deletes,
- * but allows public read access for browsing.
+ * but allows public read access for browsing. An admin user is granted special
+ * privileges for deletion.
  *
  * Data Structure:
  * All suggestions, assignments, and messages are stored in root-level collections.
@@ -11,12 +12,17 @@
  * Key Security Decisions:
  * - Any user, including unauthenticated visitors, can read (get, list) suggestions, assignments and messages.
  * - Users can only create suggestions, assignments and messages for themselves (uid must match).
- * - Users can only update or delete their own suggestions and assignments.
+ * - Users can only update their own suggestions and assignments.
+ * - The Admin (UID: m4qrSmKR9dXnLxFxw4ZmjmlSWVI2) can delete any suggestion or assignment.
  * - User profile documents (/users/{userId}) are private to the owner.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'm4qrSmKR9dXnLxFxw4ZmjmlSWVI2';
+    }
 
     /**
      * @description Protects user profile data. Only the owner can access their own document.
@@ -27,7 +33,7 @@ service cloud.firestore {
 
     /**
      * @description Secures the 'suggestions' collection.
-     * Allows public reads but restricts writes/deletes to owners.
+     * Allows public reads but restricts writes/deletes to owners or the admin.
      */
     match /suggestions/{suggestionId} {
       // Anyone can read suggestions.
@@ -36,13 +42,16 @@ service cloud.firestore {
       // Only the owner can create a suggestion, and the userId must be correct.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
 
-      // Only the owner can update or delete their suggestion.
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Only the owner can update their suggestion.
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // The owner or the admin can delete a suggestion.
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
     }
 
     /**
      * @description Secures the 'assignments' collection.
-     * Allows public reads but restricts writes/deletes to owners.
+     * Allows public reads but restricts writes/deletes to owners or the admin.
      */
     match /assignments/{assignmentId} {
       // Anyone can read assignments.
@@ -51,8 +60,11 @@ service cloud.firestore {
       // Only the owner can create an assignment, and the userId must be correct.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
 
-      // Only the owner can update or delete their assignment.
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Only the owner can update their assignment.
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // The owner or the admin can delete an assignment.
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
     }
 
     /**

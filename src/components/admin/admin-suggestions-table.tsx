@@ -57,19 +57,10 @@ export function AdminSuggestionsTable() {
 
   const { data: suggestions, isLoading } = useCollection<Suggestion>(suggestionsQuery);
 
-  const handleDelete = (suggestion: Suggestion) => {
-    if (!firestore || !user) return;
+  const handleDelete = (suggestionId: string) => {
+    if (!firestore) return;
     
-    if(user.uid !== suggestion.userId) {
-        toast({
-            variant: 'destructive',
-            title: 'Unauthorized',
-            description: 'You do not have permission to delete this suggestion.',
-        });
-        return;
-    }
-    
-    const docRef = doc(firestore, 'suggestions', suggestion.id);
+    const docRef = doc(firestore, 'suggestions', suggestionId);
     deleteDocumentNonBlocking(docRef);
 
     toast({
@@ -118,7 +109,7 @@ export function AdminSuggestionsTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={!user || user.uid !== suggestion.userId}>
+                      <Button variant="ghost" size="icon" disabled={!user}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -132,7 +123,7 @@ export function AdminSuggestionsTable() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(suggestion)}
+                          onClick={() => handleDelete(suggestion.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete

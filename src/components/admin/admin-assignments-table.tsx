@@ -57,19 +57,10 @@ export function AdminAssignmentsTable() {
 
   const { data: assignments, isLoading } = useCollection<Assignment>(assignmentsQuery);
 
-  const handleDelete = async (assignment: Assignment) => {
-    if (!firestore || !user) return;
+  const handleDelete = async (assignmentId: string) => {
+    if (!firestore) return;
 
-    if(user.uid !== assignment.userId) {
-        toast({
-            variant: 'destructive',
-            title: 'Unauthorized',
-            description: 'You do not have permission to delete this assignment.',
-        });
-        return;
-    }
-
-    const docRef = doc(firestore, 'assignments', assignment.id);
+    const docRef = doc(firestore, 'assignments', assignmentId);
     deleteDocumentNonBlocking(docRef);
     
     toast({
@@ -114,7 +105,7 @@ export function AdminAssignmentsTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={!user || user.uid !== assignment.userId}>
+                      <Button variant="ghost" size="icon" disabled={!user}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -128,7 +119,7 @@ export function AdminAssignmentsTable() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDelete(assignment)}
+                          onClick={() => handleDelete(assignment.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete
