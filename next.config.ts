@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  experimental: {
+    serverActions: {
+      maxDuration: 120, // 2 minutes
+    },
+  },
 };
 
 export default nextConfig;
