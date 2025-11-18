@@ -1,6 +1,6 @@
 'use client';
 
-import { createBrowserClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
 // --- 1. PASTE YOUR CREDENTIALS HERE ---
 const supabaseUrl = "YOUR_SUPABASE_PROJECT_URL"; // Replace with your Project URL
@@ -11,4 +11,4 @@ if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes("YOUR_SUPABASE")) {
   throw new Error('Supabase URL or Anon Key is not configured. Please edit src/lib/supabase/client.ts');
 }
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
