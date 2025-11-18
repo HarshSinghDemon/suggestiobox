@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Mail, Phone, User as UserIcon } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 
-export default function AboutPage() {
+export default function AboutAdminPage() {
   return (
     <div className="container py-12 mx-auto">
       <Card className="max-w-2xl mx-auto">

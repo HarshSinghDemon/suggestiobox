@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -67,10 +67,16 @@ export function Header() {
                 Upload Assignment
             </Link>
             <Link
-                href="/about"
+                href="/about-site"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
             >
-                About
+                About This Site
+            </Link>
+             <Link
+                href="/about-admin"
+                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+            >
+                About Admin
             </Link>
         </nav>
         <div className="flex items-center justify-end flex-1 ml-auto">
@@ -113,9 +119,13 @@ export function Header() {
                   <Upload className="w-4 h-4 mr-2" />
                   <span>New Assignment</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/about')}>
+                <DropdownMenuItem onClick={() => router.push('/about-site')}>
                   <Info className="w-4 h-4 mr-2" />
-                  <span>About</span>
+                  <span>About This Site</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => router.push('/about-admin')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  <span>About Admin</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
