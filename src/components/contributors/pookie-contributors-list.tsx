@@ -123,7 +123,6 @@ export function PookieContributorsList() {
                                     </Avatar>
                                     <div>
                                         <p className="font-medium">{pookie.userName}</p>
-                                        <p className="text-xs text-muted-foreground">User ID: {pookie.userId.substring(0,8)}...</p>
                                     </div>
                                 </div>
                             </TableCell>
