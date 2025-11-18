@@ -30,9 +30,10 @@ const generateAvatarFlow = ai.defineFlow(
   },
   async (prompt) => {
     const { media } = await ai.generate({
-      model: 'googleai/imagen-4.0-fast-generate-001',
-      prompt: `Generate a cool, abstract, geometric, vector-art style avatar for a user profile. Use the following word as a seed for the style and color palette: ${prompt}`,
+      model: 'googleai/gemini-2.5-flash-image-preview',
+      prompt: `Generate a cool, abstract, geometric, vector-art style avatar for a user profile, centered on a simple shape. The design should be modern and clean. Use the following word as a seed for the color palette and overall feel: ${prompt}`,
       config: {
+        responseModalities: ['IMAGE'],
         safetySettings: [
           {
             category: 'HARM_CATEGORY_DANGEROUS_CONTENT',

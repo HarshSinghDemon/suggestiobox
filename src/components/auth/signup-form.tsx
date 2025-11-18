@@ -17,37 +17,25 @@ import { signUpWithEmail } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { CardDescription } from '../ui/card';
-
-const AVATAR_STYLES = [
-  'bottts-neutral',
-  'adventurer-neutral',
-  'fun-emoji',
-  'big-ears-neutral',
-  'micah',
-  'notionists-neutral',
-];
+import { generateAvatar } from '@/ai/flows/generate-avatar-flow';
+import { Skeleton } from '../ui/skeleton';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
-  photoURL: z.string().url({ message: 'Please select an avatar.' }).min(1, 'Please select an avatar.'),
+  photoURL: z.string().url({ message: 'Please generate an avatar.' }).min(1, 'Please generate an avatar.'),
 });
-
-const generateAvatarUrl = (seed: string, style: string) => {
-    return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
-}
 
 export function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const auth = useFirebaseAuth();
-  const [nameSeed, setNameSeed] = useState('SuggestionBox');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,14 +46,25 @@ export function SignUpForm() {
       photoURL: '',
     },
   });
+  
+  const nameValue = form.watch('name');
+  const generatedAvatarUrl = form.watch('photoURL');
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    form.setValue('name', newName);
-    if (newName.trim()) {
-      setNameSeed(newName);
-    } else {
-      setNameSeed('SuggestionBox');
+  const handleGenerateAvatar = async () => {
+    if (!nameValue) {
+      form.setError('name', { type: 'manual', message: 'Please enter your name first.' });
+      return;
+    }
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const avatarDataUri = await generateAvatar(nameValue);
+      form.setValue('photoURL', avatarDataUri, { shouldValidate: true });
+    } catch (e: any) {
+      console.error('Avatar generation failed:', e);
+      setError('Could not generate an avatar. Please try again.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -83,8 +82,6 @@ export function SignUpForm() {
       console.error(e);
     }
   };
-
-  const selectedAvatar = form.watch('photoURL');
 
   return (
     <Form {...form}>
@@ -104,7 +101,7 @@ export function SignUpForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your Name" {...field} onChange={handleNameChange} />
+                <Input placeholder="Your Name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -116,34 +113,25 @@ export function SignUpForm() {
           name="photoURL"
           render={({ field }) => (
             <FormItem>
-                <FormLabel>Choose Your Avatar</FormLabel>
-                <CardDescription>Click an image to select your avatar.</CardDescription>
-                <FormControl>
-                    <div className="grid grid-cols-3 gap-4 pt-2">
-                        {AVATAR_STYLES.map((style) => {
-                            const avatarUrl = generateAvatarUrl(nameSeed, style);
-                            return (
-                                <button
-                                    type="button"
-                                    key={style}
-                                    className={cn(
-                                        "relative aspect-square w-full rounded-full p-2 bg-muted transition-all",
-                                        "ring-2 ring-transparent hover:ring-primary focus:ring-primary",
-                                        selectedAvatar === avatarUrl && "ring-primary ring-offset-2 ring-offset-background"
-                                    )}
-                                    onClick={() => form.setValue('photoURL', avatarUrl, { shouldValidate: true })}
-                                >
-                                    <Image
-                                        src={avatarUrl}
-                                        alt={`${style} avatar`}
-                                        fill
-                                        className="rounded-full"
-                                    />
-                                </button>
-                            )
-                        })}
-                    </div>
-                </FormControl>
+                <FormLabel>Your Unique Avatar</FormLabel>
+                <CardDescription>Generate a unique avatar based on your name.</CardDescription>
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="relative w-24 h-24 rounded-full bg-muted/50">
+                    {isGenerating ? (
+                      <Skeleton className="w-full h-full rounded-full" />
+                    ) : generatedAvatarUrl ? (
+                      <Image src={generatedAvatarUrl} alt="Generated Avatar" fill className="object-cover rounded-full" />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full rounded-full bg-muted">
+                        <Sparkles className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <Button type="button" onClick={handleGenerateAvatar} disabled={isGenerating || !nameValue}>
+                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    {isGenerating ? 'Generating...' : 'Generate Avatar'}
+                  </Button>
+                </div>
                 <FormMessage />
             </FormItem>
           )}
@@ -175,7 +163,8 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isGenerating}>
+          {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {form.formState.isSubmitting ? 'Creating account...' : 'Create account'}
         </Button>
       </form>
