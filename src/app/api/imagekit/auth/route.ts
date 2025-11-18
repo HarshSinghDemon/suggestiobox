@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import ImageKit from 'imagekit';
 
 export async function GET(request: Request) {
   const { IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT } = process.env;
@@ -13,6 +12,9 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Dynamically import ImageKit at runtime
+    const ImageKit = (await import('imagekit')).default;
+
     const imagekit = new ImageKit({
       publicKey: IMAGEKIT_PUBLIC_KEY,
       privateKey: IMAGEKIT_PRIVATE_KEY,
