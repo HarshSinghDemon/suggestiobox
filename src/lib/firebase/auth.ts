@@ -6,8 +6,6 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
   Auth,
-  GoogleAuthProvider,
-  signInWithPopup,
   User,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
@@ -28,19 +26,6 @@ const handleNewUser = async (user: User) => {
   }
 };
 
-export const signInWithGoogle = async (auth: Auth) => {
-  const provider = new GoogleAuthProvider();
-  try {
-    const userCredential = await signInWithPopup(auth, provider);
-    const user = userCredential.user;
-    await handleNewUser(user);
-    return user;
-  } catch (error) {
-    console.error('Error signing in with Google: ', error);
-    throw error;
-  }
-}
-
 export const signUpWithEmail = async (
   auth: Auth,
   email: string,
@@ -58,7 +43,12 @@ export const signUpWithEmail = async (
 
     await updateProfile(user, { displayName, photoURL });
 
-    await handleNewUser(user);
+    // We need to re-fetch the user to get the updated profile
+    const updatedUser = auth.currentUser;
+    if (updatedUser) {
+        await handleNewUser(updatedUser);
+    }
+
 
     return user;
   } catch (error) {
