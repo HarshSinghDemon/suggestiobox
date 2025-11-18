@@ -20,7 +20,10 @@ import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -40,10 +43,12 @@ const initialState: SuggestionFormState = {
 
 export function SuggestionForm() {
   const { user } = useAuth();
+  const firestore = useFirestore();
   const [state, formAction] = useActionState(uploadSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [idToken, setIdToken] = useState<string>('');
 
@@ -56,16 +61,51 @@ export function SuggestionForm() {
   }, [user]);
 
   useEffect(() => {
-    if (state.success) {
-      toast({
-        title: 'Success!',
-        description: state.message,
-        action: <CheckCircle className="text-green-500" />,
-      });
-      formRef.current?.reset();
-      router.push('/browse');
-    }
-  }, [state.success, state.message, toast, router]);
+    const handleFileUpload = async () => {
+      if (state.success && state.uploadInfo && file) {
+        try {
+          const storage = getStorage();
+          const storageRef = ref(storage, state.uploadInfo.uploadPath);
+
+          // Upload file
+          const snapshot = await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(snapshot.ref);
+
+          // Update Firestore document with the file URL
+          if (firestore) {
+            const docRef = doc(firestore, state.uploadInfo.collection, state.uploadInfo.documentId);
+            await updateDoc(docRef, { fileUrl: downloadURL });
+          }
+
+          toast({
+            title: 'Success!',
+            description: "Suggestion and file uploaded successfully!",
+            action: <CheckCircle className="text-green-500" />,
+          });
+          formRef.current?.reset();
+          router.push('/browse');
+
+        } catch (error) {
+          console.error("File upload or Firestore update failed:", error);
+          toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "There was an error uploading your file. Please try again.",
+          });
+        }
+      } else if (state.success && !state.uploadInfo) {
+        toast({
+          title: 'Success!',
+          description: state.message,
+          action: <CheckCircle className="text-green-500" />,
+        });
+        formRef.current?.reset();
+        router.push('/browse');
+      }
+    };
+    
+    handleFileUpload();
+  }, [state, file, firestore, toast, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -136,12 +176,12 @@ export function SuggestionForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="file">Optional File (PDF, JPG, PNG)</Label>
+          <Label htmlFor="file">Optional File</Label>
           <Input 
             id="file" 
-            name="file" 
+            name="file"
+            ref={fileInputRef}
             type="file" 
-            accept="image/jpeg,image/png,application/pdf" 
             onChange={handleFileChange}
           />
           {state.errors?.file && (

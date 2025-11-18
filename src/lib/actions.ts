@@ -4,28 +4,20 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import { initializeFirebaseForAdmin } from '@/lib/firebase/admin-init';
 import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
-
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().optional(),
   subject: z.enum(SUBJECTS),
-  file: z.instanceof(File).optional(),
 });
 
 const assignmentSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters'),
     subject: z.enum(ASSIGNMENT_SUBJECTS),
 });
-
-const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
-const MAX_FILE_SIZE_MB = 10;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
 
 export type SuggestionFormState = {
   message: string;
@@ -37,6 +29,11 @@ export type SuggestionFormState = {
     ai?: string;
   };
   success: boolean;
+  uploadInfo?: {
+    uploadPath: string;
+    documentId: string;
+    collection: 'suggestions';
+  }
 };
 
 export async function uploadSuggestion(
@@ -46,7 +43,6 @@ export async function uploadSuggestion(
   const app = await initializeFirebaseForAdmin();
   const auth = getAuth(app);
   const firestore = getFirestore(app);
-  const storage = getStorage(app);
 
   const idToken = formData.get('idToken') as string;
   if (!idToken) {
@@ -61,8 +57,7 @@ export async function uploadSuggestion(
   }
   
   const user = await auth.getUser(decodedToken.uid);
-
-  const file = formData.get('file') as File;
+  const file = formData.get('file') as File | null;
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   const subject = formData.get('subject') as (typeof SUBJECTS)[number];
@@ -76,17 +71,8 @@ export async function uploadSuggestion(
   if (!subject || !SUBJECTS.includes(subject)) {
     errors.subject = ['Please select a valid subject.'];
   }
-  if ((!file || file.size === 0) && (!description || description.trim() === '')) {
+  if (!file && (!description || description.trim() === '')) {
       errors.description = ['A description is required when no file is uploaded.'];
-  }
-
-  if (file && file.size > 0) {
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      errors.file = [`Invalid file type. Only JPG, PNG, and PDF are allowed.`];
-    }
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-        errors.file = [`File is too large (max ${MAX_FILE_SIZE_MB}MB).`];
-    }
   }
   
   if (Object.keys(errors).length > 0) {
@@ -106,42 +92,35 @@ export async function uploadSuggestion(
       };
   }
   
-  let fileUrl: string | undefined;
-  let fileName: string | undefined;
-  let fileType: string | undefined;
-
   try {
-    if (file && file.size > 0) {
-      const bucket = storage.bucket();
-      const filePath = `suggestions/${user.uid}/${Date.now()}-${file.name}`;
-      const fileUpload = bucket.file(filePath);
-      const buffer = Buffer.from(await file.arrayBuffer());
-      
-      await fileUpload.save(buffer, {
-        metadata: {
-          contentType: file.type,
-        },
-      });
-
-      // Make the file publicly readable
-      await fileUpload.makePublic();
-      fileUrl = fileUpload.publicUrl();
-      fileName = file.name;
-      fileType = file.type;
-    }
-
-    await firestore.collection('suggestions').add({
+    const docData = {
       title,
       description: description || '',
       subject,
-      fileUrl,
-      fileName,
-      fileType,
       createdAt: new Date(),
       userId: user.uid,
       userName: user.displayName,
       userImage: user.photoURL,
-    });
+      fileUrl: '',
+      fileName: file?.name || '',
+      fileType: file?.type || '',
+    };
+
+    const docRef = await firestore.collection('suggestions').add(docData);
+
+    if (file && file.size > 0) {
+        const uploadPath = `suggestions/${user.uid}/${Date.now()}-${file.name}`;
+        return {
+            message: 'Suggestion created. Now uploading file...',
+            success: true,
+            uploadInfo: {
+                uploadPath,
+                documentId: docRef.id,
+                collection: 'suggestions',
+            }
+        };
+    }
+
   } catch (e: any) {
     console.error("Error during upload:", e);
     return { message: `Database Error: ${e.message}`, errors: {}, success: false };
@@ -161,6 +140,11 @@ export type AssignmentFormState = {
       file?: string[];
     };
     success: boolean;
+    uploadInfo?: {
+      uploadPath: string;
+      documentId: string;
+      collection: 'assignments';
+    }
   };
   
   export async function uploadAssignment(
@@ -170,7 +154,6 @@ export type AssignmentFormState = {
     const app = await initializeFirebaseForAdmin();
     const auth = getAuth(app);
     const firestore = getFirestore(app);
-    const storage = getStorage(app);
 
     const idToken = formData.get('idToken') as string;
     if (!idToken) {
@@ -204,48 +187,36 @@ export type AssignmentFormState = {
         return { message: 'File is required for assignments.', errors: { file: ['Please select a file to upload.'] }, success: false };
     }
     
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      return { message: 'Invalid file type. Only JPG, PNG, and PDF are allowed.', errors: { file: ['Please upload a valid file type (JPG, PNG, PDF).'] }, success: false };
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-        return { message: `File is too large (max ${MAX_FILE_SIZE_MB}MB).`, errors: { file: [`File must be ${MAX_FILE_SIZE_MB}MB or less.`] }, success: false };
-    }
-
     const { description, subject } = validatedFields.data;
 
     try {
-      const bucket = storage.bucket();
-      const filePath = `assignments/${user.uid}/${Date.now()}-${file.name}`;
-      const fileUpload = bucket.file(filePath);
-      const buffer = Buffer.from(await file.arrayBuffer());
+        const docData = {
+            description,
+            subject,
+            createdAt: new Date(),
+            userId: user.uid,
+            userName: user.displayName,
+            userImage: user.photoURL,
+            fileUrl: '',
+            fileName: file.name,
+            fileType: file.type,
+        };
 
-      await fileUpload.save(buffer, {
-        metadata: {
-          contentType: file.type,
-        },
-      });
+        const docRef = await firestore.collection('assignments').add(docData);
 
-      await fileUpload.makePublic();
-      const fileUrl = fileUpload.publicUrl();
-  
-      await firestore.collection('assignments').add({
-        description,
-        subject,
-        fileUrl,
-        fileName: file.name,
-        fileType: file.type,
-        createdAt: new Date(),
-        userId: user.uid,
-        userName: user.displayName,
-        userImage: user.photoURL,
-      });
+        const uploadPath = `assignments/${user.uid}/${Date.now()}-${file.name}`;
+        
+        return {
+            message: 'Assignment entry created. Now uploading file...',
+            success: true,
+            uploadInfo: {
+                uploadPath,
+                documentId: docRef.id,
+                collection: 'assignments',
+            }
+        };
     } catch (e: any) {
       console.error("Error during upload:", e);
       return { message: `Database Error: ${e.message}`, errors: {}, success: false };
     }
-  
-    revalidatePath('/browse');
-    revalidatePath('/');
-    return { message: 'Assignment uploaded successfully!', success: true };
   }
