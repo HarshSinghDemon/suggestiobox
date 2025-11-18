@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -9,9 +8,8 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { app } from './config';
+import { auth } from './config';
 
-const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
@@ -20,7 +18,7 @@ export const signInWithGoogle = async () => {
     return result.user;
   } catch (error) {
     console.error('Error signing in with Google: ', error);
-    return null;
+    throw error;
   }
 };
 
