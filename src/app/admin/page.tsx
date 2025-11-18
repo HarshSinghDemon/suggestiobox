@@ -6,7 +6,6 @@ import dynamic from 'next/dynamic';
 
 const AdminDashboard = dynamic(() => import('@/components/admin/admin-dashboard').then(mod => mod.AdminDashboard), {
   loading: () => <Skeleton className="w-full h-[400px]" />,
-  ssr: false
 });
 
 export default function AdminPage() {
