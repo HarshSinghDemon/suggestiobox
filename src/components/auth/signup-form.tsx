@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { signUpWithEmail } from '@/lib/firebase/auth';
+import { signUpWithEmail, signInWithGoogle } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -51,6 +51,20 @@ export function SignUpForm() {
     }
   }, [user, isUserLoading, router]);
 
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsSigningUp(true);
+    try {
+      await signInWithGoogle(auth);
+      // The useEffect will handle the redirect
+    } catch (error) {
+      console.error('Google Sign In Error:', error);
+      setError('Failed to sign up with Google. Please try again.');
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
   const nameValue = form.watch('name');
 
   const avatarUrl = useMemo(() => {
@@ -68,7 +82,8 @@ export function SignUpForm() {
     
     try {
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
-        // The onAuthStateChanged listener will pick up the new user and the useEffect above will redirect.
+        // The onAuthStateChanged listener in the provider will handle user state,
+        // and the useEffect above will redirect.
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');
@@ -82,84 +97,106 @@ export function SignUpForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="w-4 h-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className='space-y-2'>
-            <FormLabel>Your Unique Avatar</FormLabel>
-            <div className='flex items-center justify-center p-4 rounded-md bg-muted/50'>
-              <div className="relative w-24 h-24 rounded-full bg-background">
-                {avatarUrl ? (
-                  <Image 
-                    src={avatarUrl} 
-                    alt="Your generated avatar" 
-                    fill 
-                    className="object-cover rounded-full"
-                    unoptimized // Required for SVG images from external URLs
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full text-muted-foreground">
-                    <UserIcon className="w-12 h-12" />
-                  </div>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-center text-muted-foreground">Your avatar is automatically generated based on your name.</p>
-        </div>
+    <>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="w-4 h-4" />
+          <AlertTitle>Sign-up Failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="name@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isSigningUp || isUserLoading}>
-          {(isSigningUp || isUserLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {(isSigningUp || isUserLoading) ? 'Creating account...' : 'Create account'}
+      <div className="grid gap-4">
+        <Button variant="outline" onClick={handleGoogleSignIn} disabled={isSigningUp || isUserLoading}>
+          {isSigningUp && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          <svg className="w-4 h-4 mr-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 279.2 96 248 96c-106.1 0-192 85.9-192 192s85.9 192 192 192c98.2 0 176.7-76.7 183.4-176.1H248V261.8h239.2z"></path></svg>
+          Sign up with Google
         </Button>
-      </form>
-    </Form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="px-2 bg-background text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className='space-y-2'>
+              <FormLabel>Your Unique Avatar</FormLabel>
+              <div className='flex items-center justify-center p-4 rounded-md bg-muted/50'>
+                <div className="relative w-24 h-24 rounded-full bg-background">
+                  {avatarUrl ? (
+                    <Image 
+                      src={avatarUrl} 
+                      alt="Your generated avatar" 
+                      fill 
+                      className="object-cover rounded-full"
+                      unoptimized // Required for SVG images from external URLs
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                      <UserIcon className="w-12 h-12" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-center text-muted-foreground">Your avatar is automatically generated based on your name.</p>
+          </div>
+
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="name@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full" disabled={isSigningUp || isUserLoading}>
+            {(isSigningUp || isUserLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {(isSigningUp || isUserLoading) ? 'Creating account...' : 'Create account'}
+          </Button>
+        </form>
+      </Form>
+    </>
   );
 }

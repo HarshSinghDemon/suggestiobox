@@ -6,8 +6,42 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
   Auth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  User,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+
+const handleNewUser = async (user: User) => {
+  const db = getFirestore(user.auth.app);
+  const userDocRef = doc(db, 'users', user.uid);
+  const userDoc = await getDoc(userDocRef);
+
+  // If the user document doesn't exist, create it.
+  if (!userDoc.exists()) {
+    const userData = {
+      id: user.uid, // This is critical for the 'create' rule
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+    };
+    await setDoc(userDocRef, userData);
+  }
+};
+
+export const signInWithGoogle = async (auth: Auth) => {
+  const provider = new GoogleAuthProvider();
+  try {
+    const userCredential = await signInWithPopup(auth, provider);
+    const user = userCredential.user;
+    // Check if user is new and create a document if so.
+    await handleNewUser(user);
+    return user;
+  } catch (error) {
+    console.error('Error signing in with Google: ', error);
+    throw error;
+  }
+}
 
 export const signUpWithEmail = async (
   auth: Auth,
@@ -29,16 +63,9 @@ export const signUpWithEmail = async (
     await updateProfile(user, { displayName, photoURL });
 
     // 3. Create the user document in Firestore
-    const userDocRef = doc(getFirestore(auth.app), 'users', user.uid);
-    const userData = {
-      id: user.uid, // This is critical for the 'create' rule
-      email: user.email,
-      displayName: displayName,
-      photoURL: photoURL,
-    };
-    
-    // This now waits for the Firestore document to be created.
-    await setDoc(userDocRef, userData);
+    // This is now handled by the handleNewUser function, but we can call it here explicitly
+    // to ensure it happens immediately after sign-up.
+    await handleNewUser(user);
 
     return user;
   } catch (error) {
