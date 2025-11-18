@@ -14,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Eye } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -97,21 +97,26 @@ export function AssignmentDetails({ assignmentId }: { assignmentId: string }) {
       </CardContent>
       {assignment.fileUrl && assignment.fileName && (
         <CardFooter>
-            <a 
-                href={assignment.fileUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                download={assignment.fileName}
-                className="w-full"
-            >
-                <div className="flex items-center justify-between w-full p-4 transition-colors rounded-lg bg-muted hover:bg-muted/80">
-                    <div className="flex items-center gap-4">
-                        <FileIcon fileType={assignment.fileType} className="w-6 h-6" />
-                        <span className="font-medium">{assignment.fileName}</span>
-                    </div>
-                    <Download className="w-5 h-5 text-muted-foreground" />
-                </div>
-          </a>
+          <div className="flex items-center justify-between w-full p-4 rounded-lg bg-muted">
+            <div className="flex items-center gap-4">
+              <FileIcon fileType={assignment.fileType} className="w-6 h-6" />
+              <span className="font-medium">{assignment.fileName}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <a href={assignment.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View
+                </a>
+              </Button>
+              <Button asChild size="sm">
+                <a href={assignment.fileUrl} download={assignment.fileName}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </a>
+              </Button>
+            </div>
+          </div>
         </CardFooter>
       )}
     </Card>
