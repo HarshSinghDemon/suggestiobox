@@ -53,35 +53,35 @@ export function Header() {
             <Link
                 href="/browse"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
+                prefetch={false}
             >
                 Browse
             </Link>
             <Link
                 href="/community-chat"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
+                prefetch={false}
             >
                 Community Chat
             </Link>
             <Link
                 href="/suggestions/new"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
+                prefetch={false}
             >
                 Upload
             </Link>
             <Link
                 href="/about-site"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
+                prefetch={false}
             >
                 About This Site
             </Link>
              <Link
                 href="/about-admin"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
+                prefetch={false}
             >
                 About Admin
             </Link>
@@ -112,42 +112,16 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/browse')}>
-                  <Compass className="w-4 h-4 mr-2" />
-                  <span>Browse</span>
-                </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => router.push('/community-chat')}>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  <span>Community Chat</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/suggestions/new')}>
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  <span>New Suggestion</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/assignments/new')}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  <span>New Assignment</span>
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/community-chat')}><MessageSquare className="w-4 h-4 mr-2" /><span>Community Chat</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    <Shield className="w-4 h-4 mr-2" />
-                    <span>Admin Panel</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => router.push('/about-site')}>
-                  <Info className="w-4 h-4 mr-2" />
-                  <span>About This Site</span>
-                </DropdownMenuItem>
-                 <DropdownMenuItem onClick={() => router.push('/about-admin')}>
-                  <Users className="w-4 h-4 mr-2" />
-                  <span>About Admin</span>
-                </DropdownMenuItem>
+                {isAdmin && (<DropdownMenuItem onClick={() => router.push('/admin')}><Shield className="w-4 h-4 mr-2" /><span>Admin Panel</span></DropdownMenuItem>)}
+                <DropdownMenuItem onClick={() => router.push('/about-site')}><Info className="w-4 h-4 mr-2" /><span>About This Site</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/about-admin')}><Users className="w-4 h-4 mr-2" /><span>About Admin</span></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}><LogOut className="w-4 h-4 mr-2" /><span>Log out</span></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

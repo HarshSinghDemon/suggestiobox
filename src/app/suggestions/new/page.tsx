@@ -1,7 +1,13 @@
-import { SuggestionForm } from '@/components/uploads/suggestion-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
+
+const SuggestionForm = dynamic(() => import('@/components/uploads/suggestion-form').then(mod => mod.SuggestionForm), {
+  loading: () => <Skeleton className="w-full h-[400px]" />,
+});
 
 export default function NewSuggestionPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,7 +48,9 @@ export default function NewSuggestionPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SuggestionForm supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <SuggestionForm supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

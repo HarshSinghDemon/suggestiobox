@@ -1,7 +1,14 @@
-import { AssignmentForm } from '@/components/uploads/assignment-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
+
+const AssignmentForm = dynamic(() => import('@/components/uploads/assignment-form').then(mod => mod.AssignmentForm), {
+  loading: () => <Skeleton className="w-full h-[300px]" />,
+});
+
 
 export default function NewAssignmentPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,7 +49,9 @@ export default function NewAssignmentPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AssignmentForm supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+            <Suspense fallback={<Skeleton className="w-full h-[300px]" />}>
+              <AssignmentForm supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

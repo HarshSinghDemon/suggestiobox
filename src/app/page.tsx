@@ -1,7 +1,12 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { WavyBackground } from '@/components/wavy-background';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
+  loading: () => <Skeleton className="absolute inset-0" />,
+});
 
 export default function Home() {
   return (

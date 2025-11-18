@@ -8,7 +8,7 @@ import { ChatMessage } from '@/components/chat/chat-message';
 import { MessageInput } from '@/components/chat/message-input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
 
 function ChatSkeleton() {
@@ -27,7 +27,7 @@ function ChatSkeleton() {
   );
 }
 
-export default function CommunityChatPage() {
+function CommunityChatPage() {
   const { user } = useUser();
   const firestore = useFirestore();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,6 @@ export default function CommunityChatPage() {
   const { data: messages, isLoading } = useCollection<Message>(messagesQuery);
   
   useEffect(() => {
-    // Scroll to the bottom when new messages arrive
     if (viewportRef.current) {
         setTimeout(() => {
             viewportRef.current?.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
@@ -82,7 +81,7 @@ export default function CommunityChatPage() {
                 ) : (
                     <p className="w-full text-sm text-center text-muted-foreground">
                         Please{' '}
-                        <Link href="/login" className="underline text-primary">
+                        <Link href="/login" className="underline text-primary" prefetch={false}>
                             log in
                         </Link>{' '}
                         to send messages.
@@ -93,3 +92,6 @@ export default function CommunityChatPage() {
     </div>
   );
 }
+
+
+export default memo(CommunityChatPage);

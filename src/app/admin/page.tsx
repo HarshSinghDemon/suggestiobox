@@ -1,6 +1,13 @@
-import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { AdminAuthWrapper } from '@/components/auth/admin-auth-wrapper';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import dynamic from 'next/dynamic';
+
+const AdminDashboard = dynamic(() => import('@/components/admin/admin-dashboard').then(mod => mod.AdminDashboard), {
+  loading: () => <Skeleton className="w-full h-[400px]" />,
+  ssr: false
+});
 
 export default function AdminPage() {
   return (
@@ -14,7 +21,9 @@ export default function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AdminDashboard />
+            <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
+              <AdminDashboard />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
