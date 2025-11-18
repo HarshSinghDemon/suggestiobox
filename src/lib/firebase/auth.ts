@@ -15,7 +15,8 @@ export const signUpWithEmail = async (
   auth: Auth,
   email: string,
   password: string,
-  displayName: string
+  displayName: string,
+  photoURL: string
 ) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -23,7 +24,7 @@ export const signUpWithEmail = async (
       email,
       password
     );
-    await updateProfile(userCredential.user, { displayName });
+    await updateProfile(userCredential.user, { displayName, photoURL });
 
     const userDocRef = doc(
       getFirestore(auth.app),
@@ -34,6 +35,7 @@ export const signUpWithEmail = async (
       id: userCredential.user.uid,
       email: userCredential.user.email,
       displayName: displayName,
+      photoURL: photoURL,
     };
 
     setDoc(userDocRef, userData, { merge: true }).catch((serverError) => {

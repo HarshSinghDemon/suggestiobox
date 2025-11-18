@@ -19,12 +19,33 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
+import { Card, CardDescription } from '../ui/card';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  photoURL: z.string().url({ message: 'Please select an avatar.' }),
 });
+
+const avatarSeeds = [
+  'Gizmo',
+  'Sparky',
+  'Bolt',
+  'Pixel',
+  'Widget',
+  'Nano',
+  'Zorp',
+  'Glitch',
+  'Orbit',
+  'Comet',
+  'Radar',
+  'Cygnus',
+];
+
+const generateAvatarUrl = (seed: string) => `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}`;
 
 export function SignUpForm() {
   const router = useRouter();
@@ -34,16 +55,17 @@ export function SignUpForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        name: '',
-        email: '',
-        password: '',
+      name: '',
+      email: '',
+      password: '',
+      photoURL: '',
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     try {
-      await signUpWithEmail(auth, values.email, values.password, values.name);
+      await signUpWithEmail(auth, values.email, values.password, values.name, values.photoURL);
       router.push('/');
     } catch (e: any) {
       if (e.code === 'auth/email-already-in-use') {
@@ -59,12 +81,48 @@ export function SignUpForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-            <Alert variant="destructive">
-                <AlertCircle className="w-4 h-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
+          <Alert variant="destructive">
+            <AlertCircle className="w-4 h-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
+        
+        <FormField
+          control={form.control}
+          name="photoURL"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Choose Your Avatar</FormLabel>
+               <CardDescription>Select a cool avatar to represent you!</CardDescription>
+              <FormControl>
+                <div className="grid grid-cols-4 gap-4 py-2">
+                  {avatarSeeds.map((seed) => (
+                    <button
+                      type="button"
+                      key={seed}
+                      className={cn(
+                        'rounded-full p-1 ring-2 ring-transparent transition-all hover:ring-primary focus:ring-primary',
+                        field.value === generateAvatarUrl(seed) && 'ring-primary'
+                      )}
+                      onClick={() => field.onChange(generateAvatarUrl(seed))}
+                    >
+                      <Image
+                        src={generateAvatarUrl(seed)}
+                        alt={`${seed} avatar`}
+                        width={64}
+                        height={64}
+                        className="rounded-full bg-muted"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <FormField
           control={form.control}
           name="name"
