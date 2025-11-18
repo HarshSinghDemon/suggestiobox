@@ -21,8 +21,6 @@ import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
-import { uploadFile } from '@/lib/firebase/storage';
-import { UploadTask } from 'firebase/storage';
 
 const initialState: SuggestionFormState = {
   message: '',
@@ -57,7 +55,7 @@ export function SuggestionForm() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
+  const [uploadController, setUploadController] = useState<AbortController | null>(null);
 
   const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,14 +68,16 @@ export function SuggestionForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 100 * 1024 * 1024) {
-      // 100MB limit
+    if (file.size > 100 * 1024 * 1024) { // 100MB limit
       setFileUpload({
         ...initialFileUploadState,
         error: 'File size must be less than 100MB.',
       });
       return;
     }
+
+    const controller = new AbortController();
+    setUploadController(controller);
 
     setFileUpload({
       ...initialFileUploadState,
@@ -87,44 +87,57 @@ export function SuggestionForm() {
     });
     
     try {
-      const { task } = uploadFile(
-        file,
-        (progress) => {
-          setFileUpload((prev) => ({...prev, progress}));
-        },
-        (error) => {
-          console.error('Firebase Storage upload error:', error);
-          setFileUpload((prev) => ({
-            ...prev,
-            error: 'File upload failed. Please try again.',
-            isUploading: false,
-          }));
-          setUploadTask(null);
-        },
-        (downloadURL, fullPath) => {
-          setFileUpload((prev) => ({
-            ...prev,
-            url: downloadURL,
-            path: fullPath,
-            isUploading: false,
-            progress: 100,
-          }));
-          setUploadTask(null);
-        }
-      );
-      setUploadTask(task);
-    } catch (error) {
-      console.error('File upload process failed:', error);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // We simulate progress for fetch uploads
+      const progressInterval = setInterval(() => {
+        setFileUpload(prev => ({ ...prev, progress: Math.min(prev.progress + 10, 90) }));
+      }, 500);
+
+      const response = await fetch('/api/imagekit/upload-to-supabase', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+
       setFileUpload({
         ...initialFileUploadState,
-        error: 'File upload setup failed. Please try again.',
+        url: result.url,
+        path: result.path,
+        name: result.name,
+        type: result.type,
+        isUploading: false,
+        progress: 100,
       });
+      setUploadController(null);
+
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            console.log('Upload aborted');
+            setFileUpload({ ...initialFileUploadState, error: 'Upload cancelled.'});
+        } else {
+            console.error('File upload failed:', error);
+            setFileUpload({
+                ...initialFileUploadState,
+                error: 'File upload failed. Please try again.',
+            });
+        }
     }
   };
 
   const handleRemoveFile = () => {
-    if (uploadTask) {
-        uploadTask.cancel();
+    if (uploadController) {
+      uploadController.abort();
     }
     setFileUpload(initialFileUploadState);
     if (fileInputRef.current) {
@@ -135,20 +148,12 @@ export function SuggestionForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isAuthLoading) {
-      toast({
-        variant: 'destructive',
-        title: 'Please wait',
-        description: 'Authentication is still loading.',
-      });
+      toast({ variant: 'destructive', title: 'Please wait', description: 'Authentication is still loading.' });
       return;
     }
 
     if (fileUpload.isUploading) {
-      toast({
-        variant: 'destructive',
-        title: 'Please wait',
-        description: 'A file is currently being uploaded.',
-      });
+      toast({ variant: 'destructive', title: 'Please wait', description: 'A file is currently being uploaded.' });
       return;
     }
 
@@ -160,21 +165,13 @@ export function SuggestionForm() {
 
     if (!result.success) {
       setFormState(result);
-      toast({
-        variant: 'destructive',
-        title: 'Validation Failed',
-        description: result.message || 'Please check the form for errors.',
-      });
+      toast({ variant: 'destructive', title: 'Validation Failed', description: result.message || 'Please check the form for errors.' });
       setIsSubmitting(false);
       return;
     }
 
     if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Database connection not found.',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: 'Database connection not found.' });
       setIsSubmitting(false);
       return;
     }
@@ -196,11 +193,7 @@ export function SuggestionForm() {
 
       const docRef = await addDoc(collection(firestore, 'suggestions'), docData);
 
-      toast({
-        title: 'Success!',
-        description: 'Thank you for your contribution.',
-        action: <CheckCircle className="text-green-500" />,
-      });
+      toast({ title: 'Success!', description: 'Thank you for your contribution.', action: <CheckCircle className="text-green-500" /> });
 
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
@@ -210,11 +203,7 @@ export function SuggestionForm() {
       router.push(`/suggestions/${docRef.id}`);
     } catch (error) {
       console.error('Submission error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Submission Failed',
-        description: 'An unexpected error occurred. Please try again.',
-      });
+      toast({ variant: 'destructive', title: 'Submission Failed', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
