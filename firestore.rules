@@ -31,7 +31,7 @@ service cloud.firestore {
 
     // Rules for the suggestions collection
     match /suggestions/{suggestionId} {
-      // Any authenticated user can read suggestions
+      // Any authenticated user can read a single suggestion
       allow get: if isAuthenticated();
       // Any authenticated user can create a suggestion
       allow create: if isAuthenticated();
@@ -39,18 +39,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
     }
     match /suggestions {
+        // Any authenticated user can list the suggestions
         allow list: if isAuthenticated();
     }
 
 
     // Rules for the assignments collection
     match /assignments/{assignmentId} {
-      // Any authenticated user can get a single document.
-      allow read: if isAuthenticated();
-      // Any authenticated user can create, update, or delete an assignment.
-      allow write: if isAuthenticated();
+      // Any authenticated user can get a single document and write to it.
+      allow read, write: if isAuthenticated();
     }
     match /assignments {
+        // Any authenticated user can list the assignments
         allow list: if isAuthenticated();
     }
 
@@ -66,6 +66,7 @@ service cloud.firestore {
         allow update: if false;
     }
     match /messages {
+        // Any authenticated user can list the messages
         allow list: if isAuthenticated();
     }
   }
