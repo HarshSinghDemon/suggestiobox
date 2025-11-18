@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { signInWithGoogle } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase';
 
 function GoogleIcon() {
     return (
@@ -18,10 +19,12 @@ function GoogleIcon() {
 
 export function GoogleSignInButton() {
   const router = useRouter();
+  const auth = useAuth();
 
   const handleSignIn = async () => {
+    if (!auth) return;
     try {
-        const user = await signInWithGoogle();
+        const user = await signInWithGoogle(auth);
         if (user) {
           router.push('/');
         }

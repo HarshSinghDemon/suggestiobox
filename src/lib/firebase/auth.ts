@@ -76,8 +76,7 @@ export const signInWithEmail = async (
   }
 };
 
-export const signInWithGoogle = async () => {
-    const auth = (await import('@/firebase')).useAuth();
+export const signInWithGoogle = async (auth: Auth) => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
