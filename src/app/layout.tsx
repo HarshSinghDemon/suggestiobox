@@ -9,7 +9,7 @@ import { FirebaseClientProvider } from '@/firebase';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'Suggestion Box',
+  title: 'The Suggestion Box | StudyShare',
   description: 'Upload and browse study materials, suggestions, and assignments.',
 };
 
