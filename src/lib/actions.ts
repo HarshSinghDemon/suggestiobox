@@ -12,7 +12,7 @@ const suggestionSchema = z.object({
 });
 
 const assignmentSchema = z.object({
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  title: z.string().min(5, 'Title must be at least 5 characters'),
   subject: z.enum(ASSIGNMENT_SUBJECTS),
 });
 
@@ -83,7 +83,7 @@ export async function validateSuggestion(
 export type AssignmentFormState = {
     message: string;
     errors?: {
-      description?: string[];
+      title?: string[];
       subject?: string[];
     };
     success: boolean;
@@ -94,7 +94,7 @@ export async function validateAssignment(
 ): Promise<AssignmentFormState> {
   
     const validatedFields = assignmentSchema.safeParse({
-      description: formData.get('description'),
+      title: formData.get('title'),
       subject: formData.get('subject'),
     });
   

@@ -85,15 +85,15 @@ export function AssignmentDetails({ assignmentId }: { assignmentId: string }) {
         <div className="flex items-start gap-4">
           <SubjectIcon subject={assignment.subject} className="w-10 h-10 mt-1 text-primary" />
           <div className='flex-1'>
-            <CardTitle className="text-3xl">Assignment: {assignment.subject}</CardTitle>
+            <CardTitle className="text-3xl">{assignment.title}</CardTitle>
             <CardDescription className="mt-2 text-sm">
               Submitted by {assignment.userName || 'Anonymous'} on {date}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 text-base text-foreground/90">
-        <p className="whitespace-pre-wrap">{assignment.description}</p>
+      <CardContent>
+        <p className="text-muted-foreground">This is an assignment file submission. Please download the file to view its contents.</p>
       </CardContent>
       {assignment.fileUrl && assignment.fileName && (
         <CardFooter>

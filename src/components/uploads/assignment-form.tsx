@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { validateAssignment } from '@/lib/actions';
 import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
@@ -189,7 +188,7 @@ export function AssignmentForm() {
 
     try {
       const docData = {
-        description: formData.get('description') as string,
+        title: formData.get('title') as string,
         subject: formData.get('subject') as string,
         userId: user?.uid || 'anonymous',
         userName: user?.displayName || 'Anonymous',
@@ -231,12 +230,11 @@ export function AssignmentForm() {
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="Describe the assignment or lab file..."
-          className="min-h-[120px]"
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          name="title"
+          placeholder="e.g., Lab Assignment 1 - TCP/IP"
           required
         />
       </div>

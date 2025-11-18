@@ -24,7 +24,7 @@ export type Suggestion = {
 
 export type Assignment = {
   id: string;
-  description: string;
+  title: string;
   subject: Subject;
   createdAt: Timestamp;
   userId: string;

@@ -60,9 +60,9 @@
           "type": "string",
           "description": "Reference to the User who submitted the assignment. (Relationship: User 1:N Assignment)"
         },
-        "description": {
+        "title": {
           "type": "string",
-          "description": "Description of the assignment."
+          "description": "Title of the assignment."
         },
         "subjectId": {
           "type": "string",
@@ -81,7 +81,7 @@
       "required": [
         "id",
         "userId",
-        "description",
+        "title",
         "subjectId",
         "fileUrl",
         "uploadDate"

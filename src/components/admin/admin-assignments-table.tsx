@@ -81,7 +81,7 @@ export function AdminAssignmentsTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Description</TableHead>
+            <TableHead>Title</TableHead>
             <TableHead>User</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>File</TableHead>
@@ -92,7 +92,7 @@ export function AdminAssignmentsTable() {
           {assignments && assignments.length > 0 ? (
             assignments.map((assignment) => (
               <TableRow key={assignment.id}>
-                <TableCell className="font-medium truncate max-w-sm">{assignment.description}</TableCell>
+                <TableCell className="font-medium truncate max-w-sm">{assignment.title}</TableCell>
                 <TableCell>{assignment.userName || 'Anonymous'}</TableCell>
                 <TableCell>{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
                 <TableCell>

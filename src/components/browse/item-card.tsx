@@ -28,8 +28,8 @@ export function ItemCard({ item, type }: ItemCardProps) {
     return names.map((n) => n[0]).join('').substring(0, 2);
   };
   
-  const title = type === 'suggestion' ? item.title : `Assignment: ${subject}`;
-  const description = item.description;
+  const title = item.title;
+  const description = type === 'suggestion' ? item.description : `An assignment for the subject: ${subject}`;
   const detailsUrl = `/${type}s/${id}`;
 
   return (
