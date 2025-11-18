@@ -1,58 +1,43 @@
-import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
-import { BrowseSection } from '@/components/browse/browse-section';
-import placeholderImages from '@/lib/placeholder-images.json';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 
-type HomeProps = {
-  searchParams: {
-    tab?: 'suggestions' | 'assignments';
-    subject?: string;
-  };
-};
-
-export default function Home({ searchParams }: HomeProps) {
-  const { tab = 'suggestions', subject } = searchParams;
-  const heroImage = placeholderImages.placeholderImages.find(
-    (img) => img.id === 'hero'
-  );
-
+export default function Home() {
   return (
-    <div className="flex flex-col gap-8 md:gap-12">
-      <section className="relative w-full h-[40vh] md:h-[50vh] flex items-center justify-center text-center">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
-            fill
-            className="object-cover brightness-50"
-            priority
-            data-ai-hint={heroImage.imageHint}
-          />
-        )}
-        <div className="relative z-10 p-4 space-y-4 text-white">
-          <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl font-headline">
-            Welcome to StudyShare Central
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
+      <div className="relative w-full max-w-4xl mx-auto">
+        <div
+          className="absolute inset-0 bg-no-repeat bg-center"
+          style={{
+            backgroundImage: "url('/wavy-background.svg')",
+            backgroundSize: '120% 120%',
+          }}
+        ></div>
+        <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
+          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter">
+            The
+            <br />
+            Suggestion
+            <br />
+            Box
           </h1>
-          <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-200">
-            Your hub for academic collaboration. Share, discover, and download
-            study materials.
-          </p>
-          <div className="flex justify-center gap-4">
-             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/?tab=suggestions#browse">Browse Suggestions</Link>
-             </Button>
-             <Button asChild size="lg" variant="secondary" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                <Link href="/?tab=assignments#browse">Browse Assignments</Link>
-            </Button>
+          <div className="max-w-md space-y-4">
+            <p className="text-lg">
+              Hi there! We would love to know how can we make our workplace
+              better.
+            </p>
+            <p className="text-lg">
+              Don&apos;t worry, you can choose to be anonymous.
+            </p>
           </div>
+          <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90">
+            <Link href="/suggestions/new">
+              GIVE A SUGGESTION. <span role="img" aria-label="winking face" className="ml-2">😉</span>
+              <ChevronRight className="w-6 h-6 ml-2" />
+            </Link>
+          </Button>
         </div>
-      </section>
-
-      <section id="browse" className="container px-4 mx-auto md:px-6">
-        <BrowseSection activeTab={tab} activeSubject={subject} />
-      </section>
+      </div>
     </div>
   );
 }

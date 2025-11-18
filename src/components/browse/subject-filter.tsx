@@ -25,7 +25,7 @@ export function SubjectFilter({ activeTab, activeSubject }: SubjectFilterProps) 
     if (subject && subject !== 'all') {
       params.set('subject', subject);
     }
-    router.push(`${pathname}?${params.toString()}#browse`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (

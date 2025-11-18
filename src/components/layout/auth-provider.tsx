@@ -33,16 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-        <div className="w-full h-screen flex flex-col">
-            <header className="flex items-center h-16 px-4 border-b shrink-0 md:px-6">
-                <Skeleton className="h-8 w-40" />
+        <div className="w-full h-screen flex flex-col bg-background">
+            <header className="flex items-center h-16 px-4 border-b shrink-0 md:px-6 border-white/10">
+                <Skeleton className="w-40 h-8 bg-white/10" />
                 <div className="flex items-center w-full gap-4 ml-auto md:ml-0 md:gap-2 lg:gap-4">
-                    <Skeleton className="h-8 w-24 ml-auto" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="w-24 h-8 ml-auto bg-white/10" />
+                    <Skeleton className="w-8 h-8 rounded-full bg-white/10" />
                 </div>
             </header>
             <div className="flex-1 p-6">
-                <Skeleton className="w-full h-full" />
+                <Skeleton className="w-full h-full bg-white/10" />
             </div>
         </div>
     );
