@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -44,6 +44,13 @@ export function AssignmentForm() {
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [idToken, setIdToken] = useState<string>('');
+
+  useEffect(() => {
+    if (user) {
+      user.getIdToken().then(setIdToken);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (state.success) {
@@ -57,20 +64,9 @@ export function AssignmentForm() {
     }
   }, [state.success, state.message, toast, router]);
 
-  const actionWithToken = async (formData: FormData) => {
-    if (user) {
-        try {
-            const idToken = await user.getIdToken();
-            formData.append('idToken', idToken);
-            formAction(formData);
-        } catch (error) {
-            console.error("Failed to get ID token:", error);
-        }
-    }
-  };
-
   return (
-    <form ref={formRef} action={actionWithToken} className="space-y-6">
+    <form ref={formRef} action={formAction} className="space-y-6">
+      <input type="hidden" name="idToken" value={idToken} />
       {state.message && !state.success && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
