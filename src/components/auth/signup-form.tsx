@@ -58,21 +58,22 @@ export function SignUpForm() {
     }
   }, [user, isUserLoading, router]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     form.clearErrors();
     const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
     
-    // We don't await here. We let the onAuthStateChanged listener handle the redirect.
-    signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL)
-    .catch((e: any) => {
+    try {
+        await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
+        // The onAuthStateChanged listener will handle the redirect on success.
+    } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');
         } else {
+            console.error(e);
             setError('Failed to create an account. Please try again.');
         }
-        console.error(e);
-    });
+    }
   };
 
   return (

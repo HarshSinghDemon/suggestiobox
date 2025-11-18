@@ -8,8 +8,6 @@ import {
   Auth,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 export const signUpWithEmail = async (
   auth: Auth,
@@ -19,44 +17,33 @@ export const signUpWithEmail = async (
   photoURL: string
 ) => {
   try {
+    // 1. Create the user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password
     );
-    
-    // First, update the auth profile
-    await updateProfile(userCredential.user, { displayName, photoURL });
+    const user = userCredential.user;
 
-    // Then, create the user document in Firestore
-    const userDocRef = doc(
-      getFirestore(auth.app),
-      'users',
-      userCredential.user.uid
-    );
-    // Ensure the data being written to Firestore matches security rule expectations
+    // 2. Update the user's auth profile
+    await updateProfile(user, { displayName, photoURL });
+
+    // 3. Create the user document in Firestore
+    const userDocRef = doc(getFirestore(auth.app), 'users', user.uid);
     const userData = {
-      id: userCredential.user.uid, // This is critical for the 'create' rule
-      email: userCredential.user.email,
+      id: user.uid, // This is critical for the 'create' rule
+      email: user.email,
       displayName: displayName,
       photoURL: photoURL,
     };
+    
+    // This now waits for the Firestore document to be created.
+    await setDoc(userDocRef, userData);
 
-    // Use a non-blocking write for better UX, but handle potential permission errors
-    setDoc(userDocRef, userData).catch((serverError) => {
-      console.error("Error creating user document:", serverError);
-      const permissionError = new FirestorePermissionError({
-        path: userDocRef.path,
-        operation: 'create',
-        requestResourceData: userData,
-      });
-      // This will show the detailed error in the dev overlay if security rules fail
-      errorEmitter.emit('permission-error', permissionError);
-    });
-
-    return userCredential.user;
+    return user;
   } catch (error) {
     console.error('Error signing up: ', error);
+    // Re-throw the error so it can be caught by the form
     throw error;
   }
 };
