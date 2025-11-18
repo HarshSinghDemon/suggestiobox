@@ -22,7 +22,6 @@ const BrowseSection = dynamic(() => import('@/components/browse/browse-section')
       </div>
     </div>
   ),
-  ssr: false,
 });
 
 
