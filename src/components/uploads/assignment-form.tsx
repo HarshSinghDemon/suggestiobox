@@ -36,8 +36,20 @@ export function AssignmentForm() {
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
     setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const result = await validateAssignment(formData);
+
+    if (!result.success) {
+      toast({
+        variant: "destructive",
+        title: "Validation Failed",
+        description: result.message || "Please check the form for errors.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!firestore) {
       toast({
@@ -48,25 +60,12 @@ export function AssignmentForm() {
       setIsSubmitting(false);
       return;
     }
-
+    
     if (!file) {
       toast({
-        variant: "destructive",
-        title: "Validation Failed",
-        description: "An assignment file is required.",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const formData = new FormData(event.currentTarget);
-    const result = await validateAssignment(formData);
-
-    if (!result.success) {
-      toast({
-        variant: "destructive",
-        title: "Validation Failed",
-        description: result.message || "Please check the form for errors.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'File is required.',
       });
       setIsSubmitting(false);
       return;

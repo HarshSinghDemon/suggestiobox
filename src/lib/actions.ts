@@ -9,13 +9,13 @@ const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().optional(),
   subject: z.enum(SUBJECTS),
-  file: z.instanceof(File).optional(),
+  file: z.any().optional(),
 });
 
 const assignmentSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   subject: z.enum(ASSIGNMENT_SUBJECTS),
-  file: z.instanceof(File),
+  file: z.any(),
 });
 
 export type SuggestionFormState = {
@@ -105,10 +105,12 @@ export async function validateAssignment(
     formData: FormData
 ): Promise<AssignmentFormState> {
   
+    const file = formData.get('file') as File | null;
+
     const validatedFields = assignmentSchema.safeParse({
       description: formData.get('description'),
       subject: formData.get('subject'),
-      file: formData.get('file'),
+      file: file ?? undefined,
     });
   
     if (!validatedFields.success) {
@@ -119,7 +121,6 @@ export async function validateAssignment(
       };
     }
     
-    const file = formData.get('file') as File;
     if (!file || file.size === 0) {
         return { message: 'File is required for assignments.', errors: { file: ['Please select a file to upload.'] }, success: false };
     }

@@ -46,19 +46,8 @@ export function SuggestionForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    setFormState(initialState);
     setIsSubmitting(true);
-    
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Database connection not found.',
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    setFormState(initialState);
     
     const formData = new FormData(event.currentTarget);
     const result = await validateSuggestion(formData);
@@ -72,6 +61,16 @@ export function SuggestionForm() {
         });
         setIsSubmitting(false);
         return;
+    }
+    
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Database connection not found.',
+      });
+      setIsSubmitting(false);
+      return;
     }
 
     try {
@@ -90,12 +89,11 @@ export function SuggestionForm() {
 
       const docRef = await addDoc(collection(firestore, 'suggestions'), docData);
       
-      let downloadURL = '';
       if (file) {
         const storage = getStorage();
         const storageRef = ref(storage, `suggestions/anonymous/${Date.now()}-${file.name}`);
         await uploadBytes(storageRef, file);
-        downloadURL = await getDownloadURL(storageRef);
+        const downloadURL = await getDownloadURL(storageRef);
         
         await updateDoc(docRef, { fileUrl: downloadURL });
       }
