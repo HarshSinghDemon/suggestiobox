@@ -17,7 +17,7 @@ import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
@@ -27,6 +27,7 @@ type FileUploadState = {
   url: string | null;
   path: string | null;
   name: string | null;
+  type: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -36,12 +37,12 @@ const initialFileUploadState: FileUploadState = {
   url: null,
   path: null,
   name: null,
+  type: null,
   error: null,
   isUploading: false,
 };
 
 export function AssignmentForm() {
-  const { user } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -63,11 +64,11 @@ export function AssignmentForm() {
         return;
     }
 
-    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name });
+    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name, type: selectedFile.type });
 
     try {
         const storage = getStorage();
-        const userId = user?.uid || 'anonymous';
+        const userId = 'anonymous';
         const storagePath = `assignments/${userId}/${Date.now()}-${selectedFile.name}`;
         const storageRef = ref(storage, storagePath);
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
@@ -113,19 +114,20 @@ export function AssignmentForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!fileUpload.url) {
-        toast({
-            variant: "destructive",
-            title: "File Required",
-            description: "Please upload a file for the assignment.",
-        });
-        return;
-    }
     if (fileUpload.isUploading) {
         toast({
             variant: "destructive",
             title: "Please wait",
             description: "A file is currently being uploaded.",
+        });
+        return;
+    }
+
+    if (!fileUpload.url) {
+        toast({
+            variant: "destructive",
+            title: "File Required",
+            description: "Please upload a file for the assignment.",
         });
         return;
     }
@@ -159,13 +161,13 @@ export function AssignmentForm() {
       const docData = {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: user?.uid || 'anonymous',
-        userName: user?.displayName || 'Anonymous',
-        userImage: user?.photoURL || null,
+        userId: 'anonymous',
+        userName: 'Anonymous',
+        userImage: null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,
-        fileType: '', // This might need to be retrieved from the file object if required
+        fileType: fileUpload.type,
       };
 
       await addDoc(collection(firestore, 'assignments'), docData);

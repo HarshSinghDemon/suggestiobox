@@ -15,10 +15,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
 import { SUBJECTS } from '@/lib/constants';
-import { AlertCircle, CheckCircle, Loader2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
@@ -34,6 +34,7 @@ type FileUploadState = {
   url: string | null;
   path: string | null;
   name: string | null;
+  type: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -43,12 +44,12 @@ const initialFileUploadState: FileUploadState = {
   url: null,
   path: null,
   name: null,
+  type: null,
   error: null,
   isUploading: false,
 };
 
 export function SuggestionForm() {
-  const { user } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -70,11 +71,11 @@ export function SuggestionForm() {
         return;
     }
 
-    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name });
+    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name, type: selectedFile.type });
 
     try {
         const storage = getStorage();
-        const userId = user?.uid || 'anonymous';
+        const userId = 'anonymous';
         const storagePath = `suggestions/${userId}/${Date.now()}-${selectedFile.name}`;
         const storageRef = ref(storage, storagePath);
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
@@ -109,7 +110,6 @@ export function SuggestionForm() {
       await deleteObject(fileRef);
     } catch (error) {
       console.error("Error removing file:", error);
-      // Even if deletion fails, we clear the client state
     } finally {
         setFileUpload(initialFileUploadState);
         if (fileInputRef.current) {
@@ -161,13 +161,13 @@ export function SuggestionForm() {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: user?.uid || 'anonymous',
-        userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
-        userImage: user?.photoURL || null,
+        userId: 'anonymous',
+        userName: (formData.get('name') as string) || 'Anonymous',
+        userImage: null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || '',
         fileName: fileUpload.name || '',
-        fileType: '', // This might need to be retrieved from the file object if required
+        fileType: fileUpload.type || '',
       };
 
       await addDoc(collection(firestore, 'suggestions'), docData);
@@ -222,12 +222,10 @@ export function SuggestionForm() {
             <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
             )}
         </div>
-        {!user && (
-            <div className="space-y-2">
-                <Label htmlFor="name">Your Name (Optional)</Label>
-                <Input id="name" name="name" placeholder="John Doe" />
-            </div>
-        )}
+        <div className="space-y-2">
+            <Label htmlFor="name">Your Name (Optional)</Label>
+            <Input id="name" name="name" placeholder="John Doe" />
+        </div>
       </div>
 
       <div className="space-y-2">
