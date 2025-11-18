@@ -7,11 +7,10 @@ import {
   collection,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { getAuth } from 'firebase/auth';
+import { getDownloadURL, ref, uploadBytes, getStorage } from 'firebase/storage';
 import { SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
-import { getSdks, initializeFirebase } from '@/firebase';
+import { initializeFirebaseForServer } from '@/firebase/server-init';
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -40,8 +39,8 @@ export async function uploadSuggestion(
   prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
-  const { auth, firestore, firebaseApp } = initializeFirebase();
-  const storage = getStorage(firebaseApp);
+  const { auth, firestore, app } = await initializeFirebaseForServer();
+  const storage = getStorage(app);
   
   const user = auth.currentUser;
   if (!user) {
@@ -129,8 +128,8 @@ export type AssignmentFormState = {
     prevState: AssignmentFormState,
     formData: FormData
   ): Promise<AssignmentFormState> {
-    const { auth, firestore, firebaseApp } = initializeFirebase();
-    const storage = getStorage(firebaseApp);
+    const { auth, firestore, app } = await initializeFirebaseForServer();
+    const storage = getStorage(app);
     
     const user = auth.currentUser;
     if (!user) {
