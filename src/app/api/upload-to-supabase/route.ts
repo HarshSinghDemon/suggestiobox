@@ -1,11 +1,9 @@
-'use server';
-
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 // This function will initialize the Supabase client inside the request handler
 // to ensure environment variables are loaded correctly.
-const getSupabaseAdminClient = (): SupabaseClient => {
+const getSupabaseAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
