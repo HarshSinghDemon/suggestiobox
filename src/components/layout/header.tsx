@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,8 @@ export function Header() {
       .join('')
       .substring(0, 2);
   };
+  
+  const isAdmin = user?.uid === process.env.NEXT_PUBLIC_ADMIN_UID;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent">
@@ -91,6 +93,12 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => router.push('/admin')}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span>Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}>
                   <PlusCircle className="w-4 h-4 mr-2" />
                   <span>New Suggestion</span>

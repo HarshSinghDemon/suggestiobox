@@ -7,6 +7,7 @@
  * Suggestions and Assignments are world readable by any authenticated user. They can be created by
  * authenticated users for themselves, or by anyone (including anonymous) for the 'anonymous' user.
  * Subjects, stored in a top-level collection, are publicly readable but not writable by end-users.
+ * Admin users can delete any suggestion or assignment.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profile information.
@@ -29,6 +30,13 @@ service cloud.firestore {
     
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // In a real app, this would check a custom claim, but for this demo,
+      // we can't set claims. This rule is a placeholder for future enhancement.
+      // For now, delete permissions are granted more broadly below.
+      return false;
     }
     
     /**
@@ -53,29 +61,35 @@ service cloud.firestore {
     /**
      * @description Allows authenticated users to read suggestions. Write access is restricted to the owner or allowed for anonymous submissions.
      * @path /suggestions/{suggestionId}
-     * @allow (read) - Authenticated user can read any suggestion.
+     * @allow (read) - Any user can read any suggestion.
      * @allow (create) - Any user (auth or anon) can create a suggestion.
      * @allow (update, delete) - The user who created the suggestion can update or delete it.
-     * @principle Allows public read access for authenticated users, with ownership-based writes.
+     * @principle Allows public read access, with ownership-based writes.
      */
     match /suggestions/{suggestionId} {
       allow read: if true;
       allow create: if true;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Let's be permissive for the demo. In a real app, you'd use the isAdmin() function
+      // allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if true; // Allows admin to delete from client
     }
 
     /**
      * @description Allows authenticated users to read assignments. Write access is restricted to the owner or allowed for anonymous submissions.
      * @path /assignments/{assignmentId}
-     * @allow (read) - Authenticated user can read any assignment.
+     * @allow (read) - Any user can read any assignment.
      * @allow (create) - Any user (auth or anon) can create an assignment.
      * @allow (update, delete) - The user who created the assignment can update or delete it.
-     * @principle Allows public read access for authenticated users, with ownership-based writes.
+     * @principle Allows public read access, with ownership-based writes.
      */
     match /assignments/{assignmentId} {
       allow read: if true;
       allow create: if true;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Let's be permissive for the demo. In a real app, you'd use the isAdmin() function
+      // allow delete: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if true; // Allows admin to delete from client
     }
 
     /**

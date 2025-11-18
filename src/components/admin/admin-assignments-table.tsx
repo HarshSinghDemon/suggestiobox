@@ -1,0 +1,135 @@
+'use client';
+
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import type { Assignment } from '@/lib/types';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+
+function TableSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4">
+          <Skeleton className="flex-1 h-8" />
+          <Skeleton className="flex-1 h-8" />
+          <Skeleton className="flex-1 h-8" />
+          <Skeleton className="w-10 h-8" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function AdminAssignmentsTable() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const assignmentsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+
+  const { data: assignments, isLoading } = useCollection<Assignment>(assignmentsQuery);
+
+  const handleDelete = async (id: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'assignments', id));
+      toast({
+        title: 'Success',
+        description: 'Assignment deleted successfully.',
+      });
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete assignment.',
+      });
+    }
+  };
+
+  if (isLoading) {
+    return <TableSkeleton />;
+  }
+
+  return (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Description</TableHead>
+            <TableHead>User</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {assignments && assignments.length > 0 ? (
+            assignments.map((assignment) => (
+              <TableRow key={assignment.id}>
+                <TableCell className="font-medium truncate max-w-sm">{assignment.description}</TableCell>
+                <TableCell>{assignment.userName || 'Anonymous'}</TableCell>
+                <TableCell>{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the assignment.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(assignment.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="h-24 text-center">
+                No assignments found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
