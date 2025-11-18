@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useActionState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -115,8 +116,8 @@ export function SuggestionForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="file">Optional File</Label>
-          <Input id="file" name="file" type="file" />
+          <Label htmlFor="file">Optional File (PDF, JPG, PNG)</Label>
+          <Input id="file" name="file" type="file" accept="image/jpeg,image/png,application/pdf" />
           {state.errors?.file && (
             <p className="text-sm font-medium text-destructive">{state.errors.file}</p>
           )}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useActionState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -99,8 +100,8 @@ export function AssignmentForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="file">Assignment File (Required)</Label>
-          <Input id="file" name="file" type="file" required />
+          <Label htmlFor="file">Assignment File (PDF, JPG, PNG - Required)</Label>
+          <Input id="file" name="file" type="file" required accept="image/jpeg,image/png,application/pdf"/>
           {state.errors?.file && (
             <p className="text-sm font-medium text-destructive">{state.errors.file}</p>
           )}

@@ -23,6 +23,8 @@ const assignmentSchema = z.object({
     subject: z.enum(SUBJECTS),
 });
 
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+
 export type SuggestionFormState = {
   message: string;
   errors?: {
@@ -82,6 +84,9 @@ export async function uploadSuggestion(
 
   try {
     if (file && file.size > 0) {
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        return { message: 'Invalid file type. Only JPG, PNG, and PDF are allowed.', errors: { file: ['Please upload a valid file type (JPG, PNG, PDF).'] }, success: false };
+      }
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         return { message: 'File is too large (max 5MB).', errors: { file: ['File must be 5MB or less.'] }, success: false };
       }
@@ -152,6 +157,10 @@ export type AssignmentFormState = {
     const file = formData.get('file') as File;
     if (!file || file.size === 0) {
         return { message: 'File is required for assignments.', errors: { file: ['Please select a file to upload.'] }, success: false };
+    }
+    
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return { message: 'Invalid file type. Only JPG, PNG, and PDF are allowed.', errors: { file: ['Please upload a valid file type (JPG, PNG, PDF).'] }, success: false };
     }
 
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
