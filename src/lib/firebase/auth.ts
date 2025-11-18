@@ -5,12 +5,9 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
-  getAuth,
 } from 'firebase/auth';
-import { app } from './config';
+import { auth } from './config';
 
-// This is necessary to get the auth instance on the client side.
-const auth = getAuth(app);
 
 export const signUpWithEmail = async (
   email: string,
