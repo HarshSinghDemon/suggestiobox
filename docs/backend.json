@@ -1,0 +1,220 @@
+{
+  "entities": {
+    "Suggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Suggestion",
+      "type": "object",
+      "description": "Represents a user-submitted suggestion for study materials.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the suggestion."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who submitted the suggestion. (Relationship: User 1:N Suggestion)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the suggestion."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the suggestion."
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Reference to the Subject to which the suggestion belongs. (Relationship: Subject 1:N Suggestion)"
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the associated file in Firebase Storage."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Date and time when the suggestion was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "description",
+        "subjectId",
+        "fileUrl",
+        "uploadDate"
+      ]
+    },
+    "Assignment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Assignment",
+      "type": "object",
+      "description": "Represents a user-submitted assignment or lab file.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the assignment."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who submitted the assignment. (Relationship: User 1:N Assignment)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the assignment."
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Reference to the Subject to which the assignment belongs. (Relationship: Subject 1:N Assignment)"
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the assignment file in Firebase Storage."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Date and time when the assignment was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "description",
+        "subjectId",
+        "fileUrl",
+        "uploadDate"
+      ]
+    },
+    "Subject": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subject",
+      "type": "object",
+      "description": "Represents a subject category for filtering suggestions and assignments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the subject."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the subject (e.g., Computer Networks, Data Analytics)."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. User ID is used as the document ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/suggestions/{suggestionId}",
+        "definition": {
+          "entityName": "Suggestion",
+          "schema": {
+            "$ref": "#/backend/entities/Suggestion"
+          },
+          "description": "Stores suggestions created by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "suggestionId",
+              "description": "The unique identifier for the suggestion."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/assignments/{assignmentId}",
+        "definition": {
+          "entityName": "Assignment",
+          "schema": {
+            "$ref": "#/backend/entities/Assignment"
+          },
+          "description": "Stores assignments submitted by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "assignmentId",
+              "description": "The unique identifier for the assignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/subjects/{subjectId}",
+        "definition": {
+          "entityName": "Subject",
+          "schema": {
+            "$ref": "#/backend/entities/Subject"
+          },
+          "description": "Stores subject categories for suggestions and assignments.",
+          "params": [
+            {
+              "name": "subjectId",
+              "description": "The unique identifier for the subject."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, following the core design principles and strategy mandates. The structure prioritizes Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters).\n\n**Authorization Independence:** Achieved through denormalization. For example, the `suggestions` and `assignments` subcollections under each `user` include denormalized `userId`, `subjectId`, avoiding the need for `get()` calls to parent documents for authorization.\n\n**Structural Segregation:** Each collection is designed to hold documents with similar security requirements. User-specific data (suggestions and assignments) is stored under `/users/{userId}`, ensuring that access control is primarily path-based, simplifying security rules.\n\n**Access Modeling:** Path-based ownership is used for user-owned data (suggestions, assignments), located under `/users/{userId}`. This ensures that only the user can manage their own data. Subjects are stored in a top-level collection, which simplifies access to subjects and allows for easy filtering and listing.\n\n**QAPs Support:** The segregation of user-specific data into subcollections allows for secure `list` operations. Rules can easily filter based on `request.auth.uid` without needing to filter data within the rules themselves.\n\nThis structure enables simple and robust security rules and makes debugging easier by explicitly defining ownership and access rights through the data structure itself."
+  }
+}

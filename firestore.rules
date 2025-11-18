@@ -1,0 +1,136 @@
+/**
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for data stored under the `/users/{userId}` path.
+ * Users can only read and write their own user profiles and associated data (suggestions, assignments).
+ * Subjects, stored in a top-level collection, are publicly readable but not writable by end-users.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information.
+ * - /users/{userId}/suggestions/{suggestionId}: Stores user-created suggestions.
+ * - /users/{userId}/assignments/{assignmentId}: Stores user-submitted assignments.
+ * - /subjects/{subjectId}: Stores subject categories.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed to prevent information harvesting.
+ * - Suggestions and assignments are stored as user subcollections with denormalized `userId` fields for authorization.
+ * - Subjects are publicly readable to facilitate data filtering and selection but not writable.
+ *
+ * Denormalization for Authorization:
+ * The `suggestions` and `assignments` documents include a `userId` field, mirroring the user ID from the parent path.
+ * This avoids the need for costly `get()` calls to the `/users/{userId}` document during authorization checks, improving rule performance.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for user profiles.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user creates their profile with matching userId.
+     * @allow (get) - Authenticated user retrieves their own profile.
+     * @allow (update) - Authenticated user updates their own profile.
+     * @allow (delete) - Authenticated user deletes their own profile.
+     * @deny (create) - Authenticated user attempts to create a profile for another user.
+     * @deny (get) - Authenticated user attempts to retrieve another user's profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is not permitted.
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for suggestions within a user's subcollection.
+     * @path /users/{userId}/suggestions/{suggestionId}
+     * @allow (create) - Authenticated user creates a suggestion under their own user ID with matching userId in the document.
+     * @allow (get) - Authenticated user retrieves their own suggestion.
+     * @allow (update) - Authenticated user updates their own suggestion.
+     * @allow (delete) - Authenticated user deletes their own suggestion.
+     * @deny (create) - Authenticated user attempts to create a suggestion for another user.
+     * @deny (get) - Authenticated user attempts to retrieve another user's suggestion.
+     * @principle Enforces document ownership and relational integrity for writes.
+     */
+    match /users/{userId}/suggestions/{suggestionId} {
+       function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for assignments within a user's subcollection.
+     * @path /users/{userId}/assignments/{assignmentId}
+     * @allow (create) - Authenticated user creates an assignment under their own user ID with matching userId in the document.
+     * @allow (get) - Authenticated user retrieves their own assignment.
+     * @allow (update) - Authenticated user updates their own assignment.
+     * @allow (delete) - Authenticated user deletes their own assignment.
+     * @deny (create) - Authenticated user attempts to create an assignment for another user.
+     * @deny (get) - Authenticated user attempts to retrieve another user's assignment.
+     * @principle Enforces document ownership and relational integrity for writes.
+     */
+    match /users/{userId}/assignments/{assignmentId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to subjects. Write access is not permitted for end-users.
+     * @path /subjects/{subjectId}
+     * @allow (get) - Any user can retrieve a subject.
+     * @allow (list) - Any user can list subjects.
+     * @deny (create) - No user can create a subject.
+     * @deny (update) - No user can update a subject.
+     * @principle Allows public read access while restricting writes.
+     */
+    match /subjects/{subjectId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
