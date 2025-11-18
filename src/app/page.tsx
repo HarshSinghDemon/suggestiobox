@@ -31,11 +31,11 @@ export default function Home({ searchParams }: HomeProps) {
             data-ai-hint={heroImage.imageHint}
           />
         )}
-        <div className="relative z-10 p-4 space-y-4 text-primary-foreground">
+        <div className="relative z-10 p-4 space-y-4 text-white">
           <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl font-headline">
             Welcome to StudyShare Central
           </h1>
-          <p className="max-w-3xl mx-auto text-lg md:text-xl text-primary-foreground/80">
+          <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-200">
             Your hub for academic collaboration. Share, discover, and download
             study materials.
           </p>
@@ -43,7 +43,7 @@ export default function Home({ searchParams }: HomeProps) {
              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/?tab=suggestions#browse">Browse Suggestions</Link>
              </Button>
-             <Button asChild size="lg" variant="secondary" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+             <Button asChild size="lg" variant="secondary" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground">
                 <Link href="/?tab=assignments#browse">Browse Assignments</Link>
             </Button>
           </div>
