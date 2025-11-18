@@ -40,7 +40,8 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
         .then(() => {
           if (firestore) {
             const userDocRef = doc(firestore, 'users', user.uid);
-            setDoc(userDocRef, { photoURL: desiredPhotoURL }, { merge: true });
+            // This setDoc MUST include the user's ID to satisfy the security rule for update.
+            setDoc(userDocRef, { id: user.uid, photoURL: desiredPhotoURL }, { merge: true });
           }
           // The page will re-render naturally from auth state changes, no need to force it.
         })

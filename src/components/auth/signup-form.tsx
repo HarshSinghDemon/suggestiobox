@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { signUpWithEmail } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
@@ -33,7 +33,7 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const auth = useFirebaseAuth();
-  const { user, isUserLoading } = useUser();
+  const { isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,7 +63,7 @@ export function SignUpForm() {
     try {
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
         // The onAuthStateChanged listener in FirebaseProvider will handle user state,
-        // and the useEffect in the login form will handle the redirect.
+        // and now we can safely redirect.
         router.push('/');
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
