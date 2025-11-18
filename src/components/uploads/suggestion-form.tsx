@@ -19,9 +19,9 @@ import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
+import ImageKit from 'imagekit-javascript';
 
 const initialState: SuggestionFormState = {
   message: '',
@@ -32,9 +32,7 @@ const initialState: SuggestionFormState = {
 type FileUploadState = {
   progress: number;
   url: string | null;
-  path: string | null;
   name: string | null;
-  type: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -42,86 +40,120 @@ type FileUploadState = {
 const initialFileUploadState: FileUploadState = {
   progress: 0,
   url: null,
-  path: null,
   name: null,
-  type: null,
   error: null,
   isUploading: false,
 };
 
 export function SuggestionForm() {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fileUpload, setFileUpload] = useState<FileUploadState>(initialFileUploadState);
-  
+  const [fileUpload, setFileUpload] =
+    useState<FileUploadState>(initialFileUploadState);
+
   const isDescriptionRequired = !fileUpload.url;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
-        setFileUpload({ ...initialFileUploadState, error: 'File size must be less than 10MB.' });
-        return;
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      setFileUpload({
+        ...initialFileUploadState,
+        error: 'File size must be less than 10MB.',
+      });
+      return;
     }
 
-    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name, type: selectedFile.type });
+    setFileUpload({
+      ...initialFileUploadState,
+      isUploading: true,
+      name: file.name,
+    });
 
     try {
-        const storage = getStorage();
-        const userId = user?.uid || 'anonymous';
-        const storagePath = `suggestions/${userId}/${Date.now()}-${selectedFile.name}`;
-        const storageRef = ref(storage, storagePath);
-        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+      const authResponse = await fetch('/api/imagekit/auth');
+       if (!authResponse.ok) {
+        const errorText = await authResponse.text();
+        console.error("Auth API error response:", errorText);
+        throw new Error(`Failed to authenticate with ImageKit. Status: ${authResponse.status}`);
+      }
+      const authData = await authResponse.json();
 
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setFileUpload(prev => ({ ...prev, progress }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                setFileUpload(prev => ({ ...prev, error: 'File upload failed. Please try again.', isUploading: false }));
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                setFileUpload(prev => ({ ...prev, url: downloadURL, path: storagePath, isUploading: false, progress: 100 }));
-            }
-        );
+      const imagekit = new ImageKit({
+        urlEndpoint: authData.url,
+        publicKey: authData.publicKey,
+      });
+
+      const uploader = imagekit.upload(
+        {
+          file: file,
+          fileName: file.name,
+          token: authData.token,
+          expire: authData.expire,
+          signature: authData.signature,
+          useUniqueFileName: true,
+        },
+        (err, result) => {
+          if (err) {
+            console.error('ImageKit upload error:', err);
+            setFileUpload((prev) => ({
+              ...prev,
+              error: 'File upload failed. Please try again.',
+              isUploading: false,
+            }));
+            return;
+          }
+          if (result) {
+            setFileUpload((prev) => ({
+              ...prev,
+              url: result.url,
+              name: result.name,
+              isUploading: false,
+              progress: 100,
+            }));
+          }
+        }
+      );
+      
+      // This is a dummy progress for now, as imagekit-javascript SDK v2 doesn't support progress events easily without xhr.
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setFileUpload(prev => ({...prev, progress}));
+        if (progress >= 90) {
+          clearInterval(interval);
+        }
+      }, 200);
+
+
     } catch (error) {
-        console.error('File upload failed:', error);
-        setFileUpload({ ...initialFileUploadState, error: 'File upload failed. Please try again.' });
+      console.error('File upload process failed:', error);
+      setFileUpload({
+        ...initialFileUploadState,
+        error: 'File upload setup failed. Please try again.',
+      });
     }
   };
 
-  const handleRemoveFile = async () => {
-    if (!fileUpload.path) return;
-    
-    const storage = getStorage();
-    const fileRef = ref(storage, fileUpload.path);
-
-    try {
-      await deleteObject(fileRef);
-    } catch (error) {
-      console.error("Error removing file:", error);
-    } finally {
-        setFileUpload(initialFileUploadState);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+  const handleRemoveFile = () => {
+    setFileUpload(initialFileUploadState);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isUserLoading) {
+    if (isAuthLoading) {
       toast({
         variant: 'destructive',
         title: 'Please wait',
@@ -131,31 +163,31 @@ export function SuggestionForm() {
     }
 
     if (fileUpload.isUploading) {
-        toast({
-            variant: "destructive",
-            title: "Please wait",
-            description: "A file is currently being uploaded.",
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Please wait',
+        description: 'A file is currently being uploaded.',
+      });
+      return;
     }
-    
+
     setIsSubmitting(true);
     setFormState(initialState);
-    
+
     const formData = new FormData(event.currentTarget);
     const result = await validateSuggestion(formData, !!fileUpload.url);
 
     if (!result.success) {
-        setFormState(result);
-        toast({
-            variant: "destructive",
-            title: "Validation Failed",
-            description: result.message || "Please check the form for errors.",
-        });
-        setIsSubmitting(false);
-        return;
+      setFormState(result);
+      toast({
+        variant: 'destructive',
+        title: 'Validation Failed',
+        description: result.message || 'Please check the form for errors.',
+      });
+      setIsSubmitting(false);
+      return;
     }
-    
+
     if (!firestore) {
       toast({
         variant: 'destructive',
@@ -172,12 +204,14 @@ export function SuggestionForm() {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
         userId: user?.uid || 'anonymous',
-        userName: user ? user.displayName : (formData.get('name') as string) || 'Anonymous',
+        userName: user
+          ? user.displayName
+          : (formData.get('name') as string) || 'Anonymous',
         userImage: user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || null,
         fileName: fileUpload.name || null,
-        fileType: fileUpload.type || null,
+        fileType: fileUpload.name ? fileUpload.name.split('.').pop() : null,
       };
 
       await addDoc(collection(firestore, 'suggestions'), docData);
@@ -187,11 +221,11 @@ export function SuggestionForm() {
         description: 'Thank you for your contribution.',
         action: <CheckCircle className="text-green-500" />,
       });
-      
+
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
       router.push('/browse');
     } catch (error) {
@@ -217,32 +251,39 @@ export function SuggestionForm() {
       )}
 
       {formState.errors?.ai && (
-         <Alert variant="destructive">
-            <AlertCircle className="w-4 h-4" />
-            <AlertTitle>Content Moderation</AlertTitle>
-            <AlertDescription>{formState.errors.ai}</AlertDescription>
+        <Alert variant="destructive">
+          <AlertCircle className="w-4 h-4" />
+          <AlertTitle>Content Moderation</AlertTitle>
+          <AlertDescription>{formState.errors.ai}</AlertDescription>
         </Alert>
       )}
-      
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" placeholder="e.g., Easy way to understand TCP handshake" required />
-            {formState.errors?.title && (
-            <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
-            )}
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            name="title"
+            placeholder="e.g., Easy way to understand TCP handshake"
+            required
+          />
+          {formState.errors?.title && (
+            <p className="text-sm font-medium text-destructive">
+              {formState.errors.title}
+            </p>
+          )}
         </div>
-        {!user && !isUserLoading && (
-            <div className="space-y-2">
-                <Label htmlFor="name">Your Name (Optional)</Label>
-                <Input id="name" name="name" placeholder="John Doe" />
-            </div>
+        {!user && !isAuthLoading && (
+          <div className="space-y-2">
+            <Label htmlFor="name">Your Name (Optional)</Label>
+            <Input id="name" name="name" placeholder="John Doe" />
+          </div>
         )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="description">
-            Description {isDescriptionRequired ? '' : '(Optional)'}
+          Description {isDescriptionRequired ? '' : '(Optional)'}
         </Label>
         <Textarea
           id="description"
@@ -252,10 +293,12 @@ export function SuggestionForm() {
           required={isDescriptionRequired}
         />
         {formState.errors?.description && (
-          <p className="text-sm font-medium text-destructive">{formState.errors.description}</p>
+          <p className="text-sm font-medium text-destructive">
+            {formState.errors.description}
+          </p>
         )}
       </div>
-      
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
@@ -272,48 +315,68 @@ export function SuggestionForm() {
             </SelectContent>
           </Select>
           {formState.errors?.subject && (
-            <p className="text-sm font-medium text-destructive">{formState.errors.subject}</p>
+            <p className="text-sm font-medium text-destructive">
+              {formState.errors.subject}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="file">Optional File</Label>
-            {!fileUpload.isUploading && !fileUpload.url && (
-                <Input
-                    id="file"
-                    name="file"
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    disabled={fileUpload.isUploading}
-                />
-            )}
+          <Label htmlFor="file">Optional File</Label>
+          {!fileUpload.isUploading && !fileUpload.url && (
+            <Input
+              id="file"
+              name="file"
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              disabled={fileUpload.isUploading}
+            />
+          )}
 
-            {fileUpload.isUploading && (
-                <div className="space-y-2">
-                    <Progress value={fileUpload.progress} className="w-full" />
-                    <p className="text-sm text-muted-foreground">Uploading: {fileUpload.name}</p>
-                </div>
-            )}
+          {fileUpload.isUploading && (
+            <div className="space-y-2">
+              <Progress value={fileUpload.progress} className="w-full" />
+              <p className="text-sm text-muted-foreground">
+                Uploading: {fileUpload.name}
+              </p>
+            </div>
+          )}
 
-            {fileUpload.url && !fileUpload.isUploading && (
-                <div className="flex items-center justify-between p-2 text-sm rounded-md bg-muted">
-                    <div className="flex items-center gap-2 truncate">
-                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                        <span className="truncate">{fileUpload.name}</span>
-                    </div>
-                    <Button type="button" variant="ghost" size="icon" className="w-6 h-6" onClick={handleRemoveFile}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                </div>
-            )}
+          {fileUpload.url && !fileUpload.isUploading && (
+            <div className="flex items-center justify-between p-2 text-sm rounded-md bg-muted">
+              <div className="flex items-center gap-2 truncate">
+                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <span className="truncate">{fileUpload.name}</span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="w-6 h-6"
+                onClick={handleRemoveFile}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
 
-            {fileUpload.error && <p className="text-sm font-medium text-destructive">{fileUpload.error}</p>}
+          {fileUpload.error && (
+            <p className="text-sm font-medium text-destructive">
+              {fileUpload.error}
+            </p>
+          )}
         </div>
       </div>
-      
-      <Button type="submit" disabled={isSubmitting || fileUpload.isUploading || isUserLoading} className="w-full">
-        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+
+      <Button
+        type="submit"
+        disabled={isSubmitting || fileUpload.isUploading || isAuthLoading}
+        className="w-full"
+      >
+        {isSubmitting ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : null}
         {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
       </Button>
     </form>

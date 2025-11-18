@@ -18,16 +18,14 @@ import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
+import ImageKit from 'imagekit-javascript';
 
 type FileUploadState = {
   progress: number;
   url: string | null;
-  path: string | null;
   name: string | null;
-  type: string | null;
   error: string | null;
   isUploading: boolean;
 };
@@ -35,87 +33,109 @@ type FileUploadState = {
 const initialFileUploadState: FileUploadState = {
   progress: 0,
   url: null,
-  path: null,
   name: null,
-  type: null,
   error: null,
   isUploading: false,
 };
 
 export function AssignmentForm() {
   const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fileUpload, setFileUpload] = useState<FileUploadState>(initialFileUploadState);
+  const [fileUpload, setFileUpload] =
+    useState<FileUploadState>(initialFileUploadState);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) {
-        setFileUpload(initialFileUploadState);
-        return;
-    };
-
-    if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
-        setFileUpload({ ...initialFileUploadState, error: 'File size must be less than 10MB.' });
-        return;
+    const file = e.target.files?.[0];
+    if (!file) {
+      setFileUpload(initialFileUploadState);
+      return;
     }
 
-    setFileUpload({ ...initialFileUploadState, isUploading: true, name: selectedFile.name, type: selectedFile.type });
-
-    try {
-        const storage = getStorage();
-        const userId = user?.uid || 'anonymous';
-        const storagePath = `assignments/${userId}/${Date.now()}-${selectedFile.name}`;
-        const storageRef = ref(storage, storagePath);
-        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setFileUpload(prev => ({ ...prev, progress }));
-            },
-            (error) => {
-                console.error("Upload error:", error);
-                setFileUpload(prev => ({ ...prev, error: 'File upload failed. Please try again.', isUploading: false }));
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                setFileUpload(prev => ({ ...prev, url: downloadURL, path: storagePath, isUploading: false, progress: 100 }));
-            }
-        );
-    } catch (error) {
-        console.error('File upload failed:', error);
-        setFileUpload({ ...initialFileUploadState, error: 'File upload failed. Please try again.' });
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      setFileUpload({
+        ...initialFileUploadState,
+        error: 'File size must be less than 10MB.',
+      });
+      return;
     }
-  };
 
-  const handleRemoveFile = async () => {
-    if (!fileUpload.path) return;
-    
-    const storage = getStorage();
-    const fileRef = ref(storage, fileUpload.path);
+    setFileUpload({
+      ...initialFileUploadState,
+      isUploading: true,
+      name: file.name,
+    });
 
     try {
-      await deleteObject(fileRef);
-    } catch (error) {
-      console.error("Error removing file:", error);
-    } finally {
-        setFileUpload(initialFileUploadState);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+      const authResponse = await fetch('/api/imagekit/auth');
+      if (!authResponse.ok) {
+        throw new Error('Failed to authenticate with ImageKit.');
+      }
+      const authData = await authResponse.json();
+
+      const imagekit = new ImageKit({
+        urlEndpoint: authData.url,
+        publicKey: authData.publicKey,
+        authenticationEndpoint: '/api/imagekit/auth',
+      });
+
+      imagekit.upload(
+        {
+          file: file,
+          fileName: file.name,
+          token: authData.token,
+          expire: authData.expire,
+          signature: authData.signature,
+          useUniqueFileName: true,
+        },
+        (err, result) => {
+          if (err) {
+            console.error('ImageKit upload error:', err);
+            setFileUpload((prev) => ({
+              ...prev,
+              error: 'File upload failed. Please try again.',
+              isUploading: false,
+            }));
+            return;
+          }
+          if (result) {
+            setFileUpload((prev) => ({
+              ...prev,
+              url: result.url,
+              name: result.name,
+              isUploading: false,
+              progress: 100,
+            }));
+          }
         }
+      );
+    } catch (error) {
+      console.error('File upload failed:', error);
+      setFileUpload({
+        ...initialFileUploadState,
+        error: 'File upload failed. Please try again.',
+      });
     }
   };
-  
+
+  const handleRemoveFile = () => {
+    // No need to delete from ImageKit for this simplified version
+    setFileUpload(initialFileUploadState);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isUserLoading) {
+    if (isAuthLoading) {
       toast({
         variant: 'destructive',
         title: 'Please wait',
@@ -125,21 +145,21 @@ export function AssignmentForm() {
     }
 
     if (fileUpload.isUploading) {
-        toast({
-            variant: "destructive",
-            title: "Please wait",
-            description: "A file is currently being uploaded.",
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Please wait',
+        description: 'A file is currently being uploaded.',
+      });
+      return;
     }
 
     if (!fileUpload.url) {
-        toast({
-            variant: "destructive",
-            title: "File Required",
-            description: "Please upload a file for the assignment.",
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'File Required',
+        description: 'Please upload a file for the assignment.',
+      });
+      return;
     }
 
     setIsSubmitting(true);
@@ -149,9 +169,9 @@ export function AssignmentForm() {
 
     if (!result.success) {
       toast({
-        variant: "destructive",
-        title: "Validation Failed",
-        description: result.message || "Please check the form for errors.",
+        variant: 'destructive',
+        title: 'Validation Failed',
+        description: result.message || 'Please check the form for errors.',
       });
       setIsSubmitting(false);
       return;
@@ -166,7 +186,7 @@ export function AssignmentForm() {
       setIsSubmitting(false);
       return;
     }
-    
+
     try {
       const docData = {
         description: formData.get('description') as string,
@@ -177,7 +197,9 @@ export function AssignmentForm() {
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,
-        fileType: fileUpload.type,
+        fileType: fileUpload.name
+          ? fileUpload.name.split('.').pop()
+          : 'unknown',
       };
 
       await addDoc(collection(firestore, 'assignments'), docData);
@@ -187,11 +209,11 @@ export function AssignmentForm() {
         description: 'Thank you for your contribution.',
         action: <CheckCircle className="text-green-500" />,
       });
-      
+
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
       router.push('/browse?tab=assignments');
     } catch (error) {
@@ -206,7 +228,6 @@ export function AssignmentForm() {
     }
   };
 
-
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
@@ -219,7 +240,7 @@ export function AssignmentForm() {
           required
         />
       </div>
-      
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
@@ -238,44 +259,64 @@ export function AssignmentForm() {
         </div>
 
         <div className="space-y-2">
-            <Label htmlFor="file">Assignment File (Required)</Label>
-            {!fileUpload.isUploading && !fileUpload.url && (
-                <Input
-                    id="file"
-                    name="file"
-                    type="file"
-                    ref={fileInputRef}
-                    required
-                    onChange={handleFileChange}
-                    disabled={fileUpload.isUploading}
-                />
-            )}
-            
-            {fileUpload.isUploading && (
-                <div className="space-y-2">
-                    <Progress value={fileUpload.progress} className="w-full" />
-                    <p className="text-sm text-muted-foreground">Uploading: {fileUpload.name}</p>
-                </div>
-            )}
+          <Label htmlFor="file">Assignment File (Required)</Label>
+          {!fileUpload.isUploading && !fileUpload.url && (
+            <Input
+              id="file"
+              name="file"
+              type="file"
+              ref={fileInputRef}
+              required
+              onChange={handleFileChange}
+              disabled={fileUpload.isUploading}
+            />
+          )}
 
-            {fileUpload.url && !fileUpload.isUploading && (
-                <div className="flex items-center justify-between p-2 text-sm rounded-md bg-muted">
-                    <div className="flex items-center gap-2 truncate">
-                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                        <span className="truncate">{fileUpload.name}</span>
-                    </div>
-                    <Button type="button" variant="ghost" size="icon" className="w-6 h-6" onClick={handleRemoveFile}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                </div>
-            )}
-            
-            {fileUpload.error && <p className="text-sm font-medium text-destructive">{fileUpload.error}</p>}
+          {fileUpload.isUploading && (
+            <div className="space-y-2">
+              <Progress value={fileUpload.progress} className="w-full" />
+              <p className="text-sm text-muted-foreground">
+                Uploading: {fileUpload.name}
+              </p>
+            </div>
+          )}
+
+          {fileUpload.url && !fileUpload.isUploading && (
+            <div className="flex items-center justify-between p-2 text-sm rounded-md bg-muted">
+              <div className="flex items-center gap-2 truncate">
+                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                <span className="truncate">{fileUpload.name}</span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="w-6 h-6"
+                onClick={handleRemoveFile}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          {fileUpload.error && (
+            <p className="text-sm font-medium text-destructive">
+              {fileUpload.error}
+            </p>
+          )}
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting || fileUpload.isUploading || !fileUpload.url || isUserLoading} className="w-full">
-        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+      <Button
+        type="submit"
+        disabled={
+          isSubmitting || fileUpload.isUploading || !fileUpload.url || isAuthLoading
+        }
+        className="w-full"
+      >
+        {isSubmitting ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : null}
         {isSubmitting ? 'Submitting...' : 'Upload Assignment'}
       </Button>
     </form>

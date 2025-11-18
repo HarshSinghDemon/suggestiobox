@@ -2,27 +2,9 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files.
+    // Disallow all reads and writes by default
     match /{allPaths=**} {
-      allow read: if true;
-    }
-
-    // Allow anyone (authenticated or not) to write to the 'anonymous' subfolders.
-    match /suggestions/anonymous/{allPaths=**} {
-      allow write: if true;
-    }
-
-    match /assignments/anonymous/{allPaths=**} {
-      allow write: if true;
-    }
-
-    // Allow authenticated users to write to their own folders.
-    match /suggestions/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /assignments/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if false;
     }
   }
 }
