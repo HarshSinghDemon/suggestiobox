@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +37,13 @@ const initialState: SuggestionFormState = {
 };
 
 export function SuggestionForm() {
-  const [state, formAction] = useActionState(uploadSuggestion, initialState);
+  const [state, formAction] = useFormState(uploadSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const isDescriptionRequired = !file || file.size === 0;
 
   useEffect(() => {
     if (state.success) {
@@ -54,6 +56,11 @@ export function SuggestionForm() {
       router.push('/browse');
     }
   }, [state.success, state.message, toast, router]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    setFile(selectedFile || null);
+  }
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
@@ -82,13 +89,15 @@ export function SuggestionForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">
+            Description {isDescriptionRequired ? '' : '(Optional)'}
+        </Label>
         <Textarea
           id="description"
           name="description"
           placeholder="Explain your suggestion in detail..."
           className="min-h-[120px]"
-          required
+          required={isDescriptionRequired}
         />
         {state.errors?.description && (
           <p className="text-sm font-medium text-destructive">{state.errors.description}</p>
@@ -117,7 +126,13 @@ export function SuggestionForm() {
 
         <div className="space-y-2">
           <Label htmlFor="file">Optional File (PDF, JPG, PNG)</Label>
-          <Input id="file" name="file" type="file" accept="image/jpeg,image/png,application/pdf" />
+          <Input 
+            id="file" 
+            name="file" 
+            type="file" 
+            accept="image/jpeg,image/png,application/pdf" 
+            onChange={handleFileChange}
+          />
           {state.errors?.file && (
             <p className="text-sm font-medium text-destructive">{state.errors.file}</p>
           )}

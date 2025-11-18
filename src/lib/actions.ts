@@ -14,8 +14,14 @@ import { initializeFirebaseForServer } from '@/firebase/server-init';
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  description: z.string().optional(),
   subject: z.enum(SUBJECTS),
+}).refine(data => {
+  const file = data.file as File | undefined;
+  return !!file && file.size > 0 || (data.description && data.description.length >= 10);
+}, {
+  message: "Description must be at least 10 characters long if no file is uploaded.",
+  path: ["description"],
 });
 
 const assignmentSchema = z.object({
@@ -48,11 +54,14 @@ export async function uploadSuggestion(
   if (!user) {
     return { message: 'Authentication Error: You must be logged in to create a suggestion.', errors: {}, success: false };
   }
+  
+  const file = formData.get('file') as File;
 
   const validatedFields = suggestionSchema.safeParse({
     title: formData.get('title'),
     description: formData.get('description'),
     subject: formData.get('subject'),
+    file: file, // Pass file to validation
   });
 
   if (!validatedFields.success) {
@@ -66,7 +75,7 @@ export async function uploadSuggestion(
   const { title, description, subject } = validatedFields.data;
 
   // AI check for offensive language
-  const offensiveCheck = await checkSuggestionForOffensiveLanguage({ title, description });
+  const offensiveCheck = await checkSuggestionForOffensiveLanguage({ title, description: description || '' });
   if (offensiveCheck.isOffensive) {
       return {
           message: 'AI Moderation Error',
@@ -76,8 +85,7 @@ export async function uploadSuggestion(
           success: false
       };
   }
-
-  const file = formData.get('file') as File;
+  
   let fileUrl: string | undefined;
   let fileName: string | undefined;
   let fileType: string | undefined;
@@ -99,7 +107,7 @@ export async function uploadSuggestion(
 
     await addDoc(collection(firestore, 'suggestions'), {
       title,
-      description,
+      description: description || '',
       subject,
       fileUrl,
       fileName,
