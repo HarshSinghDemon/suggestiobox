@@ -76,7 +76,7 @@ export function AssignmentForm() {
     });
 
     try {
-      const { task, fullPath } = uploadFile(
+      const { task } = uploadFile(
         file,
         (progress) => {
           setFileUpload((prev) => ({ ...prev, progress }));
@@ -90,7 +90,7 @@ export function AssignmentForm() {
           }));
           setUploadTask(null);
         },
-        async (downloadURL) => {
+        async (downloadURL, fullPath) => {
           setFileUpload((prev) => ({
             ...prev,
             url: downloadURL,

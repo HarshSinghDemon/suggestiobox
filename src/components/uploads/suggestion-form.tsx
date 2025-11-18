@@ -84,7 +84,7 @@ export function SuggestionForm() {
     });
     
     try {
-      const { task, fullPath } = uploadFile(
+      const { task } = uploadFile(
         file,
         (progress) => {
           setFileUpload((prev) => ({...prev, progress}));
@@ -98,7 +98,7 @@ export function SuggestionForm() {
           }));
           setUploadTask(null);
         },
-        (downloadURL) => {
+        (downloadURL, fullPath) => {
           setFileUpload((prev) => ({
             ...prev,
             url: downloadURL,
