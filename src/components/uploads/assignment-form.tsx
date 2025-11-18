@@ -47,7 +47,6 @@ export function AssignmentForm() {
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [idToken, setIdToken] = useState<string>('');
 
@@ -80,6 +79,7 @@ export function AssignmentForm() {
             action: <CheckCircle className="text-green-500" />,
           });
           formRef.current?.reset();
+          setFile(null);
           router.push('/browse');
 
         } catch (error) {
@@ -153,7 +153,6 @@ export function AssignmentForm() {
             name="file" 
             type="file" 
             required 
-            ref={fileInputRef}
             onChange={handleFileChange}
           />
           {state.errors?.file && (

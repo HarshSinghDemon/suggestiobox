@@ -48,11 +48,10 @@ export function SuggestionForm() {
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [idToken, setIdToken] = useState<string>('');
-
-  const isDescriptionRequired = !file || file.size === 0;
+  
+  const isDescriptionRequired = !file;
 
   useEffect(() => {
     if (user) {
@@ -83,6 +82,7 @@ export function SuggestionForm() {
             action: <CheckCircle className="text-green-500" />,
           });
           formRef.current?.reset();
+          setFile(null);
           router.push('/browse');
 
         } catch (error) {
@@ -100,6 +100,7 @@ export function SuggestionForm() {
           action: <CheckCircle className="text-green-500" />,
         });
         formRef.current?.reset();
+        setFile(null);
         router.push('/browse');
       }
     };
@@ -180,7 +181,6 @@ export function SuggestionForm() {
           <Input 
             id="file" 
             name="file"
-            ref={fileInputRef}
             type="file" 
             onChange={handleFileChange}
           />

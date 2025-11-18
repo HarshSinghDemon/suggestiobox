@@ -10,7 +10,12 @@ const getFirebaseAdminApp = () => {
   // In a managed environment like Firebase App Hosting, the SDK is automatically
   // initialized. We can just call initializeApp() without arguments.
   if (process.env.FIREBASE_CONFIG) {
-    return admin.initializeApp();
+    try {
+      return admin.initializeApp();
+    } catch (e) {
+       console.error("Failed to initialize Firebase Admin SDK automatically.", e)
+       // Fall through to manual initialization
+    }
   }
 
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;

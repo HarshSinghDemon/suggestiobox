@@ -71,8 +71,11 @@ export async function uploadSuggestion(
   if (!subject || !SUBJECTS.includes(subject)) {
     errors.subject = ['Please select a valid subject.'];
   }
-  if (!file && (!description || description.trim() === '')) {
+  if (!file?.size && (!description || description.trim() === '')) {
       errors.description = ['A description is required when no file is uploaded.'];
+  }
+  if(file && file.size > 10 * 1024 * 1024){ // 10MB limit
+    errors.file = ['File size must be less than 10MB.'];
   }
   
   if (Object.keys(errors).length > 0) {
@@ -110,6 +113,8 @@ export async function uploadSuggestion(
 
     if (file && file.size > 0) {
         const uploadPath = `suggestions/${user.uid}/${Date.now()}-${file.name}`;
+        revalidatePath('/browse');
+        revalidatePath('/');
         return {
             message: 'Suggestion created. Now uploading file...',
             success: true,
@@ -186,6 +191,9 @@ export type AssignmentFormState = {
     if (!file || file.size === 0) {
         return { message: 'File is required for assignments.', errors: { file: ['Please select a file to upload.'] }, success: false };
     }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        return { message: 'File size must be less than 10MB.', errors: { file: ['File size must be less than 10MB.'] }, success: false };
+    }
     
     const { description, subject } = validatedFields.data;
 
@@ -206,6 +214,8 @@ export type AssignmentFormState = {
 
         const uploadPath = `assignments/${user.uid}/${Date.now()}-${file.name}`;
         
+        revalidatePath('/browse');
+        revalidatePath('/');
         return {
             message: 'Assignment entry created. Now uploading file...',
             success: true,
