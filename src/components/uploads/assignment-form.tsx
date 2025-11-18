@@ -30,7 +30,7 @@ const initialState: AssignmentFormState = {
 };
 
 export function AssignmentForm() {
-  const { user } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -46,6 +46,16 @@ export function AssignmentForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to submit an assignment.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!file) {
       toast({
@@ -70,16 +80,6 @@ export function AssignmentForm() {
       return;
     }
     
-    if (!user || !firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'You must be logged in to submit an assignment.',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const docData = {
         description: formData.get('description') as string,
@@ -166,7 +166,7 @@ export function AssignmentForm() {
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Upload Assignment'}
       </Button>

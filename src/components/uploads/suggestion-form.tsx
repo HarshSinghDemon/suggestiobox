@@ -30,7 +30,7 @@ const initialState: SuggestionFormState = {
 };
 
 export function SuggestionForm() {
-  const { user } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const [state, formAction] = useActionState(validateSuggestion, initialState);
   const { toast } = useToast();
@@ -58,6 +58,16 @@ export function SuggestionForm() {
     event.preventDefault();
     setIsSubmitting(true);
     
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to submit a suggestion.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
     const formData = new FormData(event.currentTarget);
     const result = await validateSuggestion(initialState, formData);
 
@@ -69,16 +79,6 @@ export function SuggestionForm() {
         });
         setIsSubmitting(false);
         return;
-    }
-
-    if (!user || !firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'You must be logged in to submit a suggestion.',
-      });
-      setIsSubmitting(false);
-      return;
     }
 
     try {
@@ -205,7 +205,7 @@ export function SuggestionForm() {
         </div>
       </div>
       
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
       </Button>
