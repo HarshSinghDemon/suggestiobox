@@ -31,6 +31,7 @@ const formSchema = z.object({
 export function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const auth = useFirebaseAuth();
   const { user, isUserLoading } = useUser();
 
@@ -61,6 +62,8 @@ export function SignUpForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     form.clearErrors();
+    setIsSigningUp(true);
+
     const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
     
     try {
@@ -73,6 +76,8 @@ export function SignUpForm() {
             console.error(e);
             setError('Failed to create an account. Please try again.');
         }
+    } finally {
+        setIsSigningUp(false);
     }
   };
 
@@ -150,9 +155,9 @@ export function SignUpForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {form.formState.isSubmitting ? 'Creating account...' : 'Create account'}
+        <Button type="submit" className="w-full" disabled={isSigningUp || form.formState.isSubmitting}>
+          {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSigningUp ? 'Creating account...' : 'Create account'}
         </Button>
       </form>
     </Form>
