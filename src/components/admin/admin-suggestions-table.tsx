@@ -46,13 +46,15 @@ function TableSkeleton() {
   );
 }
 
-export function AdminSuggestionsTable() {
+type AdminSuggestionsTableProps = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSuggestionsTableProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const suggestionsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc')) : null),
@@ -66,16 +68,13 @@ export function AdminSuggestionsTable() {
 
     if (suggestion.path) {
         try {
-            if (!supabaseUrl || !supabaseAnonKey) {
-                throw new Error("Supabase credentials are not configured for deletion.");
-            }
             await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
         } catch (error) {
             console.error('Failed to delete file from Supabase Storage:', error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Could not delete the associated file from storage. Please try again.',
+                description: 'Could not delete the associated file from storage. The database entry was not removed. Please try again.',
             });
             return;
         }
@@ -86,7 +85,7 @@ export function AdminSuggestionsTable() {
 
     toast({
         title: 'Success',
-        description: 'Suggestion deleted successfully.',
+        description: 'Suggestion and associated file deleted successfully.',
     });
   };
 

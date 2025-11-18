@@ -45,13 +45,15 @@ function TableSkeleton() {
   );
 }
 
-export function AdminAssignmentsTable() {
+type AdminAssignmentsTableProps = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAssignmentsTableProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const assignmentsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc')) : null),
@@ -62,30 +64,27 @@ export function AdminAssignmentsTable() {
 
   const handleDelete = async (assignment: Assignment) => {
     if (!firestore) return;
-    
+
     if (assignment.path) {
-        try {
-            if (!supabaseUrl || !supabaseAnonKey) {
-                throw new Error("Supabase credentials are not configured for deletion.");
-            }
-            await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
-        } catch (error) {
-            console.error('Failed to delete file from Supabase Storage:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not delete the assignment file from storage. Please try again.',
-            });
-            return;
-        }
+      try {
+        await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
+      } catch (error) {
+        console.error('Failed to delete file from Supabase Storage:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not delete the assignment file from storage. The database entry was not removed. Please try again.',
+        });
+        return;
+      }
     }
 
     const docRef = doc(firestore, 'assignments', assignment.id);
     deleteDocumentNonBlocking(docRef);
-    
+
     toast({
-        title: 'Success',
-        description: 'Assignment deleted successfully.',
+      title: 'Success',
+      description: 'Assignment and its file deleted successfully.',
     });
   };
 
