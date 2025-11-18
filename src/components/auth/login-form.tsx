@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
+import { User } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -41,7 +42,8 @@ export function LoginForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     try {
-      await signInWithEmail(auth, values.email, values.password);
+      const user = await signInWithEmail(auth, values.email, values.password);
+      console.log('User logged in:', user); // This will show the UID in the console
       router.push('/');
     } catch (e: any) {
       setError('Failed to sign in. Please check your credentials.');
