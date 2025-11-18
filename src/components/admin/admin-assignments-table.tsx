@@ -35,6 +35,7 @@ function TableSkeleton() {
           <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
+          <Skeleton className="flex-1 h-8" />
           <Skeleton className="w-10 h-8" />
         </div>
       ))}
@@ -83,6 +84,7 @@ export function AdminAssignmentsTable() {
             <TableHead>Description</TableHead>
             <TableHead>User</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -93,6 +95,16 @@ export function AdminAssignmentsTable() {
                 <TableCell className="font-medium truncate max-w-sm">{assignment.description}</TableCell>
                 <TableCell>{assignment.userName || 'Anonymous'}</TableCell>
                 <TableCell>{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <a
+                    href={assignment.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-primary hover:text-primary/80"
+                  >
+                    View File
+                  </a>
+                </TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -123,7 +135,7 @@ export function AdminAssignmentsTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
+              <TableCell colSpan={5} className="h-24 text-center">
                 No assignments found.
               </TableCell>
             </TableRow>

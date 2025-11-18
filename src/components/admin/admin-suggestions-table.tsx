@@ -26,12 +26,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 function TableSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 p-4">
+          <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
@@ -83,6 +85,7 @@ export function AdminSuggestionsTable() {
             <TableHead>Title</TableHead>
             <TableHead>User</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -93,6 +96,20 @@ export function AdminSuggestionsTable() {
                 <TableCell className="font-medium">{suggestion.title}</TableCell>
                 <TableCell>{suggestion.userName || 'Anonymous'}</TableCell>
                 <TableCell>{suggestion.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {suggestion.fileUrl ? (
+                    <a
+                      href={suggestion.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-primary hover:text-primary/80"
+                    >
+                      View File
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">No file</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -123,7 +140,7 @@ export function AdminSuggestionsTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
+              <TableCell colSpan={5} className="h-24 text-center">
                 No suggestions found.
               </TableCell>
             </TableRow>
