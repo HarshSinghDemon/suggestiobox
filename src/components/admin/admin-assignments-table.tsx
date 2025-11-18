@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import type { Assignment } from '@/lib/types';
 import {
   Table,
@@ -26,7 +26,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 
 function TableSkeleton() {
@@ -65,27 +64,29 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
   const handleDelete = async (assignment: Assignment) => {
     if (!firestore) return;
 
-    if (assignment.path) {
-      try {
-        await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
-      } catch (error) {
-        console.error('Failed to delete file from Supabase Storage:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not delete the assignment file from storage. The database entry was not removed. Please try again.',
-        });
-        return;
+    try {
+      // First, attempt to delete the file from Supabase Storage.
+      if (assignment.path) {
+          await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
       }
+
+      // After successfully deleting the file, delete the Firestore document.
+      const docRef = doc(firestore, 'assignments', assignment.id);
+      await deleteDoc(docRef);
+
+      toast({
+        title: 'Success',
+        description: 'Assignment and its file deleted successfully.',
+      });
+
+    } catch (error) {
+        console.error("Deletion failed:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to delete the assignment. Please check the logs and try again.',
+        });
     }
-
-    const docRef = doc(firestore, 'assignments', assignment.id);
-    deleteDocumentNonBlocking(docRef);
-
-    toast({
-      title: 'Success',
-      description: 'Assignment and its file deleted successfully.',
-    });
   };
 
   if (isLoading) {

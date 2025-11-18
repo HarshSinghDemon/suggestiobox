@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import type { Suggestion } from '@/lib/types';
 import {
   Table,
@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 
 function TableSkeleton() {
@@ -66,27 +65,29 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
   const handleDelete = async (suggestion: Suggestion) => {
     if (!firestore) return;
 
-    if (suggestion.path) {
-        try {
+    try {
+        // First, attempt to delete the file from Supabase Storage if it exists
+        if (suggestion.path) {
             await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
-        } catch (error) {
-            console.error('Failed to delete file from Supabase Storage:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not delete the associated file from storage. The database entry was not removed. Please try again.',
-            });
-            return;
         }
-    }
-    
-    const docRef = doc(firestore, 'suggestions', suggestion.id);
-    deleteDocumentNonBlocking(docRef);
+        
+        // After successfully deleting the file (or if there was no file), delete the Firestore document
+        const docRef = doc(firestore, 'suggestions', suggestion.id);
+        await deleteDoc(docRef);
 
-    toast({
-        title: 'Success',
-        description: 'Suggestion and associated file deleted successfully.',
-    });
+        toast({
+            title: 'Success',
+            description: 'Suggestion and associated file deleted successfully.',
+        });
+
+    } catch (error) {
+        console.error("Deletion failed:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to delete the suggestion. Please check the logs and try again.',
+        });
+    }
   };
 
   if (isLoading) {
