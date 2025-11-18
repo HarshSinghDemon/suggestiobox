@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { validateAssignment, AssignmentFormState } from '@/lib/actions';
+import { validateAssignment } from '@/lib/actions';
 import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

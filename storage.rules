@@ -7,13 +7,22 @@ service firebase.storage {
       allow read: if true;
     }
 
-    // Allow anyone to write to the 'suggestions' and 'assignments' folders.
-    match /suggestions/{userId}/{allPaths=**} {
+    // Allow anyone (authenticated or not) to write to the 'anonymous' subfolders.
+    match /suggestions/anonymous/{allPaths=**} {
       allow write: if true;
     }
 
-    match /assignments/{userId}/{allPaths=**} {
+    match /assignments/anonymous/{allPaths=**} {
       allow write: if true;
+    }
+
+    // Allow authenticated users to write to their own folders.
+    match /suggestions/{userId}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /assignments/{userId}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

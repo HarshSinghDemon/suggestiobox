@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { validateSuggestion, SuggestionFormState } from '@/lib/actions';
+import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
 import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

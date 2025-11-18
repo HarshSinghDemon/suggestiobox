@@ -3,8 +3,9 @@
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership model for data stored under the `/users/{userId}` path.
- * Users can only read and write their own user profiles and associated data (suggestions, assignments).
- * Suggestions and Assignments are world readable by any authenticated user.
+ * Users can only read and write their own user profiles.
+ * Suggestions and Assignments are world readable by any authenticated user. They can be created by
+ * authenticated users for themselves, or by anyone (including anonymous) for the 'anonymous' user.
  * Subjects, stored in a top-level collection, are publicly readable but not writable by end-users.
  *
  * Data Structure:
@@ -50,10 +51,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows authenticated users to read suggestions. Write access is restricted to the owner.
+     * @description Allows authenticated users to read suggestions. Write access is restricted to the owner or allowed for anonymous submissions.
      * @path /suggestions/{suggestionId}
      * @allow (read) - Authenticated user can read any suggestion.
-     * @allow (create) - Authenticated user creates a suggestion with matching userId.
+     * @allow (create) - Any user (auth or anon) can create a suggestion.
      * @allow (update, delete) - The user who created the suggestion can update or delete it.
      * @principle Allows public read access for authenticated users, with ownership-based writes.
      */
@@ -64,10 +65,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows authenticated users to read assignments. Write access is restricted to the owner.
+     * @description Allows authenticated users to read assignments. Write access is restricted to the owner or allowed for anonymous submissions.
      * @path /assignments/{assignmentId}
      * @allow (read) - Authenticated user can read any assignment.
-     * @allow (create) - Authenticated user creates an assignment with matching userId.
+     * @allow (create) - Any user (auth or anon) can create an assignment.
      * @allow (update, delete) - The user who created the assignment can update or delete it.
      * @principle Allows public read access for authenticated users, with ownership-based writes.
      */
