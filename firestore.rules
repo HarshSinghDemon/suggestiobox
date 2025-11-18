@@ -41,8 +41,10 @@ service cloud.firestore {
 
     // Rules for the assignments collection
     match /assignments/{assignmentId} {
-      // Any authenticated user can read and write assignments
-      allow read, write: if isAuthenticated();
+      // Any authenticated user can get a single document or list the collection.
+      allow get, list: if isAuthenticated();
+      // Any authenticated user can create, update, or delete an assignment.
+      allow write: if isAuthenticated();
     }
 
     // Rules for the messages collection
