@@ -21,7 +21,7 @@ import { AlertCircle } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { Card, CardDescription } from '../ui/card';
+import { CardDescription } from '../ui/card';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -103,7 +103,7 @@ export function SignUpForm() {
                       key={seed}
                       className={cn(
                         'rounded-full p-1 ring-2 ring-transparent transition-all hover:ring-primary focus:ring-primary',
-                        field.value === generateAvatarUrl(seed) && 'ring-primary'
+                        field.value === generateAvatarUrl(seed) && 'ring-primary ring-offset-2 ring-offset-background'
                       )}
                       onClick={() => field.onChange(generateAvatarUrl(seed))}
                     >
@@ -112,7 +112,7 @@ export function SignUpForm() {
                         alt={`${seed} avatar`}
                         width={64}
                         height={64}
-                        className="rounded-full bg-muted"
+                        className="p-1 rounded-full bg-muted"
                       />
                     </button>
                   ))}
