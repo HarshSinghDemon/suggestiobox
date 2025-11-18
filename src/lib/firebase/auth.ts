@@ -6,8 +6,6 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
   Auth,
-  GoogleAuthProvider,
-  signInWithPopup,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -70,36 +68,6 @@ export const signInWithEmail = async (
     console.error('Error signing in: ', error);
     throw error;
   }
-};
-
-export const signInWithGoogle = async (auth: Auth) => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-  
-      const userDocRef = doc(getFirestore(auth.app), "users", user.uid);
-      const userData = {
-        id: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-      };
-
-      setDoc(userDocRef, userData, { merge: true }).catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: userDocRef.path,
-          operation: 'create',
-          requestResourceData: userData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-
-      return user;
-
-    } catch (error) {
-      console.error("Error during Google sign-in:", error);
-      throw error;
-    }
 };
 
 export const signOut = async (auth: Auth) => {

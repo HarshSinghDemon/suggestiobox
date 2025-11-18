@@ -19,7 +19,6 @@ import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth as useFirebaseAuth } from '@/firebase';
-import { GoogleSignInButton } from './google-signin-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -92,17 +91,6 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-2 bg-background text-muted-foreground">
-            Or continue with
-            </span>
-        </div>
-      </div>
-      <GoogleSignInButton />
     </>
   );
 }
