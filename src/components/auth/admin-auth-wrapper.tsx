@@ -8,12 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
+import { updateProfile } from 'firebase/auth';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID;
+  const desiredPhotoURL = "https://github.com/shadcn.png";
 
   useEffect(() => {
     if (!adminUid) {
@@ -26,9 +31,23 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
       // If not loading and no user, redirect to login page.
       if (!user) {
         router.push('/login');
+      } else if (user.uid === adminUid && user.photoURL !== desiredPhotoURL) {
+        // One-time update for the admin's photoURL
+        updateProfile(user, { photoURL: desiredPhotoURL })
+          .then(() => {
+            if (firestore) {
+              const userDocRef = doc(firestore, 'users', user.uid);
+              setDoc(userDocRef, { photoURL: desiredPhotoURL }, { merge: true });
+            }
+            // We can optionally force a reload or let the state update naturally.
+            // For simplicity, we'll let the existing hooks handle UI updates.
+          })
+          .catch((error) => {
+            console.error("Failed to update admin profile picture:", error);
+          });
       }
     }
-  }, [user, loading, router, adminUid]);
+  }, [user, loading, router, adminUid, desiredPhotoURL, firestore]);
 
   if (loading || !user) {
     // Show a loading skeleton while checking auth state.
