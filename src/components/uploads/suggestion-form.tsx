@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,20 +14,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { uploadSuggestion, SuggestionFormState } from '@/lib/actions';
+import { validateSuggestion, SuggestionFormState } from '@/lib/actions';
 import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
-
-function SubmitButton({ disabled }: { disabled?: boolean }) {
+function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending || disabled} className="w-full">
+    <Button type="submit" disabled={pending} className="w-full">
       {pending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
       {pending ? 'Submitting...' : 'Submit Suggestion'}
     </Button>
@@ -44,81 +42,108 @@ const initialState: SuggestionFormState = {
 export function SuggestionForm() {
   const { user } = useAuth();
   const firestore = useFirestore();
-  const [state, formAction] = useActionState(uploadSuggestion, initialState);
+  const [state, formAction] = useFormState(validateSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [idToken, setIdToken] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isDescriptionRequired = !file;
 
   useEffect(() => {
-    if (user) {
-      user.getIdToken().then(setIdToken);
+    if (state.success) {
+      // The formAction logic will run on the server and re-render the component with the new state.
+      // We do not proceed with upload here because state is from the *previous* render.
+      // The form's onSubmit handler will manage the upload process.
     }
-  }, [user]);
-
-  useEffect(() => {
-    const handleFileUpload = async () => {
-      // Case 1: A file needs to be uploaded
-      if (state.success && state.uploadInfo && file) {
-        try {
-          const storage = getStorage();
-          const storageRef = ref(storage, state.uploadInfo.uploadPath);
-
-          // Upload file
-          await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(storageRef);
-
-          // Update Firestore document with the file URL
-          if (firestore) {
-            const docRef = doc(firestore, state.uploadInfo.collection, state.uploadInfo.documentId);
-            await updateDoc(docRef, { fileUrl: downloadURL });
-          }
-
-          toast({
-            title: 'Success!',
-            description: "Suggestion and file uploaded successfully!",
-            action: <CheckCircle className="text-green-500" />,
-          });
-          formRef.current?.reset();
-          setFile(null);
-          router.push('/browse');
-
-        } catch (error) {
-          console.error("File upload or Firestore update failed:", error);
-          toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "There was an error uploading your file. Please try again.",
-          });
-        }
-      } 
-      // Case 2: No file was uploaded, submission is complete
-      else if (state.success && !state.uploadInfo) {
-        toast({
-          title: 'Success!',
-          description: state.message,
-          action: <CheckCircle className="text-green-500" />,
-        });
-        formRef.current?.reset();
-        setFile(null);
-        router.push('/browse');
-      }
-    };
-    
-    handleFileUpload();
-  }, [state, file, firestore, toast, router]);
+  }, [state, toast, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     setFile(selectedFile || null);
   }
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    
+    const formData = new FormData(event.currentTarget);
+    const result = await validateSuggestion(initialState, formData);
+
+    if (!result.success) {
+        // This part is tricky because useFormState is not being used to its full potential
+        // For now, we can just show a generic error or try to map errors manually
+        toast({
+            variant: "destructive",
+            title: "Validation Failed",
+            description: result.message || "Please check the form for errors.",
+        });
+        // A better implementation would involve updating a state that the form can read from.
+        setIsSubmitting(false);
+        return;
+    }
+
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to submit a suggestion.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const docData = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        subject: formData.get('subject') as string,
+        userId: user.uid,
+        userName: user.displayName,
+        userImage: user.photoURL,
+        createdAt: serverTimestamp(),
+        fileUrl: '',
+        fileName: file?.name || '',
+        fileType: file?.type || '',
+      };
+
+      const docRef = await addDoc(collection(firestore, 'suggestions'), docData);
+      
+      let downloadURL = '';
+      if (file) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `suggestions/${user.uid}/${Date.now()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+        downloadURL = await getDownloadURL(storageRef);
+        
+        await updateDoc(docRef, { fileUrl: downloadURL });
+      }
+
+      toast({
+        title: 'Success!',
+        description: 'Your suggestion has been submitted.',
+        action: <CheckCircle className="text-green-500" />,
+      });
+      
+      formRef.current?.reset();
+      setFile(null);
+      router.push('/browse');
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
-      <input type="hidden" name="idToken" value={idToken} />
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {state.message && !state.success && !state.errors?.ai && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
@@ -192,8 +217,11 @@ export function SuggestionForm() {
           )}
         </div>
       </div>
-
-      <SubmitButton disabled={!idToken} />
+      
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+        {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+      </Button>
     </form>
   );
 }
