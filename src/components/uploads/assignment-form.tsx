@@ -41,7 +41,12 @@ const initialFileUploadState: FileUploadState = {
   isUploading: false,
 };
 
-export function AssignmentForm() {
+type AssignmentFormProps = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
@@ -77,7 +82,10 @@ export function AssignmentForm() {
     });
 
     try {
-      const result = await uploadFileToSupabase(file);
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Supabase credentials are not configured.");
+      }
+      const result = await uploadFileToSupabase(file, supabaseUrl, supabaseAnonKey);
       
       setFileUpload({
         ...initialFileUploadState,

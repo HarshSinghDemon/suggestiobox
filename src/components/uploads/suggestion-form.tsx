@@ -49,7 +49,12 @@ const initialFileUploadState: FileUploadState = {
   isUploading: false,
 };
 
-export function SuggestionForm() {
+type SuggestionFormProps = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
@@ -85,7 +90,10 @@ export function SuggestionForm() {
     });
     
     try {
-      const result = await uploadFileToSupabase(file);
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Supabase credentials are not configured.");
+      }
+      const result = await uploadFileToSupabase(file, supabaseUrl, supabaseAnonKey);
 
       setFileUpload({
         ...initialFileUploadState,

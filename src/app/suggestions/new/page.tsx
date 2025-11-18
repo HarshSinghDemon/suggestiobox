@@ -4,6 +4,23 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function NewSuggestionPage() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return (
+        <div className="container py-8 mx-auto">
+            <div className="max-w-2xl mx-auto text-center">
+                <h1 className="text-2xl font-bold">Configuration Error</h1>
+                <p className="mt-4 text-muted-foreground">
+                    Supabase URL or Anonymous Key is not configured in your environment variables. 
+                    Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env file.
+                </p>
+            </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 mx-auto">
       <div className="max-w-2xl mx-auto">
@@ -25,7 +42,7 @@ export default function NewSuggestionPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SuggestionForm />
+            <SuggestionForm supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
           </CardContent>
         </Card>
       </div>

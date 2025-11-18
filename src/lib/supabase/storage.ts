@@ -1,17 +1,24 @@
 'use client';
 
-import { supabase } from './client';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Reusable function to upload a file to Supabase Storage directly from the client.
+ * This version receives credentials directly to avoid client-side environment variable issues.
  *
  * @param file The file object to upload.
+ * @param supabaseUrl The Supabase Project URL.
+ * @param supabaseAnonKey The Supabase public anon key.
  * @returns An object containing the public URL and the path of the uploaded file.
  */
-export async function uploadFileToSupabase(file: File) {
-  const bucketName = 'uploads'; 
+export async function uploadFileToSupabase(file: File, supabaseUrl: string, supabaseAnonKey: string) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase URL or Anon Key was not provided to the upload function.');
+  }
 
-  // Sanitize the filename to be URL-friendly and unique.
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  const bucketName = 'uploads';
+
   const fileExtension = file.name.split('.').pop();
   const sanitizedFileName = file.name
     .replace(`.${fileExtension}`, '')
@@ -27,7 +34,7 @@ export async function uploadFileToSupabase(file: File) {
 
   if (uploadError) {
     console.error('Supabase upload failed. Raw error:', uploadError);
-    if (uploadError instanceof Error && 'message' in uploadError && !uploadError.message.includes('{')) {
+    if (uploadError instanceof Error && 'message' in uploadError) {
         console.error('Raw Server Response:', uploadError.message);
     }
     throw new Error(`Failed to upload file. Message: ${uploadError.message}`);
@@ -49,7 +56,11 @@ export async function uploadFileToSupabase(file: File) {
   };
 }
 
-export async function deleteFileFromStorage(filePath: string) {
+export async function deleteFileFromStorage(filePath: string, supabaseUrl: string, supabaseAnonKey: string) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase URL or Anon Key was not provided to the delete function.');
+    }
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const bucketName = 'uploads';
     const { error } = await supabase.storage.from(bucketName).remove([filePath]);
 

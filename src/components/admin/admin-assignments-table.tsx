@@ -49,6 +49,10 @@ export function AdminAssignmentsTable() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  
+  // NOTE: This will not work until you add your Supabase credentials to .env
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const assignmentsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc')) : null),
@@ -62,7 +66,10 @@ export function AdminAssignmentsTable() {
     
     if (assignment.path) {
         try {
-            await deleteFileFromStorage(assignment.path);
+            if (!supabaseUrl || !supabaseAnonKey) {
+                throw new Error("Supabase credentials are not configured for deletion.");
+            }
+            await deleteFileFromStorage(assignment.path, supabaseUrl, supabaseAnonKey);
         } catch (error) {
             console.error('Failed to delete file from Supabase Storage:', error);
             toast({
@@ -70,7 +77,6 @@ export function AdminAssignmentsTable() {
                 title: 'Error',
                 description: 'Could not delete the assignment file from storage. Please try again.',
             });
-            // Stop here to avoid deleting the Firestore record without deleting the file
             return;
         }
     }
