@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,18 +14,12 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { validateAssignment, AssignmentFormState } from '@/lib/actions';
 import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-
-const initialState: AssignmentFormState = {
-  message: '',
-  errors: {},
-  success: false,
-};
 
 export function AssignmentForm() {
   const { user, loading: isAuthLoading } = useAuth();
@@ -45,6 +37,16 @@ export function AssignmentForm() {
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    if (isAuthLoading) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please wait for authentication to complete.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     if (!user || !firestore) {
@@ -68,7 +70,7 @@ export function AssignmentForm() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const result = await validateAssignment(initialState, formData);
+    const result = await validateAssignment(formData);
 
     if (!result.success) {
       toast({

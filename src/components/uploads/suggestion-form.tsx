@@ -47,6 +47,16 @@ export function SuggestionForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isAuthLoading) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Please wait for authentication to complete.',
+        });
+        return;
+    }
+
     setFormState(initialState);
     setIsSubmitting(true);
     
@@ -61,7 +71,7 @@ export function SuggestionForm() {
     }
     
     const formData = new FormData(event.currentTarget);
-    const result = await validateSuggestion(initialState, formData);
+    const result = await validateSuggestion(formData);
 
     if (!result.success) {
         setFormState(result);

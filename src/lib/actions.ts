@@ -31,7 +31,6 @@ export type SuggestionFormState = {
 };
 
 export async function validateSuggestion(
-  prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
   const file = formData.get('file') as File | null;
@@ -103,7 +102,6 @@ export type AssignmentFormState = {
 };
   
 export async function validateAssignment(
-    prevState: AssignmentFormState,
     formData: FormData
 ): Promise<AssignmentFormState> {
   
