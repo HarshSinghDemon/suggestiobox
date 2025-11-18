@@ -32,31 +32,41 @@ service cloud.firestore {
     // Rules for the suggestions collection
     match /suggestions/{suggestionId} {
       // Any authenticated user can read suggestions
-      allow get, list: if isAuthenticated();
+      allow get: if isAuthenticated();
       // Any authenticated user can create a suggestion
       allow create: if isAuthenticated();
       // Only the owner or an admin can update or delete a suggestion
       allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
     }
+    match /suggestions {
+        allow list: if isAuthenticated();
+    }
+
 
     // Rules for the assignments collection
     match /assignments/{assignmentId} {
-      // Any authenticated user can get a single document or list the collection.
-      allow get, list: if isAuthenticated();
+      // Any authenticated user can get a single document.
+      allow get: if isAuthenticated();
       // Any authenticated user can create, update, or delete an assignment.
       allow write: if isAuthenticated();
+    }
+    match /assignments {
+        allow list: if isAuthenticated();
     }
 
     // Rules for the messages collection
     match /messages/{messageId} {
-        // Any authenticated user can read messages
-        allow get, list: if isAuthenticated();
+        // Any authenticated user can read a single message
+        allow get: if isAuthenticated();
         // Any authenticated user can create a message
         allow create: if isAuthenticated();
         // Only the owner or an admin can delete a message
         allow delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
         // Updates are not allowed for messages
         allow update: if false;
+    }
+    match /messages {
+        allow list: if isAuthenticated();
     }
   }
 }
