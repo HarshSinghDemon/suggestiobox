@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'StudyShare Central',
+  title: 'Suggestion Box',
   description: 'Upload and browse study materials, suggestions, and assignments.',
 };
 

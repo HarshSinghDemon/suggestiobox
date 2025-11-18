@@ -23,11 +23,10 @@ export default function Home() {
           </h1>
           <div className="max-w-md space-y-4">
             <p className="text-lg">
-              Hi there! We would love to know how can we make our workplace
-              better.
+              Have an idea for a new assignment, a helpful study tip, or a suggestion for a class? Share it here!
             </p>
             <p className="text-lg">
-              Don&apos;t worry, you can choose to be anonymous.
+              You can also upload helpful files for the community. And don't worry, you can choose to be anonymous.
             </p>
           </div>
           <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90">
