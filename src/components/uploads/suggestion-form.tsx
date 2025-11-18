@@ -79,18 +79,9 @@ export function SuggestionForm() {
       name: file.name,
     });
     
-    // Simulate upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress = Math.min(progress + Math.random() * 20, 90);
-        setFileUpload(prev => ({...prev, progress}));
-    }, 500);
-
     try {
       const authResponse = await fetch('/api/imagekit/auth');
        if (!authResponse.ok) {
-        const errorText = await authResponse.text();
-        console.error("Auth API error response:", errorText);
         throw new Error(`Failed to authenticate with ImageKit. Status: ${authResponse.status}`);
       }
       const authData = await authResponse.json();
@@ -108,9 +99,11 @@ export function SuggestionForm() {
           expire: authData.expire,
           signature: authData.signature,
           useUniqueFileName: true,
+          onUploadProgress: (progress) => {
+            setFileUpload(prev => ({...prev, progress: progress.loaded / progress.total * 100}));
+          }
         },
         (err, result) => {
-          clearInterval(interval);
           if (err) {
             console.error('ImageKit upload error:', err);
             setFileUpload((prev) => ({
@@ -132,7 +125,6 @@ export function SuggestionForm() {
         }
       );
     } catch (error) {
-      clearInterval(interval);
       console.error('File upload process failed:', error);
       setFileUpload({
         ...initialFileUploadState,

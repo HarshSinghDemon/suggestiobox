@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { signUpWithEmail } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
@@ -33,7 +33,7 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const auth = useFirebaseAuth();
-  const { isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,6 +44,12 @@ export function SignUpForm() {
       photoURL: '',
     },
   });
+
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const nameValue = form.watch('name');
 
@@ -62,9 +68,7 @@ export function SignUpForm() {
     
     try {
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
-        // The onAuthStateChanged listener in FirebaseProvider will handle user state,
-        // and now we can safely redirect.
-        router.push('/');
+        // The onAuthStateChanged listener will pick up the new user and the useEffect above will redirect.
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');

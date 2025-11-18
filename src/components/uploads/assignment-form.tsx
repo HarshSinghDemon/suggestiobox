@@ -81,7 +81,6 @@ export function AssignmentForm() {
       const imagekit = new ImageKit({
         urlEndpoint: authData.url,
         publicKey: authData.publicKey,
-        authenticationEndpoint: '/api/imagekit/auth',
       });
 
       imagekit.upload(
@@ -92,6 +91,9 @@ export function AssignmentForm() {
           expire: authData.expire,
           signature: authData.signature,
           useUniqueFileName: true,
+          onUploadProgress: (progress) => {
+            setFileUpload((prev) => ({...prev, progress: progress.loaded / progress.total * 100}));
+          }
         },
         (err, result) => {
           if (err) {
