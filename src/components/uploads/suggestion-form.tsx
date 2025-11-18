@@ -204,9 +204,7 @@ export function SuggestionForm() {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
         userId: user?.uid || 'anonymous',
-        userName: user
-          ? user.displayName
-          : (formData.get('name') as string) || 'Anonymous',
+        userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
         userImage: user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || null,

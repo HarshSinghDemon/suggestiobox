@@ -34,15 +34,16 @@ export const signUpWithEmail = async (
       'users',
       userCredential.user.uid
     );
+    // Ensure the data being written to Firestore matches security rule expectations
     const userData = {
-      id: userCredential.user.uid,
+      id: userCredential.user.uid, // This is critical for the 'create' rule
       email: userCredential.user.email,
       displayName: displayName,
       photoURL: photoURL,
     };
 
     // Use a non-blocking write for better UX, but handle potential permission errors
-    setDoc(userDocRef, userData, { merge: true }).catch((serverError) => {
+    setDoc(userDocRef, userData).catch((serverError) => {
       console.error("Error creating user document:", serverError);
       const permissionError = new FirestorePermissionError({
         path: userDocRef.path,
