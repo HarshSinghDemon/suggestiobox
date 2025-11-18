@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useRef, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,16 +23,6 @@ import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-      {pending ? 'Submitting...' : 'Submit Suggestion'}
-    </Button>
-  );
-}
-
 const initialState: SuggestionFormState = {
   message: '',
   errors: {},
@@ -42,7 +32,7 @@ const initialState: SuggestionFormState = {
 export function SuggestionForm() {
   const { user } = useAuth();
   const firestore = useFirestore();
-  const [state, formAction] = useFormState(validateSuggestion, initialState);
+  const [state, formAction] = useActionState(validateSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -72,14 +62,11 @@ export function SuggestionForm() {
     const result = await validateSuggestion(initialState, formData);
 
     if (!result.success) {
-        // This part is tricky because useFormState is not being used to its full potential
-        // For now, we can just show a generic error or try to map errors manually
         toast({
             variant: "destructive",
             title: "Validation Failed",
             description: result.message || "Please check the form for errors.",
         });
-        // A better implementation would involve updating a state that the form can read from.
         setIsSubmitting(false);
         return;
     }
