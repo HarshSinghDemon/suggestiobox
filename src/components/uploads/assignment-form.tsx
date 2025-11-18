@@ -17,7 +17,7 @@ import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
@@ -44,6 +44,7 @@ const initialFileUploadState: FileUploadState = {
 
 export function AssignmentForm() {
   const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -68,7 +69,7 @@ export function AssignmentForm() {
 
     try {
         const storage = getStorage();
-        const userId = 'anonymous';
+        const userId = user?.uid || 'anonymous';
         const storagePath = `assignments/${userId}/${Date.now()}-${selectedFile.name}`;
         const storageRef = ref(storage, storagePath);
         const uploadTask = uploadBytesResumable(storageRef, selectedFile);
@@ -113,6 +114,15 @@ export function AssignmentForm() {
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isUserLoading) {
+      toast({
+        variant: 'destructive',
+        title: 'Please wait',
+        description: 'Authentication is still loading.',
+      });
+      return;
+    }
 
     if (fileUpload.isUploading) {
         toast({
@@ -161,9 +171,9 @@ export function AssignmentForm() {
       const docData = {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: 'anonymous',
-        userName: 'Anonymous',
-        userImage: null,
+        userId: user?.uid || 'anonymous',
+        userName: user?.displayName || 'Anonymous',
+        userImage: user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,
@@ -264,7 +274,7 @@ export function AssignmentForm() {
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting || fileUpload.isUploading || !fileUpload.url} className="w-full">
+      <Button type="submit" disabled={isSubmitting || fileUpload.isUploading || !fileUpload.url || isUserLoading} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Upload Assignment'}
       </Button>
