@@ -3,77 +3,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if the user is the authenticated admin
-    function isAdmin() {
-      return request.auth.token.email == 'harshroop100@gmail.com';
-    }
-
-    // Helper function to check if the user is the owner of a document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Rules for user profiles
-    match /users/{userId} {
-      // Authenticated users can read profiles
-      allow read: if isAuthenticated();
-      // Only the user themselves can create or update their own profile
-      allow create, update: if isOwner(userId);
-      // Only an admin can delete a user profile
-      allow delete: if isAdmin();
-    }
-
-    // Rules for a single suggestion document
-    match /suggestions/{suggestionId} {
-      // Any authenticated user can read a single suggestion
-      allow get: if isAuthenticated();
-      // Any authenticated user can create a suggestion
-      allow create: if isAuthenticated();
-      // Only the owner or an admin can update or delete a suggestion
-      allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
-    }
-    
-    // Rule for listing the entire suggestions collection
-    match /suggestions {
-      allow list: if isAuthenticated();
-    }
-
-    // Rules for a single assignment document
-    match /assignments/{assignmentId} {
-      // Any authenticated user can read a single assignment
-      allow get: if isAuthenticated();
-       // Any authenticated user can create an assignment
-      allow create: if isAuthenticated();
-      // Only the owner or an admin can update or delete an assignment
-      allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
-    }
-
-    // Rule for listing the entire assignments collection
-    match /assignments {
-      allow list: if isAuthenticated();
-    }
-
-    // Rules for a single message document
-    match /messages/{messageId} {
-        // Any authenticated user can read a single message
-        allow get: if isAuthenticated();
-        // Any authenticated user can create a message
-        allow create: if isAuthenticated();
-        // Only the owner or an admin can delete a message
-        allow delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
-        // Updates are not allowed for messages
-        allow update: if false;
-    }
-
-    // Rule for listing the entire messages collection
-    match /messages {
-        allow list: if isAuthenticated();
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
