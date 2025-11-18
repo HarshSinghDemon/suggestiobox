@@ -18,7 +18,7 @@ import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
@@ -29,7 +29,6 @@ const initialState: SuggestionFormState = {
 };
 
 export function SuggestionForm() {
-  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -48,23 +47,14 @@ export function SuggestionForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isAuthLoading) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Please wait for authentication to complete.',
-        });
-        return;
-    }
-
     setFormState(initialState);
     setIsSubmitting(true);
     
-    if (!user || !firestore) {
+    if (!firestore) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to submit a suggestion.',
+        description: 'Database connection not found.',
       });
       setIsSubmitting(false);
       return;
@@ -89,9 +79,9 @@ export function SuggestionForm() {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: user.uid,
-        userName: user.displayName,
-        userImage: user.photoURL,
+        userId: 'anonymous',
+        userName: (formData.get('name') as string) || 'Anonymous',
+        userImage: null,
         createdAt: serverTimestamp(),
         fileUrl: '',
         fileName: file?.name || '',
@@ -103,7 +93,7 @@ export function SuggestionForm() {
       let downloadURL = '';
       if (file) {
         const storage = getStorage();
-        const storageRef = ref(storage, `suggestions/${user.uid}/${Date.now()}-${file.name}`);
+        const storageRef = ref(storage, `suggestions/anonymous/${Date.now()}-${file.name}`);
         await uploadBytes(storageRef, file);
         downloadURL = await getDownloadURL(storageRef);
         
@@ -149,13 +139,19 @@ export function SuggestionForm() {
             <AlertDescription>{formState.errors.ai}</AlertDescription>
         </Alert>
       )}
-
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" placeholder="e.g., Easy way to understand TCP handshake" required />
-        {formState.errors?.title && (
-          <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
-        )}
+      
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" name="title" placeholder="e.g., Easy way to understand TCP handshake" required />
+            {formState.errors?.title && (
+            <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
+            )}
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="name">Your Name (Optional)</Label>
+            <Input id="name" name="name" placeholder="John Doe" />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -208,7 +204,7 @@ export function SuggestionForm() {
         </div>
       </div>
       
-      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
       </Button>

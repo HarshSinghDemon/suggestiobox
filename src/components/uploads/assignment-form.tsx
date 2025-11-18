@@ -17,12 +17,11 @@ import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 export function AssignmentForm() {
-  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -38,22 +37,13 @@ export function AssignmentForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
-    if (isAuthLoading) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please wait for authentication to complete.',
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
-    if (!user || !firestore) {
+    if (!firestore) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to submit an assignment.',
+        description: 'Database connection not found.',
       });
       setIsSubmitting(false);
       return;
@@ -86,9 +76,9 @@ export function AssignmentForm() {
       const docData = {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: user.uid,
-        userName: user.displayName,
-        userImage: user.photoURL,
+        userId: 'anonymous',
+        userName: 'Anonymous',
+        userImage: null,
         createdAt: serverTimestamp(),
         fileUrl: '',
         fileName: file.name,
@@ -98,7 +88,7 @@ export function AssignmentForm() {
       const docRef = await addDoc(collection(firestore, 'assignments'), docData);
       
       const storage = getStorage();
-      const storageRef = ref(storage, `assignments/${user.uid}/${Date.now()}-${file.name}`);
+      const storageRef = ref(storage, `assignments/anonymous/${Date.now()}-${file.name}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       
@@ -168,7 +158,7 @@ export function AssignmentForm() {
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Upload Assignment'}
       </Button>

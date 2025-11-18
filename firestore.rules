@@ -58,8 +58,8 @@ service cloud.firestore {
      * @principle Allows public read access for authenticated users, with ownership-based writes.
      */
     match /suggestions/{suggestionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if true;
+      allow create: if true;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
@@ -72,8 +72,8 @@ service cloud.firestore {
      * @principle Allows public read access for authenticated users, with ownership-based writes.
      */
     match /assignments/{assignmentId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if true;
+      allow create: if true;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
