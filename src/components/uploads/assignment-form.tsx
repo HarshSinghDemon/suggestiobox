@@ -78,13 +78,15 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
       isUploading: true,
       name: file.name,
       type: file.type,
-      progress: 50, // Simulate progress
+      progress: 0, 
     });
 
     try {
       if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error("Supabase credentials are not configured.");
       }
+      
+      setFileUpload(prev => ({ ...prev, progress: 50 })); // Simulate progress
       const result = await uploadFileToSupabase(file, supabaseUrl, supabaseAnonKey);
       
       setFileUpload({

@@ -28,7 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { deleteFileFromStorage } from '@/lib/supabase/storage';
+import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 
 function TableSkeleton() {
   return (
@@ -51,7 +51,6 @@ export function AdminSuggestionsTable() {
   const { user } = useUser();
   const { toast } = useToast();
   
-  // NOTE: This will not work until you add your Supabase credentials to .env
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -70,7 +69,7 @@ export function AdminSuggestionsTable() {
             if (!supabaseUrl || !supabaseAnonKey) {
                 throw new Error("Supabase credentials are not configured for deletion.");
             }
-            await deleteFileFromStorage(suggestion.path, supabaseUrl, supabaseAnonKey);
+            await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
         } catch (error) {
             console.error('Failed to delete file from Supabase Storage:', error);
             toast({
@@ -78,7 +77,6 @@ export function AdminSuggestionsTable() {
                 title: 'Error',
                 description: 'Could not delete the associated file from storage. Please try again.',
             });
-            // We stop here to avoid deleting the Firestore record without deleting the file
             return;
         }
     }

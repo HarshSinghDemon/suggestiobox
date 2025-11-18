@@ -23,11 +23,11 @@ export async function uploadFileToSupabase(file: File, supabaseUrl: string, supa
   const sanitizedFileName = file.name
     .replace(`.${fileExtension}`, '')
     .replace(/[^a-zA-Z0-9._-]/g, '_');
-  const filePath = `${sanitizedFileName}-${Date.now()}.${fileExtension}`;
+  const path = `${sanitizedFileName}-${Date.now()}.${fileExtension}`;
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from(bucketName)
-    .upload(filePath, file, {
+    .upload(path, file, {
       cacheControl: '3600',
       upsert: false,
     });
@@ -56,13 +56,13 @@ export async function uploadFileToSupabase(file: File, supabaseUrl: string, supa
   };
 }
 
-export async function deleteFileFromStorage(filePath: string, supabaseUrl: string, supabaseAnonKey: string) {
+export async function deleteFileFromSupabase(path: string, supabaseUrl: string, supabaseAnonKey: string) {
     if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error('Supabase URL or Anon Key was not provided to the delete function.');
     }
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const bucketName = 'uploads';
-    const { error } = await supabase.storage.from(bucketName).remove([filePath]);
+    const { error } = await supabase.storage.from(bucketName).remove([path]);
 
     if (error) {
         console.error('Failed to delete file from Supabase Storage:', error);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
 import type { Assignment } from '@/lib/types';
 import {
   Table,
@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { deleteFileFromStorage } from '@/lib/supabase/storage';
+import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 
 function TableSkeleton() {
   return (
@@ -50,7 +50,6 @@ export function AdminAssignmentsTable() {
   const { user } = useUser();
   const { toast } = useToast();
   
-  // NOTE: This will not work until you add your Supabase credentials to .env
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -69,7 +68,7 @@ export function AdminAssignmentsTable() {
             if (!supabaseUrl || !supabaseAnonKey) {
                 throw new Error("Supabase credentials are not configured for deletion.");
             }
-            await deleteFileFromStorage(assignment.path, supabaseUrl, supabaseAnonKey);
+            await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
         } catch (error) {
             console.error('Failed to delete file from Supabase Storage:', error);
             toast({
