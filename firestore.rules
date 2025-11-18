@@ -4,40 +4,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper function to check if the user is the authenticated admin
     function isAdmin() {
       return request.auth.token.email == 'harshroop100@gmail.com';
     }
 
+    // Helper function to check if the user is the owner of a document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
+    // Helper function to check if a user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // User Profiles
+    // Rules for user profiles
     match /users/{userId} {
+      // Authenticated users can read profiles
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isAdmin(); // Admin can delete users
+      // Only the user themselves can create or update their own profile
+      allow create, update: if isOwner(userId);
+      // Only an admin can delete a user profile
+      allow delete: if isAdmin();
     }
 
-    // Suggestions, Assignments, and Messages
-    match /{collection}/{docId} {
-      // Allow read for any authenticated user
+    // Rules for the suggestions collection
+    match /suggestions/{suggestionId} {
+      // Any authenticated user can read suggestions
       allow get, list: if isAuthenticated();
-
-      // Allow create for any authenticated user
+      // Any authenticated user can create a suggestion
       allow create: if isAuthenticated();
+      // Only the owner or an admin can update or delete a suggestion
+      allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
+    }
 
-      // Allow update only by owner or admin
-      allow update: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
+    // Rules for the assignments collection
+    match /assignments/{assignmentId} {
+      // Any authenticated user can read assignments
+      allow get, list: if isAuthenticated();
+      // Any authenticated user can create an assignment
+      allow create: if isAuthenticated();
+      // Only the owner or an admin can update or delete an assignment
+      allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
+    }
 
-      // Allow delete only by owner or admin
-      allow delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
+    // Rules for the messages collection
+    match /messages/{messageId} {
+        // Any authenticated user can read messages
+        allow get, list: if isAuthenticated();
+        // Any authenticated user can create a message
+        allow create: if isAuthenticated();
+        // Only the owner or an admin can delete a message
+        allow delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
+        // Updates are not allowed for messages
+        allow update: if false;
     }
   }
 }
