@@ -28,9 +28,11 @@ export default function GlobalError({
             </CardHeader>
             <CardContent>
                 <p className="mb-4 text-sm text-muted-foreground">
-                    We've logged the issue and our team is looking into it. Please try refreshing the page or clicking the button below.
+                    We've logged the issue and our team is looking into it. Please try refreshing the page. If the issue persists, contact support.
                 </p>
-                <Button onClick={() => reset()}>Try again</Button>
+                {typeof reset === 'function' && (
+                  <Button onClick={() => reset()}>Try again</Button>
+                )}
             </CardContent>
           </Card>
         </div>
