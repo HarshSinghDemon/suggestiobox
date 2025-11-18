@@ -21,33 +21,35 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   const desiredPhotoURL = "https://github.com/shadcn.png";
 
   useEffect(() => {
+    if (loading) return;
+    
     if (!adminUid) {
         console.error("Admin UID is not configured. Set NEXT_PUBLIC_ADMIN_UID in your environment variables.");
-        router.push('/');
+        // We don't redirect here, just show access denied if the check below fails.
         return;
     }
 
-    if (!loading) {
-      // If not loading and no user, redirect to login page.
-      if (!user) {
-        router.push('/login');
-      } else if (user.uid === adminUid && user.photoURL !== desiredPhotoURL) {
-        // One-time update for the admin's photoURL
-        updateProfile(user, { photoURL: desiredPhotoURL })
-          .then(() => {
-            if (firestore) {
-              const userDocRef = doc(firestore, 'users', user.uid);
-              setDoc(userDocRef, { photoURL: desiredPhotoURL }, { merge: true });
-            }
-            // We can optionally force a reload or let the state update naturally.
-            // For simplicity, we'll let the existing hooks handle UI updates.
-          })
-          .catch((error) => {
-            console.error("Failed to update admin profile picture:", error);
-          });
-      }
+    if (!user) {
+      router.push('/login');
+      return;
     }
-  }, [user, loading, router, adminUid, desiredPhotoURL, firestore]);
+
+    // Perform the one-time profile update if necessary, but don't block rendering.
+    if (user && user.uid === adminUid && user.photoURL !== desiredPhotoURL) {
+      updateProfile(user, { photoURL: desiredPhotoURL })
+        .then(() => {
+          if (firestore) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            setDoc(userDocRef, { photoURL: desiredPhotoURL }, { merge: true });
+          }
+          // The page will re-render naturally from auth state changes, no need to force it.
+        })
+        .catch((error) => {
+          console.error("Failed to update admin profile picture:", error);
+        });
+    }
+
+  }, [user, loading, router, adminUid, firestore, desiredPhotoURL]);
 
   if (loading || !user) {
     // Show a loading skeleton while checking auth state.
@@ -82,9 +84,11 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
                     <p className="text-sm text-muted-foreground">
                         This area is restricted to administrators only. If you believe this is a mistake, please contact the site owner.
                     </p>
-                    <p className="font-semibold">
-                        You are not the admin. For help contact Harsh Singh.
-                    </p>
+                    { !adminUid && (
+                        <p className="font-semibold text-destructive">
+                            Admin UID is not configured on the server.
+                        </p>
+                    )}
                     <Button asChild>
                         <Link href="/">Return to Homepage</Link>
                     </Button>

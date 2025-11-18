@@ -25,8 +25,10 @@ export const signUpWithEmail = async (
       password
     );
     
+    // First, update the auth profile
     await updateProfile(userCredential.user, { displayName, photoURL });
 
+    // Then, create the user document in Firestore
     const userDocRef = doc(
       getFirestore(auth.app),
       'users',
@@ -39,12 +41,15 @@ export const signUpWithEmail = async (
       photoURL: photoURL,
     };
 
+    // Use a non-blocking write for better UX, but handle potential permission errors
     setDoc(userDocRef, userData, { merge: true }).catch((serverError) => {
+      console.error("Error creating user document:", serverError);
       const permissionError = new FirestorePermissionError({
         path: userDocRef.path,
         operation: 'create',
         requestResourceData: userData,
       });
+      // This will show the detailed error in the dev overlay if security rules fail
       errorEmitter.emit('permission-error', permissionError);
     });
 
