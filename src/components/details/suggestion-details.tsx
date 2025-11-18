@@ -75,7 +75,7 @@ export function SuggestionDetails({ suggestionId }: { suggestionId: string }) {
       <CardHeader>
         <div className="flex items-center justify-between mb-4">
           <Button asChild variant="outline" size="sm">
-            <Link href="/browse?tab=suggestions">
+            <Link href="/browse?tab=suggestions" prefetch={true}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Suggestions
             </Link>

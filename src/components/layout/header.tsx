@@ -43,7 +43,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2" prefetch={true}>
             <Logo />
           </Link>
         </div>
@@ -51,30 +51,35 @@ export function Header() {
             <Link
                 href="/browse"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
             >
                 Browse
             </Link>
             <Link
                 href="/suggestions/new"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
             >
                 Upload Suggestion
             </Link>
             <Link
                 href="/assignments/new"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
             >
                 Upload Assignment
             </Link>
             <Link
                 href="/about-site"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
             >
                 About This Site
             </Link>
              <Link
                 href="/about-admin"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
             >
                 About Admin
             </Link>

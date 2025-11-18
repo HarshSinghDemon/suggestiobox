@@ -59,7 +59,7 @@ export function ItemCard({ item, type }: ItemCardProps) {
         </div>
         
         <Button asChild className="w-full" variant="outline">
-          <Link href={detailsUrl}>
+          <Link href={detailsUrl} prefetch={true}>
             View Details <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>

@@ -75,7 +75,7 @@ export function AssignmentDetails({ assignmentId }: { assignmentId: string }) {
       <CardHeader>
         <div className="flex items-center justify-between mb-4">
           <Button asChild variant="outline" size="sm">
-            <Link href="/browse?tab=assignments">
+            <Link href="/browse?tab=assignments" prefetch={true}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Assignments
             </Link>

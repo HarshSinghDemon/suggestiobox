@@ -1,6 +1,6 @@
 'use client';
 import { cn } from '@/lib/utils';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 export const WavyBackground = ({
   children,
@@ -34,12 +34,10 @@ export const WavyBackground = ({
     );
   }, []);
 
-  const noise = `url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`;
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const animationFrameRef = useRef<number>(0);
 
-  const getSpeed = () => {
+  const getSpeed = useCallback(() => {
     switch (speed) {
       case 'slow':
         return 0.001;
@@ -48,13 +46,12 @@ export const WavyBackground = ({
       default:
         return 0.001;
     }
-  };
+  }, [speed]);
 
-  const init = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+  const init = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
     let waveWidthValue = waveWidth || 50;
     let waveCount = Math.ceil(width / waveWidthValue) + 2;
     let waveHeight = height * 0.5;
-
     let step = 0;
 
     const render = () => {
@@ -77,9 +74,9 @@ export const WavyBackground = ({
         ctx.lineTo(x, height);
         ctx.closePath();
 
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
         const gradColors = colors || ['#38bdf8', '#818cf8', '#c084fc', '#e879f9', '#22d3ee'];
         const colorIndex = i % gradColors.length;
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
         gradient.addColorStop(0, gradColors[colorIndex]);
         gradient.addColorStop(0.5, gradColors[(colorIndex + 1) % gradColors.length]);
 
@@ -87,10 +84,10 @@ export const WavyBackground = ({
         ctx.globalAlpha = waveOpacity || 0.5;
         ctx.fill();
       }
-      requestAnimationFrame(render);
+      animationFrameRef.current = requestAnimationFrame(render);
     };
     render();
-  };
+  }, [colors, getSpeed, waveOpacity, waveWidth]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,19 +95,28 @@ export const WavyBackground = ({
       const ctx = canvas.getContext('2d');
       if (ctx) {
         const resize = () => {
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
           const newWidth = canvas.parentElement?.offsetWidth || window.innerWidth;
           const newHeight = canvas.parentElement?.offsetHeight || window.innerHeight;
           canvas.width = newWidth;
           canvas.height = newHeight;
-          setDimensions({ width: newWidth, height: newHeight });
           init(ctx, newWidth, newHeight);
         };
+        
         window.addEventListener('resize', resize);
         resize();
-        return () => window.removeEventListener('resize', resize);
+        
+        return () => {
+          window.removeEventListener('resize', resize);
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+        };
       }
     }
-  }, [colors, waveWidth, speed, waveOpacity]);
+  }, [init]);
 
 
   return (

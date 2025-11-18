@@ -25,13 +25,13 @@ export default function Home() {
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
-                <Link href="/suggestions/new">
+                <Link href="/suggestions/new" prefetch={true}>
                     Give a Suggestion
                     <ChevronRight className="w-6 h-6 ml-2" />
                 </Link>
             </Button>
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
-                <Link href="/browse">
+                <Link href="/browse" prefetch={true}>
                     Explore Content
                     <ChevronRight className="w-6 h-6 ml-2" />
                 </Link>
