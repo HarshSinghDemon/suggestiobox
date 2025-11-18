@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useRef, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,22 +31,14 @@ const initialState: SuggestionFormState = {
 export function SuggestionForm() {
   const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
-  const [state, formAction] = useActionState(validateSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   
   const isDescriptionRequired = !file;
-
-  useEffect(() => {
-    if (state.success) {
-      // The formAction logic will run on the server and re-render the component with the new state.
-      // We do not proceed with upload here because state is from the *previous* render.
-      // The form's onSubmit handler will manage the upload process.
-    }
-  }, [state, toast, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -56,6 +47,7 @@ export function SuggestionForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFormState(initialState);
     setIsSubmitting(true);
     
     if (!user || !firestore) {
@@ -72,6 +64,7 @@ export function SuggestionForm() {
     const result = await validateSuggestion(initialState, formData);
 
     if (!result.success) {
+        setFormState(result);
         toast({
             variant: "destructive",
             title: "Validation Failed",
@@ -131,27 +124,27 @@ export function SuggestionForm() {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-      {state.message && !state.success && !state.errors?.ai && (
+      {formState.message && !formState.success && !formState.errors?.ai && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{state.message}</AlertDescription>
+          <AlertDescription>{formState.message}</AlertDescription>
         </Alert>
       )}
 
-      {state.errors?.ai && (
+      {formState.errors?.ai && (
          <Alert variant="destructive">
             <AlertCircle className="w-4 h-4" />
             <AlertTitle>Content Moderation</AlertTitle>
-            <AlertDescription>{state.errors.ai}</AlertDescription>
+            <AlertDescription>{formState.errors.ai}</AlertDescription>
         </Alert>
       )}
 
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input id="title" name="title" placeholder="e.g., Easy way to understand TCP handshake" required />
-        {state.errors?.title && (
-          <p className="text-sm font-medium text-destructive">{state.errors.title}</p>
+        {formState.errors?.title && (
+          <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
         )}
       </div>
 
@@ -166,8 +159,8 @@ export function SuggestionForm() {
           className="min-h-[120px]"
           required={isDescriptionRequired}
         />
-        {state.errors?.description && (
-          <p className="text-sm font-medium text-destructive">{state.errors.description}</p>
+        {formState.errors?.description && (
+          <p className="text-sm font-medium text-destructive">{formState.errors.description}</p>
         )}
       </div>
       
@@ -186,8 +179,8 @@ export function SuggestionForm() {
               ))}
             </SelectContent>
           </Select>
-          {state.errors?.subject && (
-            <p className="text-sm font-medium text-destructive">{state.errors.subject}</p>
+          {formState.errors?.subject && (
+            <p className="text-sm font-medium text-destructive">{formState.errors.subject}</p>
           )}
         </div>
 
@@ -199,8 +192,8 @@ export function SuggestionForm() {
             type="file" 
             onChange={handleFileChange}
           />
-          {state.errors?.file && (
-            <p className="text-sm font-medium text-destructive">{state.errors.file}</p>
+          {formState.errors?.file && (
+            <p className="text-sm font-medium text-destructive">{formState.errors.file}</p>
           )}
         </div>
       </div>
