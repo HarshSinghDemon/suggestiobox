@@ -29,12 +29,20 @@ export default function Home() {
               You can also upload helpful files for the community. And don't worry, you can choose to be anonymous.
             </p>
           </div>
-          <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/suggestions/new">
-              GIVE A SUGGESTION. <span role="img" aria-label="winking face" className="ml-2">😉</span>
-              <ChevronRight className="w-6 h-6 ml-2" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90">
+                <Link href="/suggestions/new">
+                    Give a Suggestion
+                    <ChevronRight className="w-6 h-6 ml-2" />
+                </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
+                <Link href="/browse">
+                    Explore Suggestions
+                    <ChevronRight className="w-6 h-6 ml-2" />
+                </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
