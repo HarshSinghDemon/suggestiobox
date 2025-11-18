@@ -29,7 +29,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Rules for the suggestions collection
+    // Rules for a single suggestion document
     match /suggestions/{suggestionId} {
       // Any authenticated user can read a single suggestion
       allow get: if isAuthenticated();
@@ -38,23 +38,28 @@ service cloud.firestore {
       // Only the owner or an admin can update or delete a suggestion
       allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
     }
+    
+    // Rule for listing the entire suggestions collection
     match /suggestions {
-        // Any authenticated user can list the suggestions
-        allow list: if isAuthenticated();
+      allow list: if isAuthenticated();
     }
 
-
-    // Rules for the assignments collection
+    // Rules for a single assignment document
     match /assignments/{assignmentId} {
-      // Any authenticated user can get a single document and write to it.
-      allow read, write: if isAuthenticated();
-    }
-    match /assignments {
-        // Any authenticated user can list the assignments
-        allow list: if isAuthenticated();
+      // Any authenticated user can read a single assignment
+      allow get: if isAuthenticated();
+       // Any authenticated user can create an assignment
+      allow create: if isAuthenticated();
+      // Only the owner or an admin can update or delete an assignment
+      allow update, delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.userId));
     }
 
-    // Rules for the messages collection
+    // Rule for listing the entire assignments collection
+    match /assignments {
+      allow list: if isAuthenticated();
+    }
+
+    // Rules for a single message document
     match /messages/{messageId} {
         // Any authenticated user can read a single message
         allow get: if isAuthenticated();
@@ -65,8 +70,9 @@ service cloud.firestore {
         // Updates are not allowed for messages
         allow update: if false;
     }
+
+    // Rule for listing the entire messages collection
     match /messages {
-        // Any authenticated user can list the messages
         allow list: if isAuthenticated();
     }
   }
