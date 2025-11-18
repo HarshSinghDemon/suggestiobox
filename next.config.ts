@@ -38,7 +38,6 @@ const nextConfig: NextConfig = {
       maxDuration: 120, // 2 minutes
     },
   },
-  env: {}
 };
 
 export default nextConfig;
