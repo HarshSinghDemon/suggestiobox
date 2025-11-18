@@ -232,7 +232,7 @@ export function SuggestionForm() {
             <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
             )}
         </div>
-        {!user && (
+        {!user && !isUserLoading && (
             <div className="space-y-2">
                 <Label htmlFor="name">Your Name (Optional)</Label>
                 <Input id="name" name="name" placeholder="John Doe" />
