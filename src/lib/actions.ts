@@ -8,7 +8,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes, getStorage } from 'firebase/storage';
-import { SUBJECTS } from './constants';
+import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
 import { initializeFirebaseForServer } from '@/firebase/server-init';
 
@@ -20,7 +20,7 @@ const suggestionSchema = z.object({
 
 const assignmentSchema = z.object({
     description: z.string().min(10, 'Description must be at least 10 characters'),
-    subject: z.enum(SUBJECTS),
+    subject: z.enum(ASSIGNMENT_SUBJECTS),
 });
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];

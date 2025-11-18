@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useActionState } from 'react';
+import { useActionState } from 'react-dom';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { uploadAssignment, AssignmentFormState } from '@/lib/actions';
-import { SUBJECTS } from '@/lib/constants';
+import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -87,7 +87,7 @@ export function AssignmentForm() {
               <SelectValue placeholder="Select a subject" />
             </SelectTrigger>
             <SelectContent>
-              {SUBJECTS.map((subject) => (
+              {ASSIGNMENT_SUBJECTS.map((subject) => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
                 </SelectItem>
