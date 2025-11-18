@@ -24,10 +24,10 @@ import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full">
+    <Button type="submit" disabled={pending || disabled} className="w-full">
       {pending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
       {pending ? 'Submitting...' : 'Upload Assignment'}
     </Button>
@@ -161,7 +161,7 @@ export function AssignmentForm() {
         </div>
       </div>
 
-      <SubmitButton />
+      <SubmitButton disabled={!idToken} />
     </form>
   );
 }
