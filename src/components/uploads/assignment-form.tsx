@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { validateAssignment } from '@/lib/actions';
+import { validateAssignment, getImageKitAuthenticator } from '@/lib/actions';
 import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,11 @@ const initialFileUploadState: FileUploadState = {
   error: null,
   isUploading: false,
 };
+
+const imagekit = new ImageKit({
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+});
 
 export function AssignmentForm() {
   const firestore = useFirestore();
@@ -74,25 +79,15 @@ export function AssignmentForm() {
     });
 
     try {
-      const authResponse = await fetch('/api/imagekit/auth');
-      if (!authResponse.ok) {
-        throw new Error('Failed to authenticate with ImageKit.');
-      }
-      const authData = await authResponse.json();
-
-      const imagekit = new ImageKit({
-        urlEndpoint: authData.url,
-        publicKey: authData.publicKey,
-      });
-
       imagekit.upload(
         {
           file: file,
           fileName: file.name,
-          token: authData.token,
-          expire: authData.expire,
-          signature: authData.signature,
           useUniqueFileName: true,
+          authenticator: async () => {
+            // Using a server action as the authenticator
+            return await getImageKitAuthenticator();
+          },
           onUploadProgress: (progress) => {
             setFileUpload((prev) => ({...prev, progress: progress.loaded / progress.total * 100}));
           }
@@ -129,7 +124,6 @@ export function AssignmentForm() {
   };
 
   const handleRemoveFile = () => {
-    // No need to delete from ImageKit for this simplified version
     setFileUpload(initialFileUploadState);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
+import ImageKit from 'imagekit';
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -109,4 +110,28 @@ export async function validateAssignment(
     revalidatePath('/browse');
     revalidatePath('/');
     return { message: 'Validation successful!', success: true, errors: {} };
+}
+
+export async function getImageKitAuthenticator() {
+  const { IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT } = process.env;
+
+  if (!IMAGEKIT_PUBLIC_KEY || !IMAGEKIT_PRIVATE_KEY || !IMAGEKIT_URL_ENDPOINT) {
+    console.error('ImageKit environment variables are not configured.');
+    throw new Error('Server configuration error for ImageKit.');
+  }
+
+  try {
+    const imagekit = new ImageKit({
+      publicKey: IMAGEKIT_PUBLIC_KEY,
+      privateKey: IMAGEKIT_PRIVATE_KEY,
+      urlEndpoint: IMAGEKIT_URL_ENDPOINT,
+    });
+    
+    const authenticationParameters = imagekit.getAuthenticationParameters();
+    return authenticationParameters;
+  } catch (error) {
+    console.error('Error getting ImageKit authentication parameters:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    throw new Error(`Error generating ImageKit token: ${errorMessage}`);
+  }
 }

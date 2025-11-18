@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
+import { validateSuggestion, getImageKitAuthenticator, type SuggestionFormState } from '@/lib/actions';
 import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +46,11 @@ const initialFileUploadState: FileUploadState = {
   error: null,
   isUploading: false,
 };
+
+const imagekit = new ImageKit({
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+});
 
 export function SuggestionForm() {
   const firestore = useFirestore();
@@ -82,25 +87,15 @@ export function SuggestionForm() {
     });
     
     try {
-      const authResponse = await fetch('/api/imagekit/auth');
-       if (!authResponse.ok) {
-        throw new Error(`Failed to authenticate with ImageKit. Status: ${authResponse.status}`);
-      }
-      const authData = await authResponse.json();
-
-      const imagekit = new ImageKit({
-        urlEndpoint: authData.url,
-        publicKey: authData.publicKey,
-      });
-
       imagekit.upload(
         {
           file: file,
           fileName: file.name,
-          token: authData.token,
-          expire: authData.expire,
-          signature: authData.signature,
           useUniqueFileName: true,
+          authenticator: async () => {
+            // Using a server action as the authenticator
+            return await getImageKitAuthenticator();
+          },
           onUploadProgress: (progress) => {
             setFileUpload(prev => ({...prev, progress: progress.loaded / progress.total * 100}));
           }
