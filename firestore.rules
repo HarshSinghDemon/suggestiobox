@@ -6,11 +6,11 @@
  * but allows public read access for browsing.
  *
  * Data Structure:
- * All suggestions and assignments are stored in root-level collections.
+ * All suggestions, assignments, and messages are stored in root-level collections.
  *
  * Key Security Decisions:
- * - Any user, including unauthenticated visitors, can read (get, list) suggestions and assignments.
- * - Users can only create suggestions and assignments for themselves (uid must match).
+ * - Any user, including unauthenticated visitors, can read (get, list) suggestions, assignments and messages.
+ * - Users can only create suggestions, assignments and messages for themselves (uid must match).
  * - Users can only update or delete their own suggestions and assignments.
  * - User profile documents (/users/{userId}) are private to the owner.
  */
@@ -53,6 +53,21 @@ service cloud.firestore {
 
       // Only the owner can update or delete their assignment.
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    /**
+     * @description Secures the 'messages' collection for the community chat.
+     * Allows public reads but restricts writes to authenticated users.
+     */
+    match /messages/{messageId} {
+      // Anyone can read chat messages.
+      allow get, list: if true;
+
+      // Only an authenticated user can create a message, and the userId must match their own.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // No one can update or delete messages to preserve chat history.
+      allow update, delete: if false;
     }
   }
 }

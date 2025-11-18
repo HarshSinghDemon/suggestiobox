@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -42,7 +42,7 @@ export function Header() {
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent backdrop-blur-md">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="flex items-center space-x-2" prefetch={true}>
@@ -58,18 +58,18 @@ export function Header() {
                 Browse
             </Link>
             <Link
+                href="/community-chat"
+                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={true}
+            >
+                Community Chat
+            </Link>
+            <Link
                 href="/suggestions/new"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
                 prefetch={true}
             >
-                Upload Suggestion
-            </Link>
-            <Link
-                href="/assignments/new"
-                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={true}
-            >
-                Upload Assignment
+                Upload
             </Link>
             <Link
                 href="/about-site"
@@ -115,6 +115,10 @@ export function Header() {
                 <DropdownMenuItem onClick={() => router.push('/browse')}>
                   <Compass className="w-4 h-4 mr-2" />
                   <span>Browse</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => router.push('/community-chat')}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  <span>Community Chat</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}>
                   <PlusCircle className="w-4 h-4 mr-2" />

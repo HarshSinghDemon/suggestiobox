@@ -114,6 +114,41 @@
         "fileUrl",
         "uploadDate"
       ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message in the community chat.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Message entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who sent the message."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The display name of the user who sent the message."
+        },
+        "userImage": {
+          "type": "string",
+          "description": "The profile picture URL of the user.",
+          "format": "uri"
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the chat message."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the message was created.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "text", "createdAt"]
     }
   },
   "auth": {
@@ -140,18 +175,14 @@
         }
       },
       {
-        "path": "/users/{userId}/suggestions/{suggestionId}",
+        "path": "/suggestions/{suggestionId}",
         "definition": {
           "entityName": "Suggestion",
           "schema": {
             "$ref": "#/backend/entities/Suggestion"
           },
-          "description": "Stores suggestions uploaded by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores suggestions uploaded by any user in a single root collection.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who uploaded the suggestion."
-            },
             {
               "name": "suggestionId",
               "description": "The unique identifier of the suggestion."
@@ -160,21 +191,33 @@
         }
       },
       {
-        "path": "/users/{userId}/assignments/{assignmentId}",
+        "path": "/assignments/{assignmentId}",
         "definition": {
           "entityName": "Assignment",
           "schema": {
             "$ref": "#/backend/entities/Assignment"
           },
-          "description": "Stores assignments uploaded by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores assignments uploaded by any user in a single root collection.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who uploaded the assignment."
-            },
             {
               "name": "assignmentId",
               "description": "The unique identifier of the assignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores all chat messages in a single root collection for the community chat.",
+          "params": [
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the chat message."
             }
           ]
         }

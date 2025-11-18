@@ -34,3 +34,12 @@ export type Assignment = {
   fileName: string;
   fileType: string;
 };
+
+export type Message = {
+  id: string;
+  text: string;
+  createdAt: Timestamp;
+  userId: string;
+  userName: string | null;
+  userImage: string | null;
+};
