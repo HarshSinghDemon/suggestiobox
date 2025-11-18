@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
+import { uploadFileToSupabase } from '@/lib/supabase/storage';
 
 const initialState: SuggestionFormState = {
   message: '',
@@ -55,7 +56,6 @@ export function SuggestionForm() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadController, setUploadController] = useState<AbortController | null>(null);
 
   const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,39 +76,16 @@ export function SuggestionForm() {
       return;
     }
 
-    const controller = new AbortController();
-    setUploadController(controller);
-
     setFileUpload({
       ...initialFileUploadState,
       isUploading: true,
       name: file.name,
       type: file.type,
+      progress: 50, // Simulate progress
     });
     
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // We simulate progress for fetch uploads
-      const progressInterval = setInterval(() => {
-        setFileUpload(prev => ({ ...prev, progress: Math.min(prev.progress + 10, 90) }));
-      }, 500);
-
-      const response = await fetch('/api/imagekit/upload-to-supabase', {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
-
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
-      }
-
-      const result = await response.json();
+      const result = await uploadFileToSupabase(file);
 
       setFileUpload({
         ...initialFileUploadState,
@@ -119,26 +96,17 @@ export function SuggestionForm() {
         isUploading: false,
         progress: 100,
       });
-      setUploadController(null);
 
     } catch (error: any) {
-        if (error.name === 'AbortError') {
-            console.log('Upload aborted');
-            setFileUpload({ ...initialFileUploadState, error: 'Upload cancelled.'});
-        } else {
-            console.error('File upload failed:', error);
-            setFileUpload({
-                ...initialFileUploadState,
-                error: 'File upload failed. Please try again.',
-            });
-        }
+        console.error('File upload failed:', error);
+        setFileUpload({
+            ...initialFileUploadState,
+            error: 'File upload failed. Please check console for details and ensure CORS rules are set in Supabase.',
+        });
     }
   };
 
   const handleRemoveFile = () => {
-    if (uploadController) {
-      uploadController.abort();
-    }
     setFileUpload(initialFileUploadState);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
