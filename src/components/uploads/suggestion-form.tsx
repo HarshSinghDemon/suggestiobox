@@ -64,11 +64,11 @@ export function SuggestionForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      // 10MB limit
+    if (file.size > 100 * 1024 * 1024) {
+      // 100MB limit
       setFileUpload({
         ...initialFileUploadState,
-        error: 'File size must be less than 10MB.',
+        error: 'File size must be less than 100MB.',
       });
       return;
     }
