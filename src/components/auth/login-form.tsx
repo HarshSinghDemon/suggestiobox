@@ -13,13 +13,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { signInWithEmail } from '@/lib/firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useAuth as useFirebaseAuth } from '@/firebase';
-import { User } from 'firebase/auth';
+import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -30,6 +29,7 @@ export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const auth = useFirebaseAuth();
+  const { user, isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,16 +39,30 @@ export function LoginForm() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setError(null);
-    try {
-      const user = await signInWithEmail(auth, values.email, values.password);
-      console.log('User logged in:', user); // This will show the UID in the console
+  useEffect(() => {
+    if (user && !isUserLoading) {
       router.push('/');
-    } catch (e: any) {
-      setError('Failed to sign in. Please check your credentials.');
-      console.error(e);
     }
+  }, [user, isUserLoading, router]);
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    setError(null);
+    form.clearErrors();
+
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .then(userCredential => {
+        // This block will execute on successful login.
+        // The onAuthStateChanged listener in the provider will handle the redirect.
+      })
+      .catch(error => {
+        // Handle specific auth errors
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          setError('Invalid email or password. Please try again.');
+        } else {
+          setError('An unexpected error occurred. Please try again later.');
+        }
+        console.error("Login Error:", error);
+      });
   };
 
   return (
@@ -58,7 +72,7 @@ export function LoginForm() {
           {error && (
               <Alert variant="destructive">
                   <AlertCircle className="w-4 h-4" />
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>Login Failed</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
               </Alert>
           )}
