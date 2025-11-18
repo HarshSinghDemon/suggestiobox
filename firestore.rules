@@ -9,7 +9,7 @@
  * All suggestions and assignments are stored in root-level collections.
  *
  * Key Security Decisions:
- * - Any authenticated user can read (get, list) suggestions and assignments.
+ * - Any user, including unauthenticated visitors, can read (get, list) suggestions and assignments.
  * - Users can only create suggestions and assignments for themselves (uid must match).
  * - Users can only update or delete their own suggestions and assignments.
  * - User profile documents (/users/{userId}) are private to the owner.
@@ -30,8 +30,8 @@ service cloud.firestore {
      * Allows public reads but restricts writes/deletes to owners.
      */
     match /suggestions/{suggestionId} {
-      // Any authenticated user can read suggestions.
-      allow get, list: if request.auth != null;
+      // Anyone can read suggestions.
+      allow get, list: if true;
 
       // Only the owner can create a suggestion, and the userId must be correct.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
@@ -45,8 +45,8 @@ service cloud.firestore {
      * Allows public reads but restricts writes/deletes to owners.
      */
     match /assignments/{assignmentId} {
-      // Any authenticated user can read assignments.
-      allow get, list: if request.auth != null;
+      // Anyone can read assignments.
+      allow get, list: if true;
 
       // Only the owner can create an assignment, and the userId must be correct.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
