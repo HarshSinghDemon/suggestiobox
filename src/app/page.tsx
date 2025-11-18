@@ -23,7 +23,7 @@ export default function Home() {
           </h1>
           <div className="max-w-md space-y-4">
             <p className="text-lg">
-              Have an idea for a new assignment, a helpful study tip, or a suggestion for a class? Share it here!
+              Got full lab assignments, a helpful study tip, or a suggestion for a class? Share it here!
             </p>
             <p className="text-lg">
               You can also upload helpful files for the community. #proudsectionB #BforBhaukali
