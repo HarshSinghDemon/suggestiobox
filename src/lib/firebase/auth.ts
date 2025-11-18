@@ -24,6 +24,8 @@ export const signUpWithEmail = async (
       email,
       password
     );
+    
+    // The photoURL from Dicebear is a full URL, so we can use it directly.
     await updateProfile(userCredential.user, { displayName, photoURL });
 
     const userDocRef = doc(
