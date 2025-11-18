@@ -15,10 +15,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { signUpWithEmail } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import Image from 'next/image';
 
 const formSchema = z.object({
@@ -32,6 +32,7 @@ export function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const auth = useFirebaseAuth();
+  const { user, isUserLoading } = useUser();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,21 +51,28 @@ export function SignUpForm() {
     const seed = encodeURIComponent(nameValue);
     return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
   }, [nameValue]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setError(null);
-    const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
-    try {
-      await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
+  
+  useEffect(() => {
+    if (user && !isUserLoading) {
       router.push('/');
-    } catch (e: any) {
-      if (e.code === 'auth/email-already-in-use') {
-        setError('This email is already in use. Please log in.');
-      } else {
-        setError('Failed to create an account. Please try again.');
-      }
-      console.error(e);
     }
+  }, [user, isUserLoading, router]);
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    setError(null);
+    form.clearErrors();
+    const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
+    
+    // We don't await here. We let the onAuthStateChanged listener handle the redirect.
+    signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL)
+    .catch((e: any) => {
+        if (e.code === 'auth/email-already-in-use') {
+            setError('This email is already in use. Please log in.');
+        } else {
+            setError('Failed to create an account. Please try again.');
+        }
+        console.error(e);
+    });
   };
 
   return (
