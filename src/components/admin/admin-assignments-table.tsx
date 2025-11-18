@@ -103,8 +103,8 @@ export function AdminAssignmentsTable() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead className="hidden md:table-cell">User</TableHead>
+            <TableHead className="hidden md:table-cell">Date</TableHead>
             <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -113,9 +113,9 @@ export function AdminAssignmentsTable() {
           {assignments && assignments.length > 0 ? (
             assignments.map((assignment) => (
               <TableRow key={assignment.id}>
-                <TableCell className="font-medium truncate max-w-sm">{assignment.title}</TableCell>
-                <TableCell>{assignment.userName || 'Anonymous'}</TableCell>
-                <TableCell>{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell className="font-medium truncate max-w-[150px] md:max-w-sm">{assignment.title}</TableCell>
+                <TableCell className="hidden md:table-cell">{assignment.userName || 'Anonymous'}</TableCell>
+                <TableCell className="hidden md:table-cell">{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
                 <TableCell>
                   <a
                     href={assignment.fileUrl}

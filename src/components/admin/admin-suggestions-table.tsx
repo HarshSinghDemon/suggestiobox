@@ -103,8 +103,8 @@ export function AdminSuggestionsTable() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>User</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead className="hidden md:table-cell">User</TableHead>
+            <TableHead className="hidden md:table-cell">Date</TableHead>
             <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -113,9 +113,9 @@ export function AdminSuggestionsTable() {
           {suggestions && suggestions.length > 0 ? (
             suggestions.map((suggestion) => (
               <TableRow key={suggestion.id}>
-                <TableCell className="font-medium">{suggestion.title}</TableCell>
-                <TableCell>{suggestion.userName || 'Anonymous'}</TableCell>
-                <TableCell>{suggestion.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell className="font-medium max-w-[150px] md:max-w-sm truncate">{suggestion.title}</TableCell>
+                <TableCell className="hidden md:table-cell">{suggestion.userName || 'Anonymous'}</TableCell>
+                <TableCell className="hidden md:table-cell">{suggestion.createdAt.toDate().toLocaleDateString()}</TableCell>
                 <TableCell>
                   {suggestion.fileUrl ? (
                     <a

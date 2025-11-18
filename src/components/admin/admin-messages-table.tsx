@@ -82,9 +82,9 @@ export function AdminMessagesTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">User</TableHead>
+            <TableHead className="w-[150px] hidden sm:table-cell">User</TableHead>
             <TableHead>Message</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead className="hidden md:table-cell">Date</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -92,17 +92,17 @@ export function AdminMessagesTable() {
           {messages && messages.length > 0 ? (
             messages.map((message) => (
               <TableRow key={message.id}>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-2">
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={message.userImage ?? undefined} />
                       <AvatarFallback>{getInitials(message.userName)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{message.userName || 'Anonymous'}</span>
+                    <span className="font-medium truncate">{message.userName || 'Anonymous'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-md truncate">{message.text}</TableCell>
-                <TableCell>{message.createdAt.toDate().toLocaleString()}</TableCell>
+                <TableCell className="max-w-[150px] sm:max-w-md truncate">{message.text}</TableCell>
+                <TableCell className="hidden md:table-cell">{message.createdAt.toDate().toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
