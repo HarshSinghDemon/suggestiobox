@@ -69,7 +69,7 @@ service cloud.firestore {
 
     /**
      * @description Secures the 'messages' collection for the community chat.
-     * Allows public reads but restricts writes to authenticated users.
+     * Allows public reads but restricts writes to authenticated users and deletes to owners/admin.
      */
     match /messages/{messageId} {
       // Anyone can read chat messages.
@@ -77,9 +77,12 @@ service cloud.firestore {
 
       // Only an authenticated user can create a message, and the userId must match their own.
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      
+      // The owner or the admin can delete a message.
+      allow delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
 
-      // No one can update or delete messages to preserve chat history.
-      allow update, delete: if false;
+      // No one can update messages to preserve chat history.
+      allow update: if false;
     }
   }
 }
