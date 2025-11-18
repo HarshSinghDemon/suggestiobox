@@ -2,15 +2,13 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-} from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes, getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { initializeFirebaseForAdmin } from '@/lib/firebase/admin-init';
 import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
-import { initializeFirebaseForServer } from '@/firebase/server-init';
+
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -45,14 +43,25 @@ export async function uploadSuggestion(
   prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
-  const { auth, firestore, app } = await initializeFirebaseForServer();
+  const app = await initializeFirebaseForAdmin();
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
   const storage = getStorage(app);
-  
-  const user = auth.currentUser;
-  if (!user) {
-    return { message: 'Authentication Error: You must be logged in to create a suggestion.', errors: {}, success: false };
+
+  const idToken = formData.get('idToken') as string;
+  if (!idToken) {
+    return { message: 'Authentication Error: Missing user token.', errors: {}, success: false };
+  }
+
+  let decodedToken;
+  try {
+    decodedToken = await auth.verifyIdToken(idToken);
+  } catch (error) {
+    return { message: 'Authentication Error: Invalid user token.', errors: {}, success: false };
   }
   
+  const user = await auth.getUser(decodedToken.uid);
+
   const file = formData.get('file') as File;
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
@@ -103,26 +112,38 @@ export async function uploadSuggestion(
 
   try {
     if (file && file.size > 0) {
-      const storageRef = ref(storage, `suggestions/${user.uid}/${Date.now()}-${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      fileUrl = await getDownloadURL(snapshot.ref);
+      const bucket = storage.bucket();
+      const filePath = `suggestions/${user.uid}/${Date.now()}-${file.name}`;
+      const fileUpload = bucket.file(filePath);
+      const buffer = Buffer.from(await file.arrayBuffer());
+      
+      await fileUpload.save(buffer, {
+        metadata: {
+          contentType: file.type,
+        },
+      });
+
+      // Make the file publicly readable
+      await fileUpload.makePublic();
+      fileUrl = fileUpload.publicUrl();
       fileName = file.name;
       fileType = file.type;
     }
 
-    await addDoc(collection(firestore, 'suggestions'), {
+    await firestore.collection('suggestions').add({
       title,
       description: description || '',
       subject,
       fileUrl,
       fileName,
       fileType,
-      createdAt: serverTimestamp(),
+      createdAt: new Date(),
       userId: user.uid,
       userName: user.displayName,
       userImage: user.photoURL,
     });
   } catch (e: any) {
+    console.error("Error during upload:", e);
     return { message: `Database Error: ${e.message}`, errors: {}, success: false };
   }
 
@@ -146,13 +167,24 @@ export type AssignmentFormState = {
     prevState: AssignmentFormState,
     formData: FormData
   ): Promise<AssignmentFormState> {
-    const { auth, firestore, app } = await initializeFirebaseForServer();
+    const app = await initializeFirebaseForAdmin();
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
     const storage = getStorage(app);
-    
-    const user = auth.currentUser;
-    if (!user) {
-      return { message: 'Authentication Error: You must be logged in to upload an assignment.', errors: {}, success: false };
+
+    const idToken = formData.get('idToken') as string;
+    if (!idToken) {
+      return { message: 'Authentication Error: Missing user token.', errors: {}, success: false };
     }
+  
+    let decodedToken;
+    try {
+      decodedToken = await auth.verifyIdToken(idToken);
+    } catch (error) {
+      return { message: 'Authentication Error: Invalid user token.', errors: {}, success: false };
+    }
+    
+    const user = await auth.getUser(decodedToken.uid);
   
     const validatedFields = assignmentSchema.safeParse({
       description: formData.get('description'),
@@ -183,22 +215,33 @@ export type AssignmentFormState = {
     const { description, subject } = validatedFields.data;
 
     try {
-      const storageRef = ref(storage, `assignments/${user.uid}/${Date.now()}-${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const fileUrl = await getDownloadURL(snapshot.ref);
+      const bucket = storage.bucket();
+      const filePath = `assignments/${user.uid}/${Date.now()}-${file.name}`;
+      const fileUpload = bucket.file(filePath);
+      const buffer = Buffer.from(await file.arrayBuffer());
+
+      await fileUpload.save(buffer, {
+        metadata: {
+          contentType: file.type,
+        },
+      });
+
+      await fileUpload.makePublic();
+      const fileUrl = fileUpload.publicUrl();
   
-      await addDoc(collection(firestore, 'assignments'), {
+      await firestore.collection('assignments').add({
         description,
         subject,
         fileUrl,
         fileName: file.name,
         fileType: file.type,
-        createdAt: serverTimestamp(),
+        createdAt: new Date(),
         userId: user.uid,
         userName: user.displayName,
         userImage: user.photoURL,
       });
     } catch (e: any) {
+      console.error("Error during upload:", e);
       return { message: `Database Error: ${e.message}`, errors: {}, success: false };
     }
   

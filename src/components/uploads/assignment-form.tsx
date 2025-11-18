@@ -20,6 +20,7 @@ import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -38,6 +39,7 @@ const initialState: AssignmentFormState = {
 };
 
 export function AssignmentForm() {
+  const { user } = useAuth();
   const [state, formAction] = useActionState(uploadAssignment, initialState);
   const { toast } = useToast();
   const router = useRouter();
@@ -55,8 +57,20 @@ export function AssignmentForm() {
     }
   }, [state.success, state.message, toast, router]);
 
+  const actionWithToken = async (formData: FormData) => {
+    if (user) {
+        try {
+            const idToken = await user.getIdToken();
+            formData.append('idToken', idToken);
+            formAction(formData);
+        } catch (error) {
+            console.error("Failed to get ID token:", error);
+        }
+    }
+  };
+
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
+    <form ref={formRef} action={actionWithToken} className="space-y-6">
       {state.message && !state.success && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />

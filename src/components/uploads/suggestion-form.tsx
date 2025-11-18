@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useActionState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -37,6 +39,7 @@ const initialState: SuggestionFormState = {
 };
 
 export function SuggestionForm() {
+  const { user } = useAuth();
   const [state, formAction] = useActionState(uploadSuggestion, initialState);
   const { toast } = useToast();
   const router = useRouter();
@@ -62,8 +65,21 @@ export function SuggestionForm() {
     setFile(selectedFile || null);
   }
 
+  const actionWithToken = async (formData: FormData) => {
+    if (user) {
+        try {
+            const idToken = await user.getIdToken();
+            formData.append('idToken', idToken);
+            formAction(formData);
+        } catch (error) {
+            console.error("Failed to get ID token:", error);
+            // Handle error, maybe show a toast to the user
+        }
+    }
+  };
+
   return (
-    <form ref={formRef} action={formAction} className="space-y-6">
+    <form ref={formRef} action={actionWithToken} className="space-y-6">
       {state.message && !state.success && !state.errors?.ai && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
