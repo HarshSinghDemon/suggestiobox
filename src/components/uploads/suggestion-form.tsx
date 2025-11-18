@@ -18,7 +18,7 @@ import { SUBJECTS } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
@@ -29,6 +29,7 @@ const initialState: SuggestionFormState = {
 };
 
 export function SuggestionForm() {
+  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -46,6 +47,16 @@ export function SuggestionForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isAuthLoading) {
+      toast({
+        variant: "destructive",
+        title: "Authentication still loading",
+        description: "Please wait a moment and try again.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setFormState(initialState);
     
@@ -78,9 +89,9 @@ export function SuggestionForm() {
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: 'anonymous',
-        userName: (formData.get('name') as string) || 'Anonymous',
-        userImage: null,
+        userId: user?.uid || 'anonymous',
+        userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
+        userImage: user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: '',
         fileName: file?.name || '',
@@ -91,7 +102,8 @@ export function SuggestionForm() {
       
       if (file) {
         const storage = getStorage();
-        const storageRef = ref(storage, `suggestions/anonymous/${Date.now()}-${file.name}`);
+        const storagePath = `suggestions/${docData.userId}/${Date.now()}-${file.name}`;
+        const storageRef = ref(storage, storagePath);
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
         
@@ -146,10 +158,12 @@ export function SuggestionForm() {
             <p className="text-sm font-medium text-destructive">{formState.errors.title}</p>
             )}
         </div>
-        <div className="space-y-2">
-            <Label htmlFor="name">Your Name (Optional)</Label>
-            <Input id="name" name="name" placeholder="John Doe" />
-        </div>
+        {!user && (
+            <div className="space-y-2">
+                <Label htmlFor="name">Your Name (Optional)</Label>
+                <Input id="name" name="name" placeholder="John Doe" />
+            </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -202,7 +216,7 @@ export function SuggestionForm() {
         </div>
       </div>
       
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
       </Button>

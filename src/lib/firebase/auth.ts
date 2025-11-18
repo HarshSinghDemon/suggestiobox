@@ -38,7 +38,6 @@ export const signUpWithEmail = async (
       displayName: displayName,
     };
 
-    // Non-blocking write with contextual error handling
     setDoc(userDocRef, userData, { merge: true }).catch((serverError) => {
       const permissionError = new FirestorePermissionError({
         path: userDocRef.path,
@@ -46,13 +45,10 @@ export const signUpWithEmail = async (
         requestResourceData: userData,
       });
       errorEmitter.emit('permission-error', permissionError);
-      // We still throw the original error for other handlers, but the listener will catch the detailed one
-      throw serverError;
     });
 
     return userCredential.user;
   } catch (error) {
-    // This will catch the initial auth error, or the re-thrown firestore error
     console.error('Error signing up: ', error);
     throw error;
   }
@@ -82,7 +78,6 @@ export const signInWithGoogle = async (auth: Auth) => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
   
-      // Create user profile in Firestore if it doesn't exist
       const userDocRef = doc(getFirestore(auth.app), "users", user.uid);
       const userData = {
         id: user.uid,
@@ -97,7 +92,6 @@ export const signInWithGoogle = async (auth: Auth) => {
           requestResourceData: userData,
         });
         errorEmitter.emit('permission-error', permissionError);
-        throw serverError;
       });
 
       return user;

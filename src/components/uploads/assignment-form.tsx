@@ -17,11 +17,12 @@ import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useFirestore } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 export function AssignmentForm() {
+  const { user, loading: isAuthLoading } = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -36,6 +37,15 @@ export function AssignmentForm() {
   
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isAuthLoading) {
+      toast({
+        variant: "destructive",
+        title: "Authentication still loading",
+        description: "Please wait a moment and try again.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
@@ -65,7 +75,7 @@ export function AssignmentForm() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'File is required.',
+        description: 'File is required for an assignment.',
       });
       setIsSubmitting(false);
       return;
@@ -75,9 +85,9 @@ export function AssignmentForm() {
       const docData = {
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        userId: 'anonymous',
-        userName: 'Anonymous',
-        userImage: null,
+        userId: user?.uid || 'anonymous',
+        userName: user?.displayName || 'Anonymous',
+        userImage: user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: '',
         fileName: file.name,
@@ -87,7 +97,9 @@ export function AssignmentForm() {
       const docRef = await addDoc(collection(firestore, 'assignments'), docData);
       
       const storage = getStorage();
-      const storageRef = ref(storage, `assignments/anonymous/${Date.now()}-${file.name}`);
+      const storagePath = `assignments/${docData.userId}/${Date.now()}-${file.name}`;
+      const storageRef = ref(storage, storagePath);
+      
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       
@@ -101,7 +113,7 @@ export function AssignmentForm() {
       
       formRef.current?.reset();
       setFile(null);
-      router.push('/browse');
+      router.push('/browse?tab=assignments');
     } catch (error) {
       console.error('Submission error:', error);
       toast({
@@ -157,7 +169,7 @@ export function AssignmentForm() {
         </div>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+      <Button type="submit" disabled={isSubmitting || isAuthLoading} className="w-full">
         {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
         {isSubmitting ? 'Submitting...' : 'Upload Assignment'}
       </Button>
