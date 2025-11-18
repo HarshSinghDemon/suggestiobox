@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -27,6 +28,8 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const auth = useFirebaseAuth();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,7 +41,7 @@ export function LoginForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     try {
-      await signInWithEmail(values.email, values.password);
+      await signInWithEmail(auth, values.email, values.password);
       router.push('/');
     } catch (e: any) {
       setError('Failed to sign in. Please check your credentials.');

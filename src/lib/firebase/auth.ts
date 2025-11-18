@@ -5,11 +5,11 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  Auth,
 } from 'firebase/auth';
-import { auth } from './config';
-
 
 export const signUpWithEmail = async (
+  auth: Auth,
   email: string,
   password: string,
   displayName: string
@@ -21,6 +21,7 @@ export const signUpWithEmail = async (
       password
     );
     await updateProfile(userCredential.user, { displayName });
+    // TODO: Create user profile in Firestore
     return userCredential.user;
   } catch (error) {
     console.error('Error signing up: ', error);
@@ -28,7 +29,7 @@ export const signUpWithEmail = async (
   }
 };
 
-export const signInWithEmail = async (email: string, password: string) => {
+export const signInWithEmail = async (auth: Auth, email: string, password: string) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
@@ -38,7 +39,7 @@ export const signInWithEmail = async (email: string, password: string) => {
     }
 }
 
-export const signOut = async () => {
+export const signOut = async (auth: Auth) => {
   try {
     await firebaseSignOut(auth);
   } catch (error) {

@@ -8,12 +8,13 @@ import {
   where,
   limit,
 } from 'firebase/firestore';
-import { db } from './config';
+import { initializeFirebase } from '@/firebase';
 import type { Suggestion, Assignment } from '@/lib/types';
 import type { Subject } from '@/lib/constants';
 
 export async function getSuggestions(activeSubject?: Subject): Promise<Suggestion[]> {
-  const suggestionsCol = collection(db, 'suggestions');
+  const { firestore } = initializeFirebase();
+  const suggestionsCol = collection(firestore, 'suggestions');
   let q;
 
   if (activeSubject) {
@@ -34,7 +35,8 @@ export async function getSuggestions(activeSubject?: Subject): Promise<Suggestio
 }
 
 export async function getAssignments(activeSubject?: Subject): Promise<Assignment[]> {
-  const assignmentsCol = collection(db, 'assignments');
+  const { firestore } = initializeFirebase();
+  const assignmentsCol = collection(firestore, 'assignments');
   let q;
 
   if (activeSubject) {

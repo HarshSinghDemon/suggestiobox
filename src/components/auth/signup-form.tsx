@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useAuth as useFirebaseAuth } from '@/firebase';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -28,6 +29,8 @@ const formSchema = z.object({
 export function SignUpForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const auth = useFirebaseAuth();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,7 +43,7 @@ export function SignUpForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setError(null);
     try {
-      await signUpWithEmail(values.email, values.password, values.name);
+      await signUpWithEmail(auth, values.email, values.password, values.name);
       router.push('/');
     } catch (e: any) {
       if (e.code === 'auth/email-already-in-use') {

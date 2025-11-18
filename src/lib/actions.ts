@@ -8,10 +8,10 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, storage, app } from '@/lib/firebase/config';
 import { getAuth } from 'firebase/auth';
 import { SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
+import { getSdks, initializeFirebase } from '@/firebase';
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -40,8 +40,9 @@ export async function uploadSuggestion(
   prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
-
-  const auth = getAuth(app);
+  const { auth, firestore, firebaseApp } = initializeFirebase();
+  const storage = getStorage(firebaseApp);
+  
   const user = auth.currentUser;
   if (!user) {
     return { message: 'Authentication Error: You must be logged in to create a suggestion.', errors: {}, success: false };
@@ -92,7 +93,7 @@ export async function uploadSuggestion(
       fileType = file.type;
     }
 
-    await addDoc(collection(db, 'suggestions'), {
+    await addDoc(collection(firestore, 'suggestions'), {
       title,
       description,
       subject,
@@ -128,7 +129,9 @@ export type AssignmentFormState = {
     prevState: AssignmentFormState,
     formData: FormData
   ): Promise<AssignmentFormState> {
-    const auth = getAuth(app);
+    const { auth, firestore, firebaseApp } = initializeFirebase();
+    const storage = getStorage(firebaseApp);
+    
     const user = auth.currentUser;
     if (!user) {
       return { message: 'Authentication Error: You must be logged in to upload an assignment.', errors: {}, success: false };
@@ -163,7 +166,7 @@ export type AssignmentFormState = {
       const snapshot = await uploadBytes(storageRef, file);
       const fileUrl = await getDownloadURL(snapshot.ref);
   
-      await addDoc(collection(db, 'assignments'), {
+      await addDoc(collection(firestore, 'assignments'), {
         description,
         subject,
         fileUrl,
