@@ -15,7 +15,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// These are now only used for server-side operations like in actions.ts
 const db = getFirestore(app);
 const storage = getStorage(app);
 

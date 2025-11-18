@@ -8,9 +8,8 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase/config';
-import { getAuth } from 'firebase/auth/web-extension';
-import { app } from '@/lib/firebase/config';
+import { db, storage, app } from '@/lib/firebase/config';
+import { getAuth } from 'firebase/auth';
 import { SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
 

@@ -5,8 +5,8 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  getAuth,
 } from 'firebase/auth';
-import { getAuth } from 'firebase/auth';
 import { app } from './config';
 
 // This is necessary to get the auth instance on the client side.
