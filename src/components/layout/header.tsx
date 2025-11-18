@@ -18,6 +18,8 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 
+const ADMIN_EMAIL = 'harshroop100@gmail.com';
+
 export function Header() {
   const { user } = useAuth();
   const firebaseAuth = useFirebaseAuth();
@@ -37,7 +39,7 @@ export function Header() {
       .substring(0, 2);
   };
   
-  const isAdmin = user?.uid === process.env.NEXT_PUBLIC_ADMIN_UID;
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-transparent">
