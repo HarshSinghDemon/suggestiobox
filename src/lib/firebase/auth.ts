@@ -1,26 +1,16 @@
 'use client';
 
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from './config';
+import { getAuth } from 'firebase/auth';
+import { app } from './config';
 
-const provider = new GoogleAuthProvider();
-
-export const signInWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
-  } catch (error) {
-    console.error('Error signing in with Google: ', error);
-    throw error;
-  }
-};
+// This is necessary to get the auth instance on the client side.
+const auth = getAuth(app);
 
 export const signUpWithEmail = async (
   email: string,

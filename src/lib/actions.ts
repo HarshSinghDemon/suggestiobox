@@ -8,7 +8,9 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { auth, db, storage } from '@/lib/firebase/config';
+import { db, storage } from '@/lib/firebase/config';
+import { getAuth } from 'firebase/auth/web-extension';
+import { app } from '@/lib/firebase/config';
 import { SUBJECTS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
 
@@ -39,9 +41,11 @@ export async function uploadSuggestion(
   prevState: SuggestionFormState,
   formData: FormData
 ): Promise<SuggestionFormState> {
+
+  const auth = getAuth(app);
   const user = auth.currentUser;
   if (!user) {
-    return { message: 'Authentication Error', errors: {}, success: false };
+    return { message: 'Authentication Error: You must be logged in to create a suggestion.', errors: {}, success: false };
   }
 
   const validatedFields = suggestionSchema.safeParse({
@@ -105,6 +109,7 @@ export async function uploadSuggestion(
     return { message: `Database Error: ${e.message}`, errors: {}, success: false };
   }
 
+  revalidatePath('/browse');
   revalidatePath('/');
   return { message: 'Suggestion uploaded successfully!', success: true };
 }
@@ -124,9 +129,10 @@ export type AssignmentFormState = {
     prevState: AssignmentFormState,
     formData: FormData
   ): Promise<AssignmentFormState> {
+    const auth = getAuth(app);
     const user = auth.currentUser;
     if (!user) {
-      return { message: 'Authentication Error', errors: {}, success: false };
+      return { message: 'Authentication Error: You must be logged in to upload an assignment.', errors: {}, success: false };
     }
   
     const validatedFields = assignmentSchema.safeParse({
@@ -173,6 +179,7 @@ export type AssignmentFormState = {
       return { message: `Database Error: ${e.message}`, errors: {}, success: false };
     }
   
+    revalidatePath('/browse');
     revalidatePath('/');
     return { message: 'Assignment uploaded successfully!', success: true };
   }

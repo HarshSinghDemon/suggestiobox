@@ -50,13 +50,13 @@ export function SuggestionForm() {
         action: <CheckCircle className="text-green-500" />,
       });
       formRef.current?.reset();
-      router.push('/');
+      router.push('/browse');
     }
   }, [state.success, state.message, toast, router]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-      {state.message && !state.success && (
+      {state.message && !state.success && !state.errors?.ai && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
           <AlertTitle>Error</AlertTitle>

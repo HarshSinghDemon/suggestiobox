@@ -7,8 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SignUpForm } from "@/components/auth/signup-form";
-import { GoogleSignInButton } from "@/components/auth/google-signin-button";
-import { Separator } from "@/components/ui/separator";
 
 export default function SignUpPage() {
   return (
@@ -23,17 +21,6 @@ export default function SignUpPage() {
         <CardContent>
           <div className="grid gap-4">
             <SignUpForm />
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="px-2 bg-card text-muted-foreground">
-                    Or continue with
-                    </span>
-                </div>
-            </div>
-            <GoogleSignInButton />
           </div>
           <div className="mt-4 text-sm text-center">
             Already have an account?{" "}

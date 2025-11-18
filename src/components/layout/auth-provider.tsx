@@ -2,7 +2,8 @@
 
 import { createContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { getAuth } from 'firebase/auth';
+import { app } from '@/lib/firebase/config';
 import type { FirebaseUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -12,6 +13,9 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// It's important to get the auth instance only on the client.
+const auth = getAuth(app);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);

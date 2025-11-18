@@ -50,7 +50,7 @@ export function AssignmentForm() {
         action: <CheckCircle className="text-green-500" />,
       });
       formRef.current?.reset();
-      router.push('/');
+      router.push('/browse');
     }
   }, [state.success, state.message, toast, router]);
 
