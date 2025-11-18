@@ -102,7 +102,7 @@ export function SuggestionForm() {
 
       toast({
         title: 'Success!',
-        description: 'Your suggestion has been submitted.',
+        description: 'Thank you for your contribution.',
         action: <CheckCircle className="text-green-500" />,
       });
       

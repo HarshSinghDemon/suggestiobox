@@ -96,7 +96,7 @@ export function AssignmentForm() {
 
       toast({
         title: 'Success!',
-        description: 'Your assignment has been submitted.',
+        description: 'Thank you for your contribution.',
         action: <CheckCircle className="text-green-500" />,
       });
       
