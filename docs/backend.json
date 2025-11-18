@@ -1,18 +1,44 @@
 {
   "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the StudyShare Central platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName"
+      ]
+    },
     "Suggestion": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Suggestion",
       "type": "object",
-      "description": "Represents a user-submitted suggestion for study materials.",
+      "description": "Represents a suggestion uploaded by a user.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the suggestion."
+          "description": "Unique identifier for the Suggestion entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who submitted the suggestion. (Relationship: User 1:N Suggestion)"
+          "description": "Reference to User. (Relationship: User 1:N Suggestion)"
         },
         "title": {
           "type": "string",
@@ -20,15 +46,16 @@
         },
         "description": {
           "type": "string",
-          "description": "Detailed description of the suggestion."
+          "description": "Description of the suggestion."
         },
-        "subjectId": {
+        "subject": {
           "type": "string",
-          "description": "Reference to the Subject to which the suggestion belongs. (Relationship: Subject 1:N Suggestion)"
+          "description": "Subject of the suggestion."
         },
         "fileUrl": {
           "type": "string",
-          "description": "URL of the associated file in Firebase Storage."
+          "description": "URL of the uploaded file in Firebase Storage.",
+          "format": "uri"
         },
         "uploadDate": {
           "type": "string",
@@ -41,7 +68,7 @@
         "userId",
         "title",
         "description",
-        "subjectId",
+        "subject",
         "fileUrl",
         "uploadDate"
       ]
@@ -50,27 +77,28 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Assignment",
       "type": "object",
-      "description": "Represents a user-submitted assignment or lab file.",
+      "description": "Represents an assignment uploaded by a user.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the assignment."
+          "description": "Unique identifier for the Assignment entity."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who submitted the assignment. (Relationship: User 1:N Assignment)"
+          "description": "Reference to User. (Relationship: User 1:N Assignment)"
         },
-        "title": {
+        "description": {
           "type": "string",
-          "description": "Title of the assignment."
+          "description": "Description of the assignment."
         },
-        "subjectId": {
+        "subject": {
           "type": "string",
-          "description": "Reference to the Subject to which the assignment belongs. (Relationship: Subject 1:N Assignment)"
+          "description": "Subject of the assignment."
         },
         "fileUrl": {
           "type": "string",
-          "description": "URL of the assignment file in Firebase Storage."
+          "description": "URL of the uploaded file in Firebase Storage.",
+          "format": "uri"
         },
         "uploadDate": {
           "type": "string",
@@ -81,69 +109,17 @@
       "required": [
         "id",
         "userId",
-        "title",
-        "subjectId",
+        "description",
+        "subject",
         "fileUrl",
         "uploadDate"
-      ]
-    },
-    "Subject": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Subject",
-      "type": "object",
-      "description": "Represents a subject category for filtering suggestions and assignments.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the subject."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the subject (e.g., Computer Networks, Data Analytics)."
-        }
-      },
-      "required": [
-        "id",
-        "name"
-      ]
-    },
-    "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
-      "type": "object",
-      "description": "Represents a user of the application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "User's email address.",
-          "format": "email"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "User's display name."
-        },
-        "photoURL": {
-            "type": "string",
-            "description": "URL of the user's profile picture."
-        }
-      },
-      "required": [
-        "id",
-        "email",
-        "displayName",
-        "photoURL"
       ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
@@ -155,11 +131,11 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. User ID is used as the document ID.",
+          "description": "Stores user profile information.  This is the root for all user-owned data.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user, matching their Firebase Auth UID."
             }
           ]
         }
@@ -171,15 +147,15 @@
           "schema": {
             "$ref": "#/backend/entities/Suggestion"
           },
-          "description": "Stores suggestions created by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores suggestions uploaded by a specific user. Includes denormalized 'userId' for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user who uploaded the suggestion."
             },
             {
               "name": "suggestionId",
-              "description": "The unique identifier for the suggestion."
+              "description": "The unique identifier of the suggestion."
             }
           ]
         }
@@ -191,36 +167,20 @@
           "schema": {
             "$ref": "#/backend/entities/Assignment"
           },
-          "description": "Stores assignments submitted by a specific user. Includes denormalized 'userId' for authorization independence.",
+          "description": "Stores assignments uploaded by a specific user. Includes denormalized 'userId' for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user."
+              "description": "The unique identifier of the user who uploaded the assignment."
             },
             {
               "name": "assignmentId",
-              "description": "The unique identifier for the assignment."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/subjects/{subjectId}",
-        "definition": {
-          "entityName": "Subject",
-          "schema": {
-            "$ref": "#/backend/entities/Subject"
-          },
-          "description": "Stores subject categories for suggestions and assignments.",
-          "params": [
-            {
-              "name": "subjectId",
-              "description": "The unique identifier for the subject."
+              "description": "The unique identifier of the assignment."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, following the core design principles and strategy mandates. The structure prioritizes Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters).\n\n**Authorization Independence:** Achieved through denormalization. For example, the `suggestions` and `assignments` subcollections under each `user` include denormalized `userId`, `subjectId`, avoiding the need for `get()` calls to parent documents for authorization.\n\n**Structural Segregation:** Each collection is designed to hold documents with similar security requirements. User-specific data (suggestions and assignments) is stored under `/users/{userId}`, ensuring that access control is primarily path-based, simplifying security rules.\n\n**Access Modeling:** Path-based ownership is used for user-owned data (suggestions, assignments), located under `/users/{userId}`. This ensures that only the user can manage their own data. Subjects are stored in a top-level collection, which simplifies access to subjects and allows for easy filtering and listing.\n\n**QAPs Support:** The segregation of user-specific data into subcollections allows for secure `list` operations. Rules can easily filter based on `request.auth.uid` without needing to filter data within the rules themselves.\n\nThis structure enables simple and robust security rules and makes debugging easier by explicitly defining ownership and access rights through the data structure itself."
+    "reasoning": "The Firestore structure is designed to address the 'auth/operation-not-allowed' error, ensure Authorization Independence, and facilitate secure and scalable data management for the StudyShare Central application. The error suggests an issue with Firebase Authentication configuration, which will be handled on the Firebase console configurations, as the JSON generation is for the Firestore structure only. The structure focuses on organizing user data, suggestions, and assignments in a way that simplifies security rules and optimizes query performance.\n\n**Authorization Independence (Denormalization):**\n\n*   The `userId` field is included in both `suggestions` and `assignments` collections. This denormalization allows security rules to validate ownership (`request.auth.uid == resource.data.userId`) without needing to perform expensive `get()` operations to retrieve user data.  This ensures that authorization checks are atomic and independent of other data.\n\n**Structural Segregation (Homogeneous Security Posture):**\n\n*   User-specific data (suggestions, assignments) are stored under the `/users/{userId}` path.  This segregation ensures that all documents within a given user's subcollections share the same security requirements (i.e., only the user can create/modify/delete them).\n\n**Access Modeling:**\n\n*   **Private Data (User-Owned):**  Suggestions and assignments are placed under `/users/{userId}/suggestions` and `/users/{userId}/assignments` respectively, enforcing path-based ownership.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of data into user-specific subcollections enables secure `list` operations. Rules can easily restrict listing to only the data owned by the authenticated user.\n\n**Invariants:**\n\n*   The structure supports the integrity of ownership through the consistent use of `userId` in both `suggestions` and `assignments`.\n\nIn summary, this design prioritizes security, scalability, and debuggability by denormalizing authorization data, structurally segregating data based on access requirements, and enforcing consistent access patterns."
   }
 }
