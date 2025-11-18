@@ -26,7 +26,7 @@ export default function Home() {
               Got full lab assignments, a helpful study tip, or a suggestion for a class? Share it here!
             </p>
             <p className="text-lg">
-              You can also upload helpful files for the community. #proudsectionB #BforBhaukali
+              You can also upload helpful files for the community. Made with love by SectionB #ProudtobesectionB
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
