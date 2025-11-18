@@ -223,7 +223,7 @@ export function SuggestionForm() {
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInput.current.value = '';
       }
       router.push('/browse');
     } catch (error) {
