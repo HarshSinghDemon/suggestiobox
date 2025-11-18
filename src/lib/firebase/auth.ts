@@ -17,10 +17,9 @@ const handleNewUser = async (user: User) => {
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
-  // If the user document doesn't exist, create it.
   if (!userDoc.exists()) {
     const userData = {
-      id: user.uid, // This is critical for the 'create' rule
+      id: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
@@ -34,7 +33,6 @@ export const signInWithGoogle = async (auth: Auth) => {
   try {
     const userCredential = await signInWithPopup(auth, provider);
     const user = userCredential.user;
-    // Check if user is new and create a document if so.
     await handleNewUser(user);
     return user;
   } catch (error) {
@@ -51,7 +49,6 @@ export const signUpWithEmail = async (
   photoURL: string
 ) => {
   try {
-    // 1. Create the user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -59,18 +56,13 @@ export const signUpWithEmail = async (
     );
     const user = userCredential.user;
 
-    // 2. Update the user's auth profile
     await updateProfile(user, { displayName, photoURL });
 
-    // 3. Create the user document in Firestore
-    // This is now handled by the handleNewUser function, but we can call it here explicitly
-    // to ensure it happens immediately after sign-up.
     await handleNewUser(user);
 
     return user;
   } catch (error) {
     console.error('Error signing up: ', error);
-    // Re-throw the error so it can be caught by the form
     throw error;
   }
 };
