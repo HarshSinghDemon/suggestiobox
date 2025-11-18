@@ -7,8 +7,9 @@ import {
   updateProfile,
   Auth,
 } from 'firebase/auth';
-import { getFirestore, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export const signUpWithEmail = async (
   auth: Auth,
@@ -32,8 +33,15 @@ export const signUpWithEmail = async (
       displayName: displayName,
     };
     
-    // Use the non-blocking update with contextual error handling
-    setDocumentNonBlocking(userDocRef, userData, { merge: true });
+    // Non-blocking write with contextual error handling
+    setDoc(userDocRef, userData, { merge: true }).catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: userDocRef.path,
+        operation: 'create',
+        requestResourceData: userData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
     
     return userCredential.user;
   } catch (error) {
