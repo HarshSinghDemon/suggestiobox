@@ -212,4 +212,21 @@
     .animate-float-2 { animation: float-2 10s ease-in-out infinite; }
     .animate-float-3 { animation: float-3 9s ease-in-out infinite; }
     .animate-float-4 { animation: float-4 7s ease-in-out infinite; }
+
+    @keyframes shoot {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-100px); opacity: 0; }
+    }
+    .animate-shoot {
+        animation: shoot 1s ease-out infinite;
+    }
+
+    @keyframes fly-past {
+        0% { transform: translateX(-100%); top: 20%; }
+        100% { transform: translateX(100vw); top: 20%; }
+    }
+    .animate-fly-past {
+        animation: fly-past 5s linear infinite;
+    }
+
 }

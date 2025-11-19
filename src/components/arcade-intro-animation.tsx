@@ -13,9 +13,23 @@ const icons = [
   { icon: <Bot className="w-8 h-8 text-purple-500" />, style: 'animate-float-2' },
 ];
 
+const ShooterPlane = () => (
+    <div className="relative w-8 h-8 text-red-500">
+        <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="absolute w-full h-full transform -rotate-90"
+        >
+            <path d="M12 2L2 22h20L12 2z" />
+        </svg>
+        <div className="absolute w-1 h-3 bg-yellow-400 rounded-full top-[-15px] left-1/2 -translate-x-1/2 animate-shoot" />
+    </div>
+);
+
+
 export function ArcadeIntroAnimation() {
   return (
-    <div className="relative w-full h-24">
+    <div className="relative w-full h-24 overflow-hidden">
       {icons.map((item, index) => (
         <div
           key={index}
@@ -31,6 +45,9 @@ export function ArcadeIntroAnimation() {
           {item.icon}
         </div>
       ))}
+      <div className="absolute top-0 left-0 animate-fly-past" style={{ animationDelay: '1s' }}>
+          <ShooterPlane />
+      </div>
     </div>
   );
 }
