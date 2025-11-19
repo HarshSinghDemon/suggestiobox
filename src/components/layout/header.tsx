@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -173,6 +174,15 @@ export function Header() {
                         Admin
                     </Button>
                 )}
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="hidden md:flex"
+                    onClick={handleSignOut}
+                >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log Out
+                </Button>
                 <div className="relative group hidden md:block">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
