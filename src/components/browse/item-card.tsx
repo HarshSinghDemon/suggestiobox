@@ -13,12 +13,15 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
 import type { Suggestion, Assignment } from '@/lib/types';
 import { SubjectIcon } from './subject-icon';
+import { cn } from '@/lib/utils';
 
-type ItemCardProps =
-  | { item: Suggestion; type: 'suggestion' }
-  | { item: Assignment; type: 'assignment' };
+type ItemCardProps = {
+  item: Suggestion | Assignment;
+  type: 'suggestion' | 'assignment';
+  variant?: 'default' | 'fiery';
+};
 
-export function ItemCard({ item, type }: ItemCardProps) {
+export function ItemCard({ item, type, variant = 'default' }: ItemCardProps) {
   const { id, subject, createdAt, userName, userImage } = item;
   const date = createdAt ? createdAt.toDate().toLocaleDateString() : 'N/A';
 
@@ -33,10 +36,14 @@ export function ItemCard({ item, type }: ItemCardProps) {
   const detailsUrl = `/${type}s/${id}`;
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:border-primary/50 hover:-translate-y-2">
+    <Card className={cn(
+      "flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group",
+      variant === 'default' && "hover:border-primary/50",
+      variant === 'fiery' && "bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20"
+    )}>
       <CardHeader>
         <div className="flex items-start gap-4">
-          <SubjectIcon subject={subject} className="w-8 h-8 mt-1 text-primary"/>
+          <SubjectIcon subject={subject} className={cn("w-8 h-8 mt-1", variant === 'default' ? "text-primary" : "text-orange-400")}/>
           <div className="flex-1">
             <CardTitle className="text-lg leading-tight">{title}</CardTitle>
             <CardDescription className="mt-1 text-xs text-muted-foreground">{date}</CardDescription>

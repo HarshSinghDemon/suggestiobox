@@ -71,8 +71,8 @@ export function BrowseSection({
             <ItemGridSkeleton />
         ) : suggestions && suggestions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {suggestions.map((item) => (
-              <ItemCard key={item.id} item={item} type="suggestion" />
+            {suggestions.map((item, index) => (
+              <ItemCard key={item.id} item={item} type="suggestion" variant={index % 2 === 0 ? 'default' : 'fiery'} />
             ))}
           </div>
         ) : (
@@ -86,8 +86,8 @@ export function BrowseSection({
           <ItemGridSkeleton />
       ) : assignments && assignments.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {assignments.map((item) => (
-              <ItemCard key={item.id} item={item} type="assignment" />
+            {assignments.map((item, index) => (
+              <ItemCard key={item.id} item={item} type="assignment" variant={index % 2 === 0 ? 'default' : 'fiery'} />
             ))}
           </div>
         ) : (
