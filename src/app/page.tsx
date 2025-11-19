@@ -13,7 +13,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
       <WavyBackground className="w-full max-w-4xl mx-auto">
         <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
-          <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter">
+          <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed">
             The
             <br />
             Suggestion

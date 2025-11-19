@@ -19,6 +19,7 @@ export default {
       fontFamily: {
         body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-inter)', 'sans-serif'],
+        arcade: ['var(--font-press-start-2p)', 'monospace'],
         code: ['monospace'],
       },
       colors: {
