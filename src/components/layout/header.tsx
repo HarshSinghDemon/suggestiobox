@@ -83,7 +83,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex items-center h-16">
-        <div className="flex items-center flex-1 mr-4 md:mr-6 md:flex-none">
+        <div className="mr-4 flex items-center">
           <Link href="/" className="flex items-center space-x-2" prefetch={true}>
             <Logo />
           </Link>
@@ -160,7 +160,7 @@ export function Header() {
             </DropdownMenu>
         </nav>
 
-        <div className="flex items-center justify-end gap-2 ml-auto">
+        <div className="flex items-center justify-end flex-1 gap-2 ml-auto">
             <JukeboxControls />
               {user ? (
                 <>
