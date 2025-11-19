@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -29,6 +29,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Timestamp } from 'firebase/firestore';
 import { Badge } from '../ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useState } from 'react';
 
 type User = {
     id: string;
@@ -38,6 +40,8 @@ type User = {
     createdAt?: Timestamp;
     year?: '1st' | '2nd' | '3rd';
 };
+
+const YEARS: ('1st' | '2nd' | '3rd')[] = ['1st', '2nd', '3rd'];
 
 function TableSkeleton() {
   return (
@@ -58,6 +62,7 @@ function TableSkeleton() {
 export function AdminUsersTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const usersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null),
@@ -65,6 +70,29 @@ export function AdminUsersTable() {
   );
 
   const { data: users, isLoading } = useCollection<User>(usersQuery);
+
+  const handleYearChange = async (userId: string, newYear: string) => {
+    if (!firestore) return;
+    setUpdatingId(userId);
+    const docRef = doc(firestore, 'users', userId);
+    try {
+        await updateDoc(docRef, { year: newYear });
+        toast({
+            title: "Year Updated",
+            description: "The user's year has been changed.",
+        });
+    } catch(e) {
+        console.error("Failed to update year:", e);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update the user's year.",
+        });
+    } finally {
+        setUpdatingId(null);
+    }
+  }
+
 
   const handleDelete = async (userId: string) => {
     if (!firestore) return;
@@ -128,8 +156,21 @@ export function AdminUsersTable() {
                   </div>
                 </TableCell>
                 <TableCell className="truncate">{user.email}</TableCell>
-                 <TableCell className="hidden sm:table-cell">
-                    {user.year ? <Badge variant="secondary">{user.year} Year</Badge> : <span className='text-muted-foreground'>N/A</span>}
+                 <TableCell className="hidden sm:table-cell w-[150px]">
+                    <Select
+                        defaultValue={user.year}
+                        onValueChange={(value) => handleYearChange(user.id, value)}
+                        disabled={updatingId === user.id}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="N/A" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {YEARS.map(year => (
+                                <SelectItem key={year} value={year}>{year} Year</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                  </TableCell>
                 <TableCell className="hidden font-mono text-xs md:table-cell">
                     <div className="flex items-center gap-2">
