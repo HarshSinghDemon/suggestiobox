@@ -1,0 +1,36 @@
+
+'use client';
+
+import { Gamepad, Ghost, Bot } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const icons = [
+  { icon: <Gamepad className="w-8 h-8 text-cyan-400" />, style: 'animate-float-1' },
+  { icon: <Ghost className="w-8 h-8 text-pink-500" />, style: 'animate-float-2' },
+  { icon: <Bot className="w-8 h-8 text-lime-400" />, style: 'animate-float-3' },
+  { icon: <Gamepad className="w-8 h-8 text-yellow-400" />, style: 'animate-float-4' },
+  { icon: <Ghost className="w-8 h-8 text-orange-500" />, style: 'animate-float-1' },
+  { icon: <Bot className="w-8 h-8 text-purple-500" />, style: 'animate-float-2' },
+];
+
+export function ArcadeIntroAnimation() {
+  return (
+    <div className="relative w-full h-24 mb-4 overflow-hidden">
+      {icons.map((item, index) => (
+        <div
+          key={index}
+          className={cn(
+            'absolute',
+            item.style
+          )}
+          style={{
+            left: `${10 + index * 15}%`,
+            animationDelay: `${index * 0.5}s`,
+          }}
+        >
+          {item.icon}
+        </div>
+      ))}
+    </div>
+  );
+}
