@@ -90,7 +90,7 @@ export default function VerifyEmailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Please check your inbox (and spam folder) and click the link to complete your registration. You can close this page after verifying.
+            Please check your inbox (and <strong className="px-2 py-1 rounded-md text-amber-300 bg-amber-500/20">spam folder</strong>) and click the link to complete your registration. You can close this page after verifying.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleResendVerification} disabled={isSending}>
