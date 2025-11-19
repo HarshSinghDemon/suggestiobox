@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { MusicProvider } from '@/context/MusicContext';
+import { MusicPlayer } from '@/components/MusicPlayer';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const pressStart2P = Press_Start_2P({
@@ -34,11 +36,14 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
-          <div className="relative flex min-h-dvh flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-          </div>
-          <Toaster />
+          <MusicProvider>
+            <div className="relative flex min-h-dvh flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+            </div>
+            <Toaster />
+            <MusicPlayer />
+          </MusicProvider>
         </FirebaseClientProvider>
       </body>
     </html>

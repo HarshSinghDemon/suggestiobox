@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music, Music2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,7 @@ import { useAuth as useFirebaseAuth } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
+import { useMusic } from '@/context/MusicContext';
 
 const ADMIN_EMAIL = 'harshroop100@gmail.com';
 
@@ -37,6 +38,17 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
         </button>
     )
 }
+
+function MusicToggleButton() {
+    const { isPlaying, toggleMusic } = useMusic();
+  
+    return (
+      <Button onClick={toggleMusic} variant="ghost" size="icon" className="w-10 h-10">
+        {isPlaying ? <Music className="w-5 h-5" /> : <Music2 className="w-5 h-5 text-muted-foreground" />}
+        <span className="sr-only">{isPlaying ? 'Pause music' : 'Play music'}</span>
+      </Button>
+    );
+  }
 
 export function Header() {
   const { user } = useAuth();
@@ -126,6 +138,8 @@ export function Header() {
         </nav>
 
         <div className="flex items-center justify-end flex-1 ml-auto">
+            <MusicToggleButton />
+
           {user ? (
             <div className="relative group">
               <div className={cn(
@@ -168,7 +182,7 @@ export function Header() {
               </DropdownMenu>
             </div>
           ) : (
-            <Button asChild className="hidden md:flex">
+            <Button asChild className="hidden md:flex ml-2">
               <Link href="/login">
                 <LogIn className="w-4 h-4 mr-2" /> Login
               </Link>
