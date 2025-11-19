@@ -78,6 +78,8 @@ export const signInWithEmail = async (
       email,
       password
     );
+    // On sign-in, also ensure the user document exists, especially for the admin
+    await handleNewUser(userCredential.user);
     return userCredential.user;
   } catch (error) {
     console.error('Error signing in: ', error);

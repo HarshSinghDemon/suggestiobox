@@ -51,9 +51,10 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
     );
   }
   
+  const isCreator = user?.email === 'harshroop100@gmail.com';
   const isAdmin = userData?.role === 'admin';
 
-  if (!isAdmin) {
+  if (!isCreator && !isAdmin) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
             <Card className="w-full max-w-md mx-auto text-center">
@@ -81,5 +82,3 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
-
-    
