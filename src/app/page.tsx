@@ -28,19 +28,21 @@ export default function Home() {
               You can also upload helpful files for the community. Made with love by SectionB #ProudtobesectionB
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
-                <Link href="/suggestions/new" prefetch={true}>
-                    Give a Suggestion
-                    <ChevronRight className="w-6 h-6 ml-2" />
-                </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
-                <Link href="/browse" prefetch={true}>
-                    Explore Content
-                    <ChevronRight className="w-6 h-6 ml-2" />
-                </Link>
-            </Button>
+          <div className="flex flex-col items-center justify-center w-full gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
+                  <Link href="/suggestions/new" prefetch={true}>
+                      Give a Suggestion
+                      <ChevronRight className="w-6 h-6 ml-2" />
+                  </Link>
+              </Button>
+              <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
+                  <Link href="/browse" prefetch={true}>
+                      Explore Content
+                      <ChevronRight className="w-6 h-6 ml-2" />
+                  </Link>
+              </Button>
+            </div>
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
                 <Link href="/community-game" prefetch={true}>
                     Play Games
