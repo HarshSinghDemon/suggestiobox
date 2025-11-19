@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Hand, Scissors, Gem } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 type Choice = 'rock' | 'paper' | 'scissors';
 type Result = 'win' | 'lose' | 'draw' | null;
@@ -86,29 +87,31 @@ export function RockPaperScissors() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center w-full min-h-[120px] p-4 rounded-lg bg-muted/50">
-        {isPlaying ? (
-            <div className="text-xl font-medium animate-pulse">Playing...</div>
-        ) : result ? (
-          <div className="flex flex-col items-center gap-4">
-             <div className="flex items-center gap-8">
-                <div className="flex flex-col items-center gap-2">
-                    <p className="font-medium">You chose:</p>
-                    <div className="w-16 h-16">{getChoiceIcon(userChoice)}</div>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <p className="font-medium">CPU chose:</p>
-                    <div className="w-16 h-16">{getChoiceIcon(computerChoice)}</div>
-                </div>
-             </div>
-            <p className={`text-2xl font-bold uppercase ${getResultStyles()}`}>
-              {result === 'draw' ? "It's a Draw!" : `You ${result}!`}
-            </p>
-          </div>
-        ) : (
-          <p className="text-xl font-medium text-muted-foreground">Make your choice!</p>
-        )}
-      </div>
+      <Card className="flex items-center justify-center w-full min-h-[150px]">
+        <CardContent className="p-4">
+          {isPlaying ? (
+              <div className="text-xl font-medium animate-pulse">Playing...</div>
+          ) : result ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-8">
+                  <div className="flex flex-col items-center gap-2">
+                      <p className="font-medium">You chose:</p>
+                      <div className="w-16 h-16">{getChoiceIcon(userChoice)}</div>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                      <p className="font-medium">CPU chose:</p>
+                      <div className="w-16 h-16">{getChoiceIcon(computerChoice)}</div>
+                  </div>
+              </div>
+              <p className={`text-2xl font-bold uppercase ${getResultStyles()}`}>
+                {result === 'draw' ? "It's a Draw!" : `You ${result}!`}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xl font-medium text-muted-foreground">Make your choice!</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="flex justify-center gap-4">
         {choices.map(({ name, icon }) => (

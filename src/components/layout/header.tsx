@@ -76,7 +76,7 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-game')}>
                   <Gamepad2 className="w-4 h-4 mr-2" />
-                  Community Game
+                  Community Games
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -139,7 +139,7 @@ export function Header() {
                 <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-chat')}><MessageSquare className="w-4 h-4 mr-2" /><span>Community Chat</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-members')}><Users className="w-4 h-4 mr-2" /><span>Community Members</span></DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/community-game')}><Gamepad2 className="w-4 h-4 mr-2" /><span>Community Game</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/community-game')}><Gamepad2 className="w-4 h-4 mr-2" /><span>Community Games</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/pookie-contributors')}><Trophy className="w-4 h-4 mr-2" /><span>Pookie Contributors</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
