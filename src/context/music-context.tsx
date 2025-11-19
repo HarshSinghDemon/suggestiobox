@@ -28,91 +28,43 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const [volume, setVolumeState] = useState(0.3); // User-facing volume
-  
-  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [volume, setVolumeState] = useState(0.3);
   
   const currentSong = playlist[currentSongIndex];
-
-  const fadeVolume = useCallback((audio: HTMLAudioElement, targetVolume: number, duration: number = 300) => {
-    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-
-    const startVolume = audio.volume;
-    const difference = targetVolume - startVolume;
-    if (difference === 0) return;
-
-    const stepTime = 20; // ms
-    const numberOfSteps = duration / stepTime;
-    const volumeStep = difference / numberOfSteps;
-
-    let currentStep = 0;
-    fadeIntervalRef.current = setInterval(() => {
-      currentStep++;
-      if (currentStep >= numberOfSteps) {
-        audio.volume = targetVolume;
-        if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-        fadeIntervalRef.current = null;
-      } else {
-        audio.volume += volumeStep;
-      }
-    }, stepTime);
-  }, []);
 
   const setVolume = (newVolume: number) => {
     const clampedVolume = Math.max(0, Math.min(1, newVolume));
     setVolumeState(clampedVolume);
     if (audioElement) {
-      fadeVolume(audioElement, clampedVolume);
+      audioElement.volume = clampedVolume;
     }
   };
-
-  const fadeIn = useCallback((audio: HTMLAudioElement, targetVolume: number) => {
-    audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    fadeVolume(audio, targetVolume, 500); // Slower fade-in
-  }, [fadeVolume]);
-
-  const fadeOut = useCallback((audio: HTMLAudioElement, onComplete: () => void) => {
-    fadeVolume(audio, 0, 500); // Slower fade-out
-    setTimeout(onComplete, 550); // Ensure fade completes before action
-  }, [fadeVolume]);
-
 
   const togglePlayPause = useCallback(() => {
     if (!audioElement) return;
 
     if (isPlaying) {
-      fadeOut(audioElement, () => {
-        audioElement.pause();
-        setIsPlaying(false);
-      });
+      audioElement.pause();
+      setIsPlaying(false);
     } else {
       if (audioElement.src !== currentSong.url) {
         audioElement.src = currentSong.url;
       }
-      fadeIn(audioElement, volume);
+      audioElement.play().catch(() => setIsPlaying(false));
+      setIsPlaying(true);
     }
-  }, [audioElement, isPlaying, currentSong.url, fadeIn, fadeOut, volume]);
-
+  }, [audioElement, isPlaying, currentSong.url]);
 
   const changeTrack = useCallback((newIndex: number) => {
-    if (!audioElement) return;
-
-    const playNewTrack = () => {
-        setCurrentSongIndex(newIndex);
+    setCurrentSongIndex(newIndex);
+    if (audioElement) {
         const newSong = playlist[newIndex];
         audioElement.src = newSong.url;
-        fadeIn(audioElement, volume);
-    };
-
-    if (isPlaying) {
-        fadeOut(audioElement, playNewTrack);
-    } else {
-        // If paused, just change the track and keep it paused.
-        setCurrentSongIndex(newIndex);
-        const newSong = playlist[newIndex];
-        audioElement.src = newSong.url;
+        if (isPlaying) {
+            audioElement.play().catch(() => setIsPlaying(false));
+        }
     }
-  }, [audioElement, fadeOut, fadeIn, volume, playlist, isPlaying]);
+  }, [audioElement, isPlaying, playlist]);
   
   const playNext = useCallback(() => {
     const nextIndex = (currentSongIndex + 1) % playlist.length;
@@ -125,11 +77,17 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   }, [currentSongIndex, playlist.length, changeTrack]);
 
   useEffect(() => {
+    if (audioElement) {
+      audioElement.volume = volume;
+    }
+  }, [audioElement, volume]);
+
+  useEffect(() => {
     if (audioElement && isPlaying && audioElement.src !== currentSong.url) {
         audioElement.src = currentSong.url;
-        fadeIn(audioElement, volume);
+        audioElement.play().catch(() => setIsPlaying(false));
     }
-}, [currentSong, audioElement, isPlaying, fadeIn, volume]);
+  }, [currentSong, audioElement, isPlaying]);
 
 
   const value: MusicContextType = {
