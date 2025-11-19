@@ -96,7 +96,7 @@ export function MessageInput() {
         userId: user.uid,
         userName: user.displayName,
         userImage: user.photoURL,
-        userYear: currentUserData?.year,
+        userYear: currentUserData?.year || null,
       };
 
       await addDocumentNonBlocking(messagesCol, messageData);
