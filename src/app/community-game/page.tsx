@@ -1,20 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Rocket, Bot, Palette, Languages } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb } from 'lucide-react';
 import Link from 'next/link';
 
+const SnakeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 12H12.01"/><path d="M16 8H16.01"/><path d="M12 16H12.01"/><path d="M12 8H12.01"/><path d="M8 12H8.01"/><path d="M16 12H16.01"/><path d="M12 20H12.01"/><path d="M4 16H4.01"/><path d="M8 16H8.01"/><path d="M8 20H8.01"/><path d="M4 12H4.01"/><path d="M4 8H4.01"/><path d="M8 8H8.01"/><path d="M16 16H16.01"/><path d="M20 12H20.01"/><path d="M20 16H20.01"/></svg>
+);
+
+
 const games = [
-    {
-        name: 'Word Puzzle',
-        description: 'Guess the secret 5-letter word.',
-        href: '/community-games/word-puzzle',
-        icon: Puzzle,
-    },
-    {
-        name: 'Alien Invaders',
-        description: 'Defend the galaxy from invaders.',
-        href: '/community-games/alien-invaders',
-        icon: Rocket,
-    },
     {
         name: 'Brick Breaker',
         description: 'Clear all the bricks to win.',
@@ -22,16 +15,28 @@ const games = [
         icon: Palette,
     },
     {
-        name: 'Connect Four',
-        description: 'Beat the AI to four in a row.',
-        href: '/community-games/connect-four',
-        icon: Bot,
-    },
-    {
         name: 'Hangman',
         description: 'Guess the word before it\'s too late.',
         href: '/community-games/hangman',
         icon: Languages,
+    },
+    {
+        name: 'Snake',
+        description: 'Guide the snake to eat the food.',
+        href: '/community-games/snake',
+        icon: SnakeIcon,
+    },
+    {
+        name: 'Minesweeper',
+        description: 'Clear the board without hitting a mine.',
+        href: '/community-games/minesweeper',
+        icon: Bomb,
+    },
+    {
+        name: '2048',
+        description: 'Slide tiles to get the 2048 tile.',
+        href: '/community-games/2048',
+        icon: BotIcon,
     },
 ];
 

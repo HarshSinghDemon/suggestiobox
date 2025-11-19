@@ -1,18 +1,18 @@
 'use client';
 
-import { ConnectFourGame } from '@/components/game/connect-four';
+import { Game2048 } from '@/components/game/2048';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
-export default function ConnectFourPage() {
+export default function Game2048Page() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Connect Four</CardTitle>
-          <CardDescription>Try to get four of your colored discs in a row against the AI.</CardDescription>
+          <CardTitle>2048</CardTitle>
+          <CardDescription>Use arrow keys to slide tiles. Combine them to reach 2048!</CardDescription>
         </CardHeader>
         <CardContent>
-          <ConnectFourGame />
+          <Game2048 />
         </CardContent>
       </Card>
     </div>
