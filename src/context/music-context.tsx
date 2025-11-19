@@ -34,57 +34,47 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   
   const currentSong = playlist[currentSongIndex];
 
-  useEffect(() => {
-    if (audioElement && !fadeIntervalRef.current) {
-      audioElement.volume = volume;
-    }
-  }, [volume, audioElement]);
-  
+  const fadeVolume = useCallback((audio: HTMLAudioElement, targetVolume: number, duration: number = 300) => {
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+
+    const startVolume = audio.volume;
+    const difference = targetVolume - startVolume;
+    if (difference === 0) return;
+
+    const stepTime = 20; // ms
+    const numberOfSteps = duration / stepTime;
+    const volumeStep = difference / numberOfSteps;
+
+    let currentStep = 0;
+    fadeIntervalRef.current = setInterval(() => {
+      currentStep++;
+      if (currentStep >= numberOfSteps) {
+        audio.volume = targetVolume;
+        if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      } else {
+        audio.volume += volumeStep;
+      }
+    }, stepTime);
+  }, []);
+
   const setVolume = (newVolume: number) => {
-    setVolumeState(Math.max(0, Math.min(1, newVolume)));
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+    setVolumeState(clampedVolume);
+    if (audioElement) {
+      fadeVolume(audioElement, clampedVolume);
+    }
   };
 
   const fadeIn = useCallback((audio: HTMLAudioElement, targetVolume: number) => {
-    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-    audio.volume = 0;
     audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    
-    if (targetVolume === 0) return;
-
-    let currentVol = 0;
-    fadeIntervalRef.current = setInterval(() => {
-        currentVol += 0.05;
-        if (currentVol >= targetVolume) {
-            audio.volume = targetVolume;
-            if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-            fadeIntervalRef.current = null;
-        } else {
-            audio.volume = currentVol;
-        }
-    }, 50);
-  }, []);
+    fadeVolume(audio, targetVolume, 500); // Slower fade-in
+  }, [fadeVolume]);
 
   const fadeOut = useCallback((audio: HTMLAudioElement, onComplete: () => void) => {
-    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-    
-    if (audio.volume === 0) {
-        onComplete();
-        return;
-    }
-
-    let currentVol = audio.volume;
-    fadeIntervalRef.current = setInterval(() => {
-        currentVol -= 0.05;
-        if (currentVol <= 0) {
-            audio.volume = 0;
-            if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
-            fadeIntervalRef.current = null;
-            onComplete();
-        } else {
-            audio.volume = currentVol;
-        }
-    }, 50);
-  }, []);
+    fadeVolume(audio, 0, 500); // Slower fade-out
+    setTimeout(onComplete, 550); // Ensure fade completes before action
+  }, [fadeVolume]);
 
 
   const togglePlayPause = useCallback(() => {
