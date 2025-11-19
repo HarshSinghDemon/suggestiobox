@@ -20,6 +20,7 @@ import { useAuth as useFirebaseAuth } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
+import { JukeboxControls } from '../jukebox-controls';
 
 const ADMIN_EMAIL = 'harshroop100@gmail.com';
 
@@ -126,8 +127,9 @@ export function Header() {
         </nav>
 
         <div className="flex items-center justify-end flex-1 ml-auto">
+            <JukeboxControls />
           {user ? (
-            <div className="relative group">
+            <div className="relative group ml-2">
               <div className={cn(
                 "absolute -inset-0.5 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
               )}></div>

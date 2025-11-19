@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ChevronRight, Gamepad2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Jukebox } from '@/components/jukebox';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
@@ -64,10 +63,6 @@ export default function Home() {
                     </Link>
                 </Button>
               </div>
-            </div>
-
-            <div className="pt-8">
-              <Jukebox />
             </div>
 
             <div className="pt-8">
