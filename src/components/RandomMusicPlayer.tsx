@@ -4,17 +4,30 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 // --- Configuration ---
 const JAMENDO_CLIENT_ID = '3d159494';
-const FREESOUND_API_KEY = 'obpKcmnE6dyzv0C58Zm18zMCa0bRpwXlTd2qFGLQ';
+const JAMENDO_API_URL = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=20&audioformat=mp31&include=musicinfo`;
 
-const API_ENDPOINTS = {
-  jamendo: `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=50&audioformat=mp31&include=musicinfo`,
-  freesound: `https://freesound.org/apiv2/search/text/?query=music+loop&fields=id,name,previews,images&token=${FREESOUND_API_KEY}`,
-};
+// --- Hardcoded Song Lists ---
+// Placeholder for your Supabase songs
+const mySongs = [
+  {
+    title: "Shinobi - BGM 1",
+    artist: "Arcade",
+    url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/(Music)%20Shinobi%20-%20BGM%201%20(Arcade).mp3",
+    source: "Supabase"
+  },
+  {
+    title: "Arcade Game Loop",
+    artist: "Free Sound",
+    url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Arcade%20game%20music%20loop%20%20free%20sound%20effects.mp3",
+    source: "Supabase"
+  },
+];
 
 const SOUNDHELIX_SONGS = [
-  { name: 'SoundHelix Song 1', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', image: null, source: 'SoundHelix' },
-  { name: 'SoundHelix Song 2', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', image: null, source: 'SoundHelix' },
-  { name: 'SoundHelix Song 3', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', image: null, source: 'SoundHelix' },
+  { title: 'SoundHelix Song 1', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', source: 'SoundHelix' },
+  { title: 'SoundHelix Song 2', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', source: 'SoundHelix' },
+  { title: 'SoundHelix Song 3', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', source: 'SoundHelix' },
+  { title: 'SoundHelix Song 4', artist: 'SoundHelix', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', source: 'SoundHelix' },
 ];
 
 // --- Style Objects (No external CSS) ---
@@ -113,42 +126,24 @@ export function RandomMusicPlayer() {
   const fetchAllMusic = useCallback(async () => {
     setStatus('loading');
     try {
-      // Fetch from all sources in parallel
-      const [jamendoResponse, freesoundResponse] = await Promise.all([
-        fetch(API_ENDPOINTS.jamendo),
-        fetch(API_ENDPOINTS.freesound),
-      ]);
-
-      if (!jamendoResponse.ok || !freesoundResponse.ok) {
-        throw new Error('Failed to fetch data from one or more APIs.');
+      const jamendoResponse = await fetch(JAMENDO_API_URL);
+      if (!jamendoResponse.ok) {
+        console.warn("Failed to fetch from Jamendo, proceeding with local files.");
       }
-
+      
       const jamendoData = await jamendoResponse.json();
-      const freesoundData = await freesoundResponse.json();
-
-      // --- Process and Filter Data ---
-      const jamendoTracks = jamendoData.results
-        .filter(t => t.audio && t.audio.includes('.mp3'))
+      
+      const jamendoTracks = (jamendoData.results || [])
+        .filter(t => t.audio && t.audio.includes(".mp3"))
         .map(t => ({
-          name: t.name || 'Untitled',
+          title: t.name || 'Untitled',
           artist: t.artist_name || 'Unknown Artist',
           url: t.audio,
           image: t.image || null,
           source: 'Jamendo',
         }));
 
-      const freesoundTracks = freesoundData.results
-        .filter(t => t.previews && t.previews['preview-hq-mp3'])
-        .map(t => ({
-          name: t.name || 'Untitled Sound',
-          artist: 'Freesound',
-          url: t.previews['preview-hq-mp3'],
-          image: t.images ? t.images.waveform_m : null,
-          source: 'Freesound',
-        }));
-
-      // Combine and shuffle all tracks
-      const combined = [...jamendoTracks, ...freesoundTracks, ...SOUNDHELIX_SONGS];
+      const combined = [...mySongs, ...SOUNDHELIX_SONGS, ...jamendoTracks];
       const shuffled = shuffleArray(combined);
 
       if (shuffled.length === 0) {
@@ -161,7 +156,15 @@ export function RandomMusicPlayer() {
 
     } catch (error) {
       console.error("Music Fetch Error:", error);
-      setStatus('error');
+      // Fallback to local songs if API fails
+      const localOnly = shuffleArray([...mySongs, ...SOUNDHELIX_SONGS]);
+      if (localOnly.length > 0) {
+        setPlaylist(localOnly);
+        setCurrentTrackIndex(0);
+        setStatus('ready');
+      } else {
+        setStatus('error');
+      }
     }
   }, []);
 
@@ -170,8 +173,14 @@ export function RandomMusicPlayer() {
   }, [fetchAllMusic]);
   
   const handleNextTrack = useCallback(() => {
-    setCurrentTrackIndex(prevIndex => (prevIndex + 1) % playlist.length);
-  }, [playlist.length]);
+    // Pick a new random index that is different from the current one
+    if (playlist.length <= 1) return;
+    let nextIndex = currentTrackIndex;
+    while (nextIndex === currentTrackIndex) {
+        nextIndex = Math.floor(Math.random() * playlist.length);
+    }
+    setCurrentTrackIndex(nextIndex);
+  }, [playlist.length, currentTrackIndex]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -180,7 +189,7 @@ export function RandomMusicPlayer() {
       if (audio.src !== track.url) {
         audio.src = track.url;
       }
-      audio.play().catch(e => console.error("Autoplay was prevented:", e));
+      audio.play().catch(e => console.warn("Autoplay was prevented. User interaction needed."));
     }
   }, [currentTrackIndex, playlist, status]);
 
@@ -203,7 +212,7 @@ export function RandomMusicPlayer() {
         {currentTrack.image ? (
           <img
             src={currentTrack.image}
-            alt={`Cover for ${currentTrack.name}`}
+            alt={`Cover for ${currentTrack.title}`}
             style={styles.coverArt}
           />
         ) : (
@@ -212,7 +221,7 @@ export function RandomMusicPlayer() {
       </div>
 
       <div style={styles.trackInfo}>
-        <h2 style={styles.trackName}>{currentTrack.name}</h2>
+        <h2 style={styles.trackName}>{currentTrack.title}</h2>
         <p style={styles.artistName}>{currentTrack.artist}</p>
         <div style={styles.sourceBadge}>{currentTrack.source}</div>
       </div>
@@ -220,6 +229,7 @@ export function RandomMusicPlayer() {
       <audio
         ref={audioRef}
         controls
+        autoPlay
         src={currentTrack.url}
         onEnded={handleNextTrack}
         style={styles.audioPlayer}
