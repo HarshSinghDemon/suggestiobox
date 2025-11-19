@@ -1,35 +1,103 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Loader2, Music, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
-const JAMENDO_CLIENT_ID = '3d159494';
-const JAMENDO_API_URL = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=20&audioformat=mp31&include=musicinfo&boost=popularity_month`;
+// Style objects for modern UI without external CSS libraries
+const styles = {
+  playerContainer: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    maxWidth: '450px',
+    margin: 'auto',
+    padding: '2rem',
+    borderRadius: '12px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+    background: 'hsl(var(--card))',
+    color: 'hsl(var(--foreground))',
+    border: '1px solid hsl(var(--border))',
+  },
+  albumArt: {
+    width: '100%',
+    height: 'auto',
+    aspectRatio: '1 / 1',
+    borderRadius: '8px',
+    objectFit: 'cover',
+    marginBottom: '1rem',
+  },
+  trackInfo: {
+    textAlign: 'center',
+    marginBottom: '1rem',
+  },
+  trackName: {
+    fontSize: '1.25rem',
+    fontWeight: '600',
+    margin: '0',
+  },
+  artistName: {
+    fontSize: '1rem',
+    color: 'hsl(var(--muted-foreground))',
+    margin: '0.25rem 0 0 0',
+  },
+  controls: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '1.5rem',
+    margin: '1.5rem 0',
+  },
+  controlButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'hsl(var(--foreground))',
+  },
+  playButton: {
+    background: 'hsl(var(--primary))',
+    border: 'none',
+    borderRadius: '50%',
+    width: '50px',
+    height: '50px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    color: 'hsl(var(--primary-foreground))',
+    boxShadow: '0 4px 15px hsla(var(--primary), 0.4)',
+  },
+  audioPlayer: {
+    width: '100%',
+  },
+  loader: {
+    textAlign: 'center',
+    fontSize: '1rem',
+    color: 'hsl(var(--muted-foreground))',
+  }
+};
 
-interface JamendoTrack {
-  id: string;
-  name: string;
-  artist_name: string;
-  album_image: string;
-  audio: string;
-}
+const PlayIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+);
+const PauseIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+);
+const NextIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+);
+const PrevIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+);
+
 
 export function JamendoPlayer() {
-  const [playlist, setPlaylist] = useState<JamendoTrack[]>([]);
+  const [playlist, setPlaylist] = useState([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const isFirstPlay = useRef(true);
+  const audioRef = useRef(null);
+
+  const JAMENDO_CLIENT_ID = '3d159494';
+  const JAMENDO_API_URL = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=30&audioformat=mp31&include=musicinfo`;
 
   useEffect(() => {
     const fetchSongs = async () => {
@@ -38,20 +106,22 @@ export function JamendoPlayer() {
       try {
         const response = await fetch(JAMENDO_API_URL);
         if (!response.ok) {
-          throw new Error('Failed to fetch songs from Jamendo.');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        if (data.results && data.results.length > 0) {
-          const validTracks = data.results.filter((track: JamendoTrack) => track.audio);
-          if (validTracks.length === 0) {
-            throw new Error('No playable tracks found in the API response.');
-          }
-          setPlaylist(validTracks);
-        } else {
-          throw new Error('No songs found.');
+
+        // Filter for tracks that have a valid MP3 audio URL
+        const playableTracks = data.results.filter(
+          (track) => track.audio && track.audio.includes(".mp3")
+        );
+
+        if (playableTracks.length === 0) {
+          throw new Error("No playable tracks found from the API.");
         }
-      } catch (err: any) {
-        setError(err.message || 'An unknown error occurred.');
+
+        setPlaylist(playableTracks);
+      } catch (err) {
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
@@ -59,45 +129,21 @@ export function JamendoPlayer() {
 
     fetchSongs();
   }, []);
-  
-  const currentTrack = playlist[currentTrackIndex];
-  
-  useEffect(() => {
-    if (audioRef.current && currentTrack) {
-        if (audioRef.current.src !== currentTrack.audio) {
-            audioRef.current.src = currentTrack.audio;
-        }
-        if (isPlaying) {
-            audioRef.current.play().catch(e => {
-                console.error("Autoplay failed:", e);
-                setIsPlaying(false);
-            });
-        }
-    }
-  }, [currentTrack, isPlaying]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-        audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
-
 
   const handlePlayPause = useCallback(() => {
-    if (!audioRef.current) return;
-    
-    if (isFirstPlay.current) {
-      isFirstPlay.current = false;
-      audioRef.current.src = currentTrack.audio;
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        // This promise-based play is important for handling autoplay policies
+        audioRef.current.play().catch(e => {
+            console.error("Playback was prevented.", e)
+            setIsPlaying(false); // Update state if play() is rejected
+        });
+      }
+      setIsPlaying(!isPlaying);
     }
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(e => console.error("Playback failed", e));
-    }
-    setIsPlaying(!isPlaying);
-  }, [isPlaying, currentTrack]);
+  }, [isPlaying]);
 
   const playNext = useCallback(() => {
     setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % playlist.length);
@@ -107,89 +153,65 @@ export function JamendoPlayer() {
     setCurrentTrackIndex((prevIndex) => (prevIndex - 1 + playlist.length) % playlist.length);
   }, [playlist.length]);
 
-  const handleVolumeChange = (value: number[]) => {
-    setVolume(value[0]);
-    if (isMuted) setIsMuted(false);
-  };
-  
+  // Effect to handle changing track source and autoplay
+  useEffect(() => {
+    if (audioRef.current && playlist.length > 0) {
+      const currentTrack = playlist[currentTrackIndex];
+      audioRef.current.src = currentTrack.audio;
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.error("Autoplay failed on track change.", e));
+      }
+    }
+  }, [currentTrackIndex, playlist, isPlaying]);
+
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center text-foreground">
-        <Loader2 className="w-12 h-12 mb-4 animate-spin" />
-        <p className="text-lg">Loading your music...</p>
-        <p className="text-sm text-muted-foreground">Fetching fresh tracks from Jamendo.</p>
-      </div>
-    );
+    return <div style={styles.loader}>Loading music...</div>;
+  }
+
+  if (error) {
+    return <div style={{...styles.loader, color: 'red'}}>Error: {error}</div>;
   }
   
-  if (error) {
-    return (
-        <div className="flex flex-col items-center justify-center p-8 text-center text-destructive">
-            <AlertTriangle className="w-12 h-12 mb-4" />
-            <p className="text-lg font-semibold">Could not load music</p>
-            <p className="text-sm">{error}</p>
-      </div>
-    )
+  if (playlist.length === 0) {
+      return <div style={styles.loader}>No songs to display.</div>;
   }
+
+  const currentTrack = playlist[currentTrackIndex];
 
   return (
-    <Card className="w-full max-w-sm mx-auto overflow-hidden shadow-2xl bg-gradient-to-br from-card to-muted/50">
-      <CardContent className="p-6">
-        <div className="flex flex-col items-center space-y-6">
-          <div className="relative w-48 h-48 rounded-lg shadow-lg">
-            {currentTrack?.album_image ? (
-              <Image
-                src={currentTrack.album_image}
-                alt={currentTrack.name}
-                fill
-                className="object-cover rounded-md"
-                unoptimized
-              />
-            ) : (
-               <div className="flex items-center justify-center w-full h-full rounded-md bg-muted">
-                    <Music className="w-16 h-16 text-muted-foreground" />
-                </div>
-            )}
-            <div className="absolute inset-0 bg-black/20 rounded-md"></div>
-          </div>
-          
-          <div className="text-center">
-            <h2 className="text-xl font-bold truncate text-foreground">{currentTrack?.name || 'Unknown Song'}</h2>
-            <p className="text-sm text-muted-foreground">{currentTrack?.artist_name || 'Unknown Artist'}</p>
-          </div>
-          
-          <div className="flex items-center justify-center w-full gap-4">
-            <Button variant="ghost" size="icon" onClick={playPrevious}>
-              <SkipBack className="w-6 h-6" />
-            </Button>
-            <Button variant="default" size="icon" className="w-16 h-16 rounded-full shadow-lg" onClick={handlePlayPause}>
-              {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 fill-current" />}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={playNext}>
-              <SkipForward className="w-6 h-6" />
-            </Button>
-          </div>
+    <div style={styles.playerContainer}>
+      <img
+        src={currentTrack.album_image}
+        alt={`Album art for ${currentTrack.name}`}
+        style={styles.albumArt}
+      />
 
-          <div className="flex items-center w-full gap-3 pt-4">
-            <Button variant="ghost" size="icon" onClick={() => setIsMuted(!isMuted)}>
-                {isMuted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-            </Button>
-            <Slider
-              value={[isMuted ? 0 : volume]}
-              onValueChange={handleVolumeChange}
-              max={1}
-              step={0.01}
-            />
-          </div>
-        </div>
-      </CardContent>
+      <div style={styles.trackInfo}>
+        <h2 style={styles.trackName}>{currentTrack.name}</h2>
+        <p style={styles.artistName}>{currentTrack.artist_name}</p>
+      </div>
+
       <audio
         ref={audioRef}
+        src={currentTrack.audio}
         onEnded={playNext}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        crossOrigin="anonymous"
+        controls
+        style={styles.audioPlayer}
       />
-    </Card>
+
+      <div style={styles.controls}>
+        <button onClick={playPrevious} style={styles.controlButton} aria-label="Previous song">
+          <PrevIcon />
+        </button>
+        <button onClick={handlePlayPause} style={styles.playButton} aria-label={isPlaying ? "Pause" : "Play"}>
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        </button>
+        <button onClick={playNext} style={styles.controlButton} aria-label="Next song">
+          <NextIcon />
+        </button>
+      </div>
+    </div>
   );
 }
