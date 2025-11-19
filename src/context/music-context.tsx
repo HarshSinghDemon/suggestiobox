@@ -124,13 +124,14 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
       audioElement.pause();
       setIsPlaying(false);
     } else {
-      // If src is not set, this is the first play
-      if (!audioElement.src) {
+      // If src is not set or differs, this is the first play or a new song
+      if (audioElement.src !== currentSong.url) {
         audioElement.src = currentSong.url;
       }
       audioElement.play().then(() => {
         setIsPlaying(true);
-      }).catch(() => {
+      }).catch((e) => {
+        console.error("Audio playback failed:", e);
         setIsPlaying(false);
       });
     }
