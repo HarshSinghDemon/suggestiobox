@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns } from 'lucide-react';
 import Link from 'next/link';
@@ -17,7 +19,7 @@ const games = [
         description: 'Clear all the bricks to win.',
         href: '/community-games/brick-breaker',
         icon: Palette,
-        variant: 'default',
+        variant: 'ocean',
     },
     {
         name: 'Hangman',
@@ -38,14 +40,14 @@ const games = [
         description: 'Clear the board without hitting a mine.',
         href: '/community-games/minesweeper',
         icon: Bomb,
-        variant: 'default',
+        variant: 'ocean',
     },
     {
         name: '2048',
         description: 'Slide tiles to get the 2048 tile.',
         href: '/community-games/2048',
         icon: Brain,
-        variant: 'default',
+        variant: 'ocean',
     },
     {
         name: 'Rock Paper Scissors',
@@ -66,14 +68,14 @@ const games = [
         description: 'Flap your way through the pipes.',
         href: '/community-games/flappy-bird',
         icon: Bird,
-        variant: 'default',
+        variant: 'ocean',
     },
     {
         name: 'Sudoku',
         description: 'Fill the grid with numbers 1-9.',
         href: '/community-games/sudoku',
         icon: Columns,
-        variant: 'default',
+        variant: 'ocean',
     },
     {
         name: 'Word Search',
@@ -100,10 +102,11 @@ export default function CommunityGamePage() {
                     <Card className={cn(
                       "flex flex-col h-full transition-shadow duration-300 hover:shadow-xl",
                       game.variant === 'default' && 'hover:border-primary/50',
-                      game.variant === 'fiery' && 'bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20'
+                      game.variant === 'fiery' && 'bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20',
+                      game.variant === 'ocean' && 'bg-gradient-to-br from-blue-400/10 via-violet-500/10 to-purple-600/10 border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/20'
                     )}>
                         <CardHeader className="flex flex-row items-center gap-4">
-                            <game.icon className={cn("w-10 h-10", game.variant === 'fiery' ? 'text-orange-400' : 'text-primary')} />
+                            <game.icon className={cn("w-10 h-10", game.variant === 'fiery' ? 'text-orange-400' : game.variant === 'ocean' ? 'text-blue-400' : 'text-primary')} />
                             <div>
                                 <CardTitle>{game.name}</CardTitle>
                             </div>
