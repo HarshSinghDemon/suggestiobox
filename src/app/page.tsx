@@ -54,9 +54,13 @@ export default function Home() {
         ref={playerRef}
         videoId="rqJSJQww8z4"
         onStateChange={(event) => {
+            // event.data === 1 means playing
+            // event.data === 2 means paused
             // event.data === 0 means video ended
-            if (event.data === 0) {
-                setIsPlaying(false);
+            if (event.data === 1) {
+              setIsPlaying(true);
+            } else {
+              setIsPlaying(false);
             }
         }}
       />
