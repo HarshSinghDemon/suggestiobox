@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -174,15 +175,6 @@ export function Header() {
                         Admin
                     </Button>
                 )}
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    className="hidden md:flex"
-                    onClick={handleSignOut}
-                >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Log Out
-                </Button>
                 <div className="relative group hidden md:block">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -209,7 +201,10 @@ export function Header() {
                         <DropdownMenuItem onClick={() => router.push('/about-site')}><Info className="w-4 h-4 mr-2" /><span>About This Site</span></DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/about-admin')}><Users className="w-4 h-4 mr-2" /><span>About Admin</span></DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleSignOut}><LogOut className="w-4 h-4 mr-2" /><span>Log out</span></DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                          <LogOut className="w-4 h-4 mr-2" />
+                          <span>Log out</span>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -299,7 +294,7 @@ export function Header() {
                         </nav>
                         <div className="p-4 mt-auto border-t">
                             {user ? (
-                                <Button variant="outline" className="w-full" onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>
+                                <Button variant="destructive" className="w-full" onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>
                                     <LogOut className="w-4 h-4 mr-2" /> Sign Out
                                 </Button>
                             ) : (
