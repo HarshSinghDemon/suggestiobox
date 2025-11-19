@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -82,9 +83,9 @@ export function CommunityMembersList() {
         <div className="mb-12">
             <Popover>
                 <PopoverTrigger asChild>
-                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-primary/50 bg-gradient-to-tr from-card to-primary/10 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 animate-tilt">
-                         <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-primary">Admin</div>
-                        <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-primary">
+                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-purple-500/50 bg-gradient-to-tr from-purple-600/10 via-red-500/10 to-background hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2 animate-tilt">
+                         <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-red-500">Admin</div>
+                        <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-purple-400">
                             <AvatarImage src={adminUser.photoURL} alt={adminUser.displayName ?? ''} />
                             <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
                         </Avatar>
