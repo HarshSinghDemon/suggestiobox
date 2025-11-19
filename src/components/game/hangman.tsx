@@ -29,7 +29,7 @@ export function HangmanGame() {
 
   const maxMistakes = 6;
 
-  const isWinner = word && word.split('').every(letter => guessedLetters.includes(letter));
+  const isWinner = isClient && word && word.split('').every(letter => guessedLetters.includes(letter));
   const isLoser = mistakes >= maxMistakes;
   const isGameOver = isWinner || isLoser;
 
