@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
@@ -36,7 +36,13 @@ export function MessageInput() {
   );
   
   const { data: users } = useCollection<User>(usersQuery);
-  const currentUserData = users?.find(u => u.id === user?.uid);
+  const [currentUserData, setCurrentUserData] = useState<User | undefined>(undefined);
+
+  useEffect(() => {
+    if (users && user) {
+      setCurrentUserData(users.find(u => u.id === user.uid));
+    }
+  }, [users, user]);
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,8 +122,8 @@ export function MessageInput() {
 
   return (
     <Popover open={isTagging} onOpenChange={setIsTagging}>
-        <PopoverTrigger asChild>
-            <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
+        <form onSubmit={handleSubmit} className="flex w-full items-center space-x-2">
+            <PopoverTrigger asChild>
                 <Input
                     ref={inputRef}
                     type="text"
@@ -130,20 +136,21 @@ export function MessageInput() {
                             handleInputChange(e as any);
                         }
                     }}
+                    onClick={handleInputChange} // Recalculate tagging state on click
                     disabled={isSending}
                     autoComplete="off"
                     id="message-input"
                 />
-                <Button type="submit" size="icon" disabled={isSending || message.trim() === ''}>
-                    {isSending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                    <Send className="w-4 h-4" />
-                    )}
-                    <span className="sr-only">Send Message</span>
-                </Button>
-            </form>
-        </PopoverTrigger>
+            </PopoverTrigger>
+            <Button type="submit" size="icon" disabled={isSending || message.trim() === ''}>
+                {isSending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                <Send className="w-4 h-4" />
+                )}
+                <span className="sr-only">Send Message</span>
+            </Button>
+        </form>
         <PopoverContent 
             className="w-[350px] p-0" 
             onOpenAutoFocus={(e) => e.preventDefault()} // prevent focus stealing
