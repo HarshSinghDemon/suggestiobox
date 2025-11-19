@@ -136,13 +136,24 @@ export function Header() {
             >
                 Upload
             </Link>
-             <Link
-                href="/about-site"
-                className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                About
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                  About
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => router.push('/about-site')}>
+                  <Info className="w-4 h-4 mr-2" />
+                  About This Site
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/about-admin')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  About The Admin
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </nav>
 
         <div className="flex items-center justify-end gap-2 ml-auto">
