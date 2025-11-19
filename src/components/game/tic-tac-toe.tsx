@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { X, Circle, RotateCcw } from 'lucide-react';
+import { X, Circle, RotateCcw, User, Bot } from 'lucide-react';
 
 type Player = 'X' | 'O';
 type Square = Player | null;
+type GameMode = 'friend' | 'ai';
 
 const calculateWinner = (squares: Square[]): {winner: Player | null, line: number[] | null} => {
   const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-    [0, 4, 8], [2, 4, 6],           // diagonals
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
   ];
   for (const line of lines) {
     const [a, b, c] = line;
@@ -43,12 +44,36 @@ const SquareComponent = ({ value, onClick, isWinning }: { value: Square; onClick
 export function TicTacToeGame() {
   const [board, setBoard] = useState<Square[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
-  
+  const [gameMode, setGameMode] = useState<GameMode | null>(null);
+
   const { winner, line: winningLine } = calculateWinner(board);
   const isDraw = !winner && isBoardFull(board);
 
+  const aiMove = (currentBoard: Square[]) => {
+    const emptySquares = currentBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null);
+    if (emptySquares.length > 0) {
+        const randomIndex = Math.floor(Math.random() * emptySquares.length);
+        const move = emptySquares[randomIndex];
+        if (move !== null) {
+            const newBoard = currentBoard.slice();
+            newBoard[move] = 'O';
+            setBoard(newBoard);
+            setIsXNext(true);
+        }
+    }
+  };
+
+  useEffect(() => {
+    if (gameMode === 'ai' && !isXNext && !winner && !isDraw) {
+      const timer = setTimeout(() => aiMove(board), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isXNext, board, winner, isDraw, gameMode]);
+
+
   const handleClick = (i: number) => {
-    if (winner || board[i]) return;
+    if (winner || board[i] || (gameMode === 'ai' && !isXNext)) return;
+    
     const newBoard = board.slice();
     newBoard[i] = isXNext ? 'X' : 'O';
     setBoard(newBoard);
@@ -59,14 +84,37 @@ export function TicTacToeGame() {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
   };
+  
+  const changeMode = () => {
+      restartGame();
+      setGameMode(null);
+  }
+
+  if (!gameMode) {
+      return (
+          <div className="flex flex-col items-center justify-center gap-4 p-8">
+              <h3 className="text-xl font-semibold">Choose Your Opponent</h3>
+              <div className="flex gap-4">
+                  <Button onClick={() => setGameMode('friend')} size="lg"><User className="mr-2"/>Play with a Friend</Button>
+                  <Button onClick={() => setGameMode('ai')} size="lg"><Bot className="mr-2"/>Play with CPU</Button>
+              </div>
+          </div>
+      );
+  }
 
   let status;
   if (winner) {
     status = `Winner: Player ${winner}`;
+    if (gameMode === 'ai') {
+        status = winner === 'X' ? 'You Win!' : 'CPU Wins!';
+    }
   } else if (isDraw) {
     status = "It's a Draw!";
   } else {
     status = `Next player: ${isXNext ? 'X' : 'O'}`;
+    if(gameMode === 'ai') {
+        status = isXNext ? 'Your Turn (X)' : 'CPU is thinking... (O)';
+    }
   }
 
   return (
@@ -85,6 +133,9 @@ export function TicTacToeGame() {
           Play Again
         </Button>
       )}
+       <Button onClick={changeMode} variant="link" size="sm" className="mt-2">
+        Change Mode
+      </Button>
     </div>
   );
 }

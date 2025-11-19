@@ -8,8 +8,8 @@ export default function TicTacToePage() {
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <CardTitle>Tic-Tac-Toe (2 Player)</CardTitle>
-          <CardDescription>Get three in a row to beat your friend!</CardDescription>
+          <CardTitle>Tic-Tac-Toe</CardTitle>
+          <CardDescription>Get three in a row to beat your friend or the CPU!</CardDescription>
         </CardHeader>
         <CardContent>
           <TicTacToeGame />

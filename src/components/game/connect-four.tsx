@@ -6,7 +6,7 @@ import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
-import { RotateCcw, Crown } from 'lucide-react';
+import { RotateCcw, Crown, User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ROWS = 6;
@@ -15,6 +15,7 @@ const COLS = 7;
 type Player = '1' | '2';
 type Cell = Player | null;
 type Board = Cell[][];
+type GameMode = 'friend' | 'ai';
 
 const createEmptyBoard = (): Board => Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
 
@@ -24,13 +25,14 @@ export function ConnectFourGame() {
     const [winner, setWinner] = useState<Player | 'draw' | null>(null);
     const [wins, setWins] = useState({ player1: 0, player2: 0 });
     const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+    const [gameMode, setGameMode] = useState<GameMode | null>(null);
 
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
 
     const submitScore = useCallback(async () => {
-        if (!user || !firestore || hasSubmittedScore || winner !== '1') return;
+        if (!user || !firestore || hasSubmittedScore || winner !== '1' || gameMode !== 'ai') return;
         const score = wins.player1 * 100 - wins.player2 * 50;
         if(score <= 0) return;
         try {
@@ -55,10 +57,9 @@ export function ConnectFourGame() {
                 description: "Could not submit your score.",
             });
         }
-    }, [user, firestore, toast, hasSubmittedScore, winner, wins]);
+    }, [user, firestore, toast, hasSubmittedScore, winner, wins, gameMode]);
 
     const checkWinner = (boardToCheck: Board): Player | 'draw' | null => {
-        // Horizontal, Vertical, Diagonal checks
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const p = boardToCheck[r][c];
@@ -77,7 +78,7 @@ export function ConnectFourGame() {
     };
 
     const handleColumnClick = (col: number) => {
-        if (winner || board[0][col]) return;
+        if (winner || board[0][col] || (gameMode === 'ai' && currentPlayer === '2')) return;
 
         const newBoard = board.map(row => [...row]);
         for (let r = ROWS - 1; r >= 0; r--) {
@@ -98,13 +99,13 @@ export function ConnectFourGame() {
     };
     
     useEffect(() => {
-        if (winner === '1') {
+        if (winner === '1' && gameMode === 'ai') {
             submitScore();
         }
-    }, [winner, submitScore]);
+    }, [winner, submitScore, gameMode]);
     
     useEffect(() => {
-        if(currentPlayer === '2' && !winner){
+        if(gameMode === 'ai' && currentPlayer === '2' && !winner){
             const timeout = setTimeout(() => {
                 let availableCols = [];
                 for(let c=0; c < COLS; c++){
@@ -117,7 +118,7 @@ export function ConnectFourGame() {
             }, 500);
             return () => clearTimeout(timeout);
         }
-    }, [currentPlayer, board, winner]);
+    }, [currentPlayer, board, winner, gameMode]);
 
     const resetBoard = () => {
         setBoard(createEmptyBoard());
@@ -129,6 +130,19 @@ export function ConnectFourGame() {
         resetBoard();
         setWins({ player1: 0, player2: 0 });
         setHasSubmittedScore(false);
+        setGameMode(null);
+    }
+    
+    if (!gameMode) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 p-8">
+                <h3 className="text-xl font-semibold">Choose Your Opponent</h3>
+                <div className="flex gap-4">
+                    <Button onClick={() => setGameMode('friend')} size="lg"><User className="mr-2"/>Play with a Friend</Button>
+                    <Button onClick={() => setGameMode('ai')} size="lg"><Bot className="mr-2"/>Play with CPU</Button>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -148,7 +162,7 @@ export function ConnectFourGame() {
                  {winner && (
                     <div className="text-center">
                         <h2 className="text-2xl font-bold">
-                            {winner === 'draw' ? "It's a Draw!" : winner === '1' ? 'You Win!' : 'Computer Wins!'}
+                            {winner === 'draw' ? "It's a Draw!" : winner === '1' ? 'Player 1 Wins!' : gameMode === 'ai' ? 'CPU Wins!' : 'Player 2 Wins!'}
                         </h2>
                         <Button onClick={resetBoard} variant="outline" className="mt-2">Next Round</Button>
                     </div>
@@ -157,16 +171,16 @@ export function ConnectFourGame() {
             <div className="space-y-4">
                 <div className="p-4 text-center rounded-md bg-muted">
                     <h3 className="font-semibold">Score</h3>
-                    <p className="text-lg">You: {wins.player1} - CPU: {wins.player2}</p>
+                    <p className="text-lg">P1: {wins.player1} - {gameMode === 'ai' ? 'CPU' : 'P2'}: {wins.player2}</p>
                     <p className="text-sm text-muted-foreground">
-                        {winner ? `Winner: ${winner === '1' ? 'You' : winner === '2' ? 'CPU' : 'Draw'}` : `Current Turn: ${currentPlayer === '1' ? 'You' : 'CPU'}`}
+                        {winner ? `Winner: ${winner === '1' ? 'P1' : winner === '2' ? (gameMode === 'ai' ? 'CPU' : 'P2') : 'Draw'}` : `Current Turn: ${currentPlayer === '1' ? 'P1' : (gameMode === 'ai' ? 'CPU' : 'P2')}`}
                     </p>
                 </div>
                  <Button onClick={restartGame} className="w-full">
                     <RotateCcw className="w-4 h-4 mr-2" />
                     New Game
                 </Button>
-                <Leaderboard gameId="connect-four" />
+                {gameMode === 'ai' && <Leaderboard gameId="connect-four" />}
             </div>
         </div>
     );
