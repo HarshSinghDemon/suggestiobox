@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 export default function RockPaperScissorsPage() {
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+    <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl">
         <CardHeader className="text-center">
           <CardTitle>Rock Paper Scissors</CardTitle>
