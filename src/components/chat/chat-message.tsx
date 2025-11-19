@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Message } from '@/lib/types';
+import type { Message, FirebaseUser } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser, useFirestore, deleteDocumentNonBlocking } from '@/firebase';
@@ -22,9 +22,12 @@ import {
 import React from 'react';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { UserProfilePopover } from './user-profile-popover';
 
 type ChatMessageProps = {
   message: Message;
+  author?: FirebaseUser;
 };
 
 const MentionedUser = ({ text }: { text: string }) => (
@@ -46,7 +49,7 @@ const renderMessageWithMentions = (text: string) => {
 };
 
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, author }: ChatMessageProps) {
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -67,21 +70,31 @@ export function ChatMessage({ message }: ChatMessageProps) {
   };
   
   const yearBadgeClass = cn({
-    'border-sky-500/30 bg-sky-500/20 text-sky-400': message.userYear === '1st',
-    'border-amber-500/30 bg-amber-500/20 text-amber-400': message.userYear === '2nd',
-    'border-emerald-500/30 bg-emerald-500/20 text-emerald-400': message.userYear === '3rd',
+    'border-sky-500/30 bg-sky-500/20 text-sky-400': author?.year === '1st',
+    'border-amber-500/30 bg-amber-500/20 text-amber-400': author?.year === '2nd',
+    'border-emerald-500/30 bg-emerald-500/20 text-emerald-400': author?.year === '3rd',
   });
 
   return (
-    <div className="flex items-start gap-4 group">
-      <Avatar className="w-10 h-10 border">
-        <AvatarImage src={message.userImage ?? undefined} />
-        <AvatarFallback>{getInitials(message.userName)}</AvatarFallback>
-      </Avatar>
+    <div className="flex items-start gap-4 group animate-fade-in-up">
+      <Popover>
+        <PopoverTrigger asChild>
+           <Avatar className="w-10 h-10 border cursor-pointer transition-transform hover:scale-110">
+              <AvatarImage src={message.userImage ?? undefined} />
+              <AvatarFallback>{getInitials(message.userName)}</AvatarFallback>
+            </Avatar>
+        </PopoverTrigger>
+        {author && (
+            <PopoverContent className='w-80'>
+                <UserProfilePopover user={author} />
+            </PopoverContent>
+        )}
+      </Popover>
+     
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <p className="font-semibold">{message.userName || 'Anonymous'}</p>
-          {message.userYear && <Badge variant="outline" className={yearBadgeClass}>{message.userYear} Year</Badge>}
+          {author?.year && <Badge variant="outline" className={yearBadgeClass}>{author.year} Year</Badge>}
           <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
         <p className="text-foreground/90">{renderMessageWithMentions(message.text)}</p>

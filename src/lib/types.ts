@@ -4,6 +4,7 @@ import type { Subject, Semester } from "./constants";
 
 export type FirebaseUser = {
   uid: string;
+  id: string; // id is often used for collection documents
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
@@ -48,7 +49,7 @@ export type Message = {
   userId: string;
   userName: string | null;
   userImage: string | null;
-  userYear?: '1st' | '2nd' | '3rd';
+  userYear?: '1st' | '2nd' | '3rd' | null;
 };
 
 export type Notification = {

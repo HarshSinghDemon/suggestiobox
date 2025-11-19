@@ -1,14 +1,15 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import type { Message } from '@/lib/types';
+import type { Message, FirebaseUser } from '@/lib/types';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatMessage } from '@/components/chat/chat-message';
 import { MessageInput } from '@/components/chat/message-input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef, memo } from 'react';
+import { useEffect, useRef, memo, useMemo } from 'react';
 import Link from 'next/link';
 import { Users } from 'lucide-react';
 
@@ -48,7 +49,12 @@ function CommunityChatPage() {
   );
 
   const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
-  const { data: users, isLoading: isLoadingUsers } = useCollection(usersQuery);
+  const { data: users, isLoading: isLoadingUsers } = useCollection<FirebaseUser>(usersQuery);
+
+  const usersMap = useMemo(() => {
+    if (!users) return new Map<string, FirebaseUser>();
+    return new Map(users.map(u => [u.id, u]));
+  }, [users]);
 
   const totalUsers = users?.length ?? 0;
   
@@ -64,6 +70,21 @@ function CommunityChatPage() {
 
   return (
     <div className="container flex flex-col h-[calc(100vh-4rem)] py-6">
+        <style jsx global>{`
+            @keyframes-fade-in-up {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .animate-fade-in-up {
+                animation: keyframes-fade-in-up 0.5s ease-out forwards;
+            }
+        `}</style>
         <Card className="flex flex-col flex-1 w-full max-w-4xl mx-auto">
             <CardHeader>
                 <CardTitle>Community Chat</CardTitle>
@@ -88,7 +109,7 @@ function CommunityChatPage() {
                         {isLoading ? (
                             <ChatSkeleton />
                         ) : messages && messages.length > 0 ? (
-                            messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)
+                            messages.map((msg) => <ChatMessage key={msg.id} message={msg} author={usersMap.get(msg.userId)} />)
                         ) : (
                             <p className="text-center text-muted-foreground">
                             No messages yet. Be the first to say something!
