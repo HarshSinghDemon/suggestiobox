@@ -26,7 +26,10 @@ export function JukeboxControls() {
   }
   
   return (
-    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm">
+    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-in-out hover:scale-105">
+        <div className={cn("flex items-center justify-center w-8 h-8", isPlaying && "animate-pulse")}>
+            <Music className="w-4 h-4 text-muted-foreground" />
+        </div>
         <Tooltip>
             <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className='w-8 h-8 rounded-full' onClick={playPrevious}>
@@ -71,12 +74,9 @@ export function JukeboxControls() {
             </TooltipContent>
         </Tooltip>
         
-        <div className="flex items-center pl-1 pr-2 overflow-hidden text-left w-28">
-            <Music className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
-            <div className='flex-1 overflow-hidden'>
-                <p className="text-xs font-semibold truncate">{currentSong.title}</p>
-                <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
-            </div>
+        <div className="flex-1 overflow-hidden text-left w-28 pr-2">
+            <p className="text-xs font-semibold truncate">{currentSong.title}</p>
+            <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
         </div>
     </div>
   );
