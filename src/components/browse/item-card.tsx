@@ -40,7 +40,7 @@ export function ItemCard({ item, type, variant = 'default', author }: ItemCardPr
 
   return (
     <Card className={cn(
-      "flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group",
+      "flex flex-col overflow-hidden transition-all duration-200 ease-in-out hover:shadow-2xl hover:-translate-y-1 group",
       variant === 'default' && "hover:border-primary/50",
       variant === 'fiery' && "bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20",
       variant === 'ocean' && "bg-gradient-to-br from-blue-400/10 via-violet-500/10 to-purple-600/10 border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/20"

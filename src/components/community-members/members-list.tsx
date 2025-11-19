@@ -74,7 +74,7 @@ export function CommunityMembersList() {
                     <Popover key={user.id}>
                         <PopoverTrigger asChild>
                             <div 
-                                className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
+                                className="flex flex-col items-center p-4 text-center transition-all duration-200 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
                                 style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
                             >
                                 <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
