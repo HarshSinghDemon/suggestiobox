@@ -108,8 +108,6 @@ export function BrowseSection({
   const variants: ('default' | 'fiery' | 'ocean')[] = ['default', 'fiery', 'ocean'];
   const getRandomVariant = () => variants[Math.floor(Math.random() * variants.length)];
 
-  const validSemester = activeSemester && SEMESTERS.includes(activeSemester);
-
   return (
     <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
       <div className="flex flex-col items-center gap-4 mb-8 md:flex-row">
@@ -119,7 +117,7 @@ export function BrowseSection({
         </TabsList>
         <div className="flex flex-col w-full gap-2 md:flex-row md:w-auto">
             <SemesterFilter />
-            {validSemester && <SubjectFilter activeSemester={activeSemester} />}
+            <SubjectFilter activeSemester={activeSemester} />
         </div>
       </div>
       <TabsContent value="suggestions">

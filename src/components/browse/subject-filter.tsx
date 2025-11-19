@@ -10,9 +10,10 @@ import {
 } from '@/components/ui/select';
 import { SEMESTER_SUBJECTS } from '@/lib/constants';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 type SubjectFilterProps = {
-  activeSemester: '1st' | '3rd' | '5th';
+  activeSemester?: '1st' | '3rd' | '5th';
 };
 
 export function SubjectFilter({ activeSemester }: SubjectFilterProps) {
@@ -30,17 +31,20 @@ export function SubjectFilter({ activeSemester }: SubjectFilterProps) {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const subjects = activeSemester ? SEMESTER_SUBJECTS[activeSemester] : [];
+  const subjects = useMemo(() => {
+    if (activeSemester) {
+      return SEMESTER_SUBJECTS[activeSemester];
+    }
+    // If no semester is selected, combine all subjects and remove duplicates
+    const allSubjects = Object.values(SEMESTER_SUBJECTS).flat();
+    return [...new Set(allSubjects)];
+  }, [activeSemester]);
 
-  if (subjects.length === 0) {
-      return null;
-  }
 
   return (
     <Select
       onValueChange={handleSubjectChange}
       defaultValue={searchParams.get('subject') || 'all'}
-      disabled={!activeSemester}
     >
       <SelectTrigger className="w-full md:w-[240px]">
         <SelectValue placeholder="Filter by subject..." />
