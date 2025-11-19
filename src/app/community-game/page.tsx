@@ -61,12 +61,6 @@ const games = [
         icon: Bird,
     },
     {
-        name: 'Tetris',
-        description: 'Fit the falling blocks together.',
-        href: '/community-games/tetris',
-        icon: AlignEndVertical,
-    },
-    {
         name: 'Sudoku',
         description: 'Fill the grid with numbers 1-9.',
         href: '/community-games/sudoku',
