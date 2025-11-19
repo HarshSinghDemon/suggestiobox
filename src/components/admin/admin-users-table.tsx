@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -34,6 +34,8 @@ import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 type User = FirebaseUser & {
     createdAt?: Timestamp;
@@ -92,26 +94,30 @@ export function AdminUsersTable() {
     }
   }
   
-  const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
+  const handleRoleChange = (userId: string, newRole: 'user' | 'admin') => {
       if (!firestore) return;
       setUpdatingId(userId);
       const docRef = doc(firestore, 'users', userId);
-      try {
-          await updateDoc(docRef, { role: newRole });
-          toast({
-              title: "Role Updated",
-              description: `User role has been changed to ${newRole}.`
-          });
-      } catch (e: any) {
-          console.error("Failed to update role:", e);
-          toast({
-              variant: "destructive",
-              title: "Update Failed",
-              description: e.message || "Could not update the user's role."
-          });
-      } finally {
-          setUpdatingId(null);
-      }
+      const updatedData = { role: newRole };
+
+      updateDoc(docRef, updatedData)
+        .then(() => {
+            toast({
+                title: "Role Updated",
+                description: `User role has been changed to ${newRole}.`
+            });
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'update',
+                requestResourceData: updatedData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+            setUpdatingId(null);
+        });
   }
 
 
