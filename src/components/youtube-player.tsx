@@ -24,14 +24,8 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({
   const playerDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadYouTubeAPI = () => {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    };
-
     const createPlayer = () => {
+      if (playerRef.current || !playerDivRef.current) return;
       playerRef.current = new window.YT.Player(playerDivRef.current, {
         height: '0',
         width: '0',
@@ -55,7 +49,14 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({
       window.onYouTubeIframeAPIReady = () => {
         createPlayer();
       };
-      loadYouTubeAPI();
+      
+      if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+
     } else {
       createPlayer();
     }
@@ -63,6 +64,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({
     return () => {
         if(playerRef.current && typeof playerRef.current.destroy === 'function') {
             playerRef.current.destroy();
+            playerRef.current = null;
         }
     }
   }, [videoId, onStateChange]);

@@ -28,7 +28,6 @@ export default function Home() {
         } else {
             playerRef.current.playVideo();
         }
-        setIsPlaying(!isPlaying);
     }
   }
 
@@ -54,10 +53,7 @@ export default function Home() {
         ref={playerRef}
         videoId="rqJSJQww8z4"
         onStateChange={(event) => {
-            // event.data === 1 means playing
-            // event.data === 2 means paused
-            // event.data === 0 means video ended
-            if (event.data === 1) {
+            if (event.data === window.YT?.PlayerState?.PLAYING) {
               setIsPlaying(true);
             } else {
               setIsPlaying(false);
