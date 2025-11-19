@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { validateAssignment } from '@/lib/actions';
-import { SEMESTER_ASSIGNMENT_SUBJECTS, SEMESTERS, YEARS, type Semester } from '@/lib/constants';
+import { SEMESTER_ASSIGNMENT_SUBJECTS, SEMESTERS, type Semester } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -161,7 +161,6 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
       const docData = {
         title: formData.get('title') as string,
         subject: formData.get('subject') as string,
-        year: Number(formData.get('year')),
         semester: formData.get('semester') as string,
         userId: user?.uid || 'anonymous',
         userName: user?.displayName || 'Anonymous',
@@ -204,23 +203,7 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
         />
       </div>
 
-       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-         <div className="space-y-2">
-          <Label htmlFor="year">Year</Label>
-          <Select name="year" required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a year" />
-            </SelectTrigger>
-            <SelectContent>
-              {YEARS.map((year) => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
+       <div className="space-y-2">
             <Label htmlFor="semester">Semester</Label>
             <Select name="semester" required onValueChange={(value) => setSelectedSemester(value as Semester)}>
                 <SelectTrigger>
@@ -235,7 +218,6 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
                 </SelectContent>
             </Select>
         </div>
-      </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">

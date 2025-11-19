@@ -6,6 +6,12 @@ export const SUBJECTS = [
   "Cloud Computing",
   "Artificial Intelligence",
   "Compiler Design",
+  "Semiconductor Physics",
+  "Basic Electrical and Electronic Engineering",
+  "English",
+  "Foundation for AI",
+  "Understanding Harmony and Ethical Human Conducts",
+  "Calculus",
 ] as const;
 
 export const ASSIGNMENT_SUBJECTS = [
@@ -14,6 +20,12 @@ export const ASSIGNMENT_SUBJECTS = [
   "DBMS",
   "Cloud Computing",
   "Artificial Intelligence",
+  "Semiconductor Physics",
+  "Basic Electrical and Electronic Engineering",
+  "English",
+  "Foundation for AI",
+  "Understanding Harmony and Ethical Human Conducts",
+  "Calculus",
 ] as const;
 
 export type Subject = (typeof SUBJECTS)[number];
@@ -26,7 +38,14 @@ export const SEMESTERS = ["1st", "3rd", "5th"] as const;
 export type Semester = (typeof SEMESTERS)[number];
 
 export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
-    "1st": [],
+    "1st": [
+        "Semiconductor Physics",
+        "Basic Electrical and Electronic Engineering",
+        "English",
+        "Foundation for AI",
+        "Understanding Harmony and Ethical Human Conducts",
+        "Calculus",
+    ],
     "3rd": [],
     "5th": [
         "Computer Networks",
@@ -39,7 +58,14 @@ export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
 };
 
 export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]> = {
-    "1st": [],
+    "1st": [
+        "Semiconductor Physics",
+        "Basic Electrical and Electronic Engineering",
+        "English",
+        "Foundation for AI",
+        "Understanding Harmony and Ethical Human Conducts",
+        "Calculus",
+    ],
     "3rd": [],
     "5th": [
         "Computer Networks",

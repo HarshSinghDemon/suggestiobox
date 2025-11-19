@@ -1,6 +1,6 @@
 
 import type { Timestamp } from "firebase/firestore";
-import type { Subject, Year, Semester } from "./constants";
+import type { Subject, Semester } from "./constants";
 
 export type FirebaseUser = {
   uid: string;
@@ -14,7 +14,6 @@ export type Suggestion = {
   title: string;
   description: string;
   subject: Subject;
-  year: Year;
   semester: Semester;
   createdAt: Timestamp;
   userId: string;
@@ -30,7 +29,6 @@ export type Assignment = {
   id: string;
   title: string;
   subject: Subject;
-  year: Year;
   semester: Semester;
   createdAt: Timestamp;
   userId: string;

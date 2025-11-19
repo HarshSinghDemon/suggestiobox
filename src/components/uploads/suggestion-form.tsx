@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
-import { SEMESTERS, SEMESTER_SUBJECTS, YEARS, type Semester } from '@/lib/constants';
+import { SEMESTERS, SEMESTER_SUBJECTS, type Semester } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -166,7 +166,6 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
-        year: Number(formData.get('year')),
         semester: formData.get('semester') as string,
         userId: user?.uid || 'anonymous',
         userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
@@ -238,47 +237,25 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
         )}
       </div>
       
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-         <div className="space-y-2">
-          <Label htmlFor="year">Year</Label>
-          <Select name="year" required>
+      <div className="space-y-2">
+        <Label htmlFor="semester">Semester</Label>
+        <Select name="semester" required onValueChange={(value) => setSelectedSemester(value as Semester)}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a year" />
+                <SelectValue placeholder="Select a semester" />
             </SelectTrigger>
             <SelectContent>
-              {YEARS.map((year) => (
-                <SelectItem key={year} value={String(year)}>
-                  {year}
-                </SelectItem>
-              ))}
+                {SEMESTERS.map((semester) => (
+                    <SelectItem key={semester} value={semester}>
+                        {semester}
+                    </SelectItem>
+                ))}
             </SelectContent>
-          </Select>
-           {formState.errors?.year && (
+        </Select>
+        {formState.errors?.semester && (
             <p className="text-sm font-medium text-destructive">
-              {formState.errors.year}
+            {formState.errors.semester}
             </p>
-          )}
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="semester">Semester</Label>
-            <Select name="semester" required onValueChange={(value) => setSelectedSemester(value as Semester)}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a semester" />
-                </SelectTrigger>
-                <SelectContent>
-                    {SEMESTERS.map((semester) => (
-                        <SelectItem key={semester} value={semester}>
-                            {semester}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            {formState.errors?.semester && (
-                <p className="text-sm font-medium text-destructive">
-                {formState.errors.semester}
-                </p>
-            )}
-        </div>
+        )}
       </div>
 
       <div className="space-y-2">
