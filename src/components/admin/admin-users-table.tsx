@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Timestamp } from 'firebase/firestore';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
@@ -40,6 +40,7 @@ type User = FirebaseUser & {
 };
 
 const YEARS: ('1st' | '2nd' | '3rd')[] = ['1st', '2nd', '3rd'];
+const ROLES: ('user' | 'admin')[] = ['user', 'admin'];
 
 function TableSkeleton() {
   return (
@@ -90,6 +91,28 @@ export function AdminUsersTable() {
         setUpdatingId(null);
     }
   }
+  
+  const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
+      if (!firestore) return;
+      setUpdatingId(userId);
+      const docRef = doc(firestore, 'users', userId);
+      try {
+          await updateDoc(docRef, { role: newRole });
+          toast({
+              title: "Role Updated",
+              description: `User role has been changed to ${newRole}.`
+          });
+      } catch (e: any) {
+          console.error("Failed to update role:", e);
+          toast({
+              variant: "destructive",
+              title: "Update Failed",
+              description: e.message || "Could not update the user's role."
+          });
+      } finally {
+          setUpdatingId(null);
+      }
+  }
 
 
   const handleDelete = async (userId: string) => {
@@ -122,6 +145,8 @@ export function AdminUsersTable() {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copied!', description: 'User ID copied to clipboard.' });
   }
+  
+  const CREATOR_EMAIL = 'harshroop100@gmail.com';
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -135,8 +160,8 @@ export function AdminUsersTable() {
             <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
             <TableHead className='hidden sm:table-cell'>Year</TableHead>
-            <TableHead className="hidden md:table-cell">User ID</TableHead>
-            <TableHead className="hidden lg:table-cell">Created At</TableHead>
+            <TableHead className='hidden md:table-cell'>Role</TableHead>
+            <TableHead className="hidden lg:table-cell">User ID</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -177,7 +202,23 @@ export function AdminUsersTable() {
                         </SelectContent>
                     </Select>
                  </TableCell>
-                <TableCell className="hidden font-mono text-xs md:table-cell">
+                 <TableCell className="hidden md:table-cell w-[150px]">
+                    <Select
+                        defaultValue={user.role || 'user'}
+                        onValueChange={(value: 'user' | 'admin') => handleRoleChange(user.id, value)}
+                        disabled={updatingId === user.id || user.email === CREATOR_EMAIL}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ROLES.map(role => (
+                                <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </TableCell>
+                <TableCell className="hidden font-mono text-xs lg:table-cell">
                     <div className="flex items-center gap-2">
                         <span className="truncate">{user.id}</span>
                         <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => copyToClipboard(user.id)}>
@@ -185,13 +226,10 @@ export function AdminUsersTable() {
                         </Button>
                     </div>
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                    {user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                </TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled={user.email === CREATOR_EMAIL}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
@@ -228,3 +266,5 @@ export function AdminUsersTable() {
     </div>
   );
 }
+
+    

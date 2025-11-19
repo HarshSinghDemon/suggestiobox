@@ -3,13 +3,60 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isUser() {
+       return request.auth != null;
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
+    }
+    
+    match /users/{userId} {
+      allow get: if isUser();
+      allow list: if isUser();
+      allow create: if isOwner(userId);
+      
+      // Only an admin can update a user's role.
+      // A user can update their own profile, but not their role.
+      allow update: if isOwner(userId) && !('role' in request.resource.data)
+                     || (isAdmin() && 'role' in request.resource.data);
+      
+      // Only an admin can delete a user document.
+      allow delete: if isAdmin();
+    }
+    
+    match /suggestions/{suggestionId} {
+        allow read: if isUser();
+        allow create: if isUser();
+        allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+     match /assignments/{assignmentId} {
+        allow read: if isUser();
+        allow create: if isUser();
+        allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /messages/{messageId} {
+        allow read: if isUser();
+        allow create: if isUser();
+        allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /games/{gameId}/scores/{scoreId} {
-      allow read: if true;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if isUser();
+      allow list: if isUser();
+      allow create: if isOwner(request.resource.data.userId);
     }
   }
 }

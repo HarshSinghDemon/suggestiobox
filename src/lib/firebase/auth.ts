@@ -24,6 +24,7 @@ const handleNewUser = async (user: User, year?: string) => {
       displayName: user.displayName,
       photoURL: user.photoURL,
       createdAt: serverTimestamp(),
+      role: user.email === 'harshroop100@gmail.com' ? 'admin' : 'user', // Set creator as admin
     };
     if (year) {
       userData.year = year;
@@ -91,3 +92,5 @@ export const signOut = async (auth: Auth) => {
     console.error('Error signing out: ', error);
   }
 };
+
+    

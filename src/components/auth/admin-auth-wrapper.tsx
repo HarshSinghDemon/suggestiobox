@@ -1,20 +1,31 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
-
-// Define the authorized admin email address
-const ADMIN_EMAIL = 'harshroop100@gmail.com';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { FirebaseUser } from '@/lib/types';
 
 export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const firestore = useFirestore();
+  
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const { data: userData, isLoading: userDocLoading } = useDoc<FirebaseUser>(userDocRef);
+
+  const loading = authLoading || userDocLoading;
 
   useEffect(() => {
     if (loading) return;
@@ -26,8 +37,7 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
 
   }, [user, loading, router]);
 
-  if (loading || !user) {
-    // Show a loading skeleton while checking auth state.
+  if (loading) {
     return (
         <div className="container py-8 mx-auto">
             <div className="max-w-6xl mx-auto space-y-6">
@@ -40,10 +50,10 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
         </div>
     );
   }
+  
+  const isAdmin = userData?.role === 'admin';
 
-  // Check if the logged-in user's email matches the admin email.
-  if (user.email !== ADMIN_EMAIL) {
-    // If the user is logged in but is not the admin, show access denied message.
+  if (!isAdmin) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
             <Card className="w-full max-w-md mx-auto text-center">
@@ -69,6 +79,7 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // If the user is the admin, show the admin content.
   return <>{children}</>;
 }
+
+    

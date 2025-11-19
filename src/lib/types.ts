@@ -9,6 +9,7 @@ export type FirebaseUser = {
   displayName: string | null;
   photoURL: string | null;
   year?: '1st' | '2nd' | '3rd';
+  role?: 'user' | 'admin';
 };
 
 export type Suggestion = {
@@ -72,3 +73,5 @@ export type GameScore = {
   score: number;
   createdAt: Timestamp;
 };
+
+    
