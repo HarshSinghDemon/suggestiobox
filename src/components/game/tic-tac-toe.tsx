@@ -50,58 +50,10 @@ export function TicTacToeGame() {
   const handleClick = (i: number) => {
     if (winner || board[i]) return;
     const newBoard = board.slice();
-    newBoard[i] = 'X';
+    newBoard[i] = isXNext ? 'X' : 'O';
     setBoard(newBoard);
-    setIsXNext(false);
+    setIsXNext(!isXNext);
   };
-
-  useEffect(() => {
-    if (!isXNext && !winner && !isDraw) {
-      const emptySquares = board
-        .map((sq, index) => (sq === null ? index : null))
-        .filter(val => val !== null) as number[];
-      
-      const timeoutId = setTimeout(() => {
-        let move: number | null = null;
-        
-        for (const i of emptySquares) {
-            const tempBoard = [...board];
-            tempBoard[i] = 'O';
-            if (calculateWinner(tempBoard).winner === 'O') {
-                move = i;
-                break;
-            }
-        }
-        
-        if (move === null) {
-            for (const i of emptySquares) {
-                const tempBoard = [...board];
-                tempBoard[i] = 'X';
-                if (calculateWinner(tempBoard).winner === 'X') {
-                    move = i;
-                    break;
-                }
-            }
-        }
-
-        if (move === null && board[4] === null) {
-            move = 4;
-        }
-        
-        if (move === null) {
-            const randomIndex = Math.floor(Math.random() * emptySquares.length);
-            move = emptySquares[randomIndex];
-        }
-
-        const newBoard = board.slice();
-        newBoard[move] = 'O';
-        setBoard(newBoard);
-        setIsXNext(true);
-      }, 300);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isXNext, board, winner, isDraw]);
 
   const restartGame = () => {
     setBoard(Array(9).fill(null));
@@ -110,11 +62,11 @@ export function TicTacToeGame() {
 
   let status;
   if (winner) {
-    status = `Winner: ${winner === 'X' ? 'Player' : 'Computer'}`;
+    status = `Winner: Player ${winner}`;
   } else if (isDraw) {
     status = "It's a Draw!";
   } else {
-    status = `Next player: ${isXNext ? 'You (X)' : 'Computer (O)'}`;
+    status = `Next player: ${isXNext ? 'X' : 'O'}`;
   }
 
   return (

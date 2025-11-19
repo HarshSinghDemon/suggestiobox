@@ -8,8 +8,8 @@ export default function RockPaperScissorsPage() {
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl">
         <CardHeader className="text-center">
-          <CardTitle>Rock Paper Scissors</CardTitle>
-          <CardDescription>Choose your weapon and challenge the computer!</CardDescription>
+          <CardTitle>Rock Paper Scissors (2 Player)</CardTitle>
+          <CardDescription>Challenge a friend in a classic match! First to 5 points wins.</CardDescription>
         </CardHeader>
         <CardContent>
           <RockPaperScissorsGame />
