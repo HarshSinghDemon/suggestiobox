@@ -11,10 +11,17 @@ import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 import sudoku from 'sudoku';
 
-type Level = 'easy' | 'medium' | 'hard' | 'very-hard'; // Removed insane and inhuman as they often timed out
+type Level = 'noob' | 'rookie' | 'amateur' | 'veteran';
+
+const difficultySettings: Record<Level, { removal: number, scoreMultiplier: number }> = {
+    noob: { removal: 30, scoreMultiplier: 1 },
+    rookie: { removal: 40, scoreMultiplier: 1.5 },
+    amateur: { removal: 50, scoreMultiplier: 2 },
+    veteran: { removal: 55, scoreMultiplier: 3 },
+};
 
 export function SudokuGame() {
-    const [level, setLevel] = useState<Level>('easy');
+    const [level, setLevel] = useState<Level>('noob');
     const [puzzle, setPuzzle] = useState<number[][] | null>(null);
     const [solution, setSolution] = useState<number[][] | null>(null);
     const [playerBoard, setPlayerBoard] = useState<number[][] | null>(null);
@@ -54,25 +61,27 @@ export function SudokuGame() {
     }, [user, firestore, toast, hasSubmittedScore]);
 
     const createNewPuzzle = useCallback((newLevel: Level) => {
-        // The sudoku library's difficulty is not parameterized, it's random.
-        // We can simulate difficulty by removing more numbers for harder levels,
-        // but for now, we'll just generate a new puzzle.
-        const rawPuzzle: (number|null)[] = sudoku.makepuzzle();
-        const rawSolution = sudoku.solvepuzzle(rawPuzzle);
-
-        const boardTo2D = (board: (number|null)[]) => {
-            const newBoard: number[][] = [];
-            for (let i = 0; i < 9; i++) {
-                const row = board.slice(i * 9, (i + 1) * 9).map(n => n === null ? 0 : n + 1);
-                newBoard.push(row);
-            }
-            return newBoard;
+        const rawSolution: number[] = sudoku.solvepuzzle(sudoku.makepuzzle());
+        const solvedBoard = [];
+        for (let i = 0; i < 9; i++) {
+            solvedBoard.push(rawSolution.slice(i * 9, (i + 1) * 9).map(n => n + 1));
         }
 
-        const newPuzzle = boardTo2D(rawPuzzle);
+        const newPuzzle = JSON.parse(JSON.stringify(solvedBoard));
+        let removed = 0;
+        const removalCount = difficultySettings[newLevel].removal;
+        while (removed < removalCount) {
+            const r = Math.floor(Math.random() * 9);
+            const c = Math.floor(Math.random() * 9);
+            if (newPuzzle[r][c] !== 0) {
+                newPuzzle[r][c] = 0;
+                removed++;
+            }
+        }
+        
         setPuzzle(newPuzzle);
         setPlayerBoard(JSON.parse(JSON.stringify(newPuzzle)));
-        setSolution(boardTo2D(rawSolution!));
+        setSolution(solvedBoard);
         
         setIsGameOver(false);
         setIsWinner(false);
@@ -116,7 +125,7 @@ export function SudokuGame() {
                 setIsWinner(true);
                 setIsGameOver(true);
                 setStartTime(null);
-                const score = Math.max(10, (10000 - time));
+                const score = Math.max(10, Math.floor((10000 - time) * difficultySettings[level].scoreMultiplier));
                 submitScore(score);
             }
         }
@@ -194,10 +203,10 @@ export function SudokuGame() {
                  <Select value={level} onValueChange={(val: Level) => createNewPuzzle(val)} disabled={!isGameOver && startTime !== null}>
                     <SelectTrigger><SelectValue placeholder="Difficulty" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                        <SelectItem value="very-hard">Very Hard</SelectItem>
+                        <SelectItem value="noob">Noob</SelectItem>
+                        <SelectItem value="rookie">Rookie</SelectItem>
+                        <SelectItem value="amateur">Amateur</SelectItem>
+                        <SelectItem value="veteran">Veteran</SelectItem>
                     </SelectContent>
                 </Select>
                  <Button onClick={() => createNewPuzzle(level)} className="w-full">

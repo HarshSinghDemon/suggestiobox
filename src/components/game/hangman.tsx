@@ -8,27 +8,49 @@ import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 import { RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-const words = ["DEVELOPER", "JAVASCRIPT", "REACT", "NEXTJS", "TAILWIND", "FIREBASE", "GENKIT", "TYPESCRIPT", "COMPONENT", "PROTOTYPE"];
+const wordsByLength = {
+    short: ["API", "CSS", "HTML", "NODE"],
+    medium: ["REACT", "CLOUD", "GENKIT", "SERVER"],
+    long: ["NEXTJS", "TAILWIND", "FIREBASE", "DATABASE"],
+    veryLong: ["DEVELOPER", "JAVASCRIPT", "TYPESCRIPT", "COMPONENT", "PROTOTYPE"],
+};
+
+type Level = 'noob' | 'rookie' | 'amateur' | 'veteran';
+
+const difficultySettings: Record<Level, { mistakes: number, wordLengths: (keyof typeof wordsByLength)[] }> = {
+    noob: { mistakes: 8, wordLengths: ['short'] },
+    rookie: { mistakes: 7, wordLengths: ['short', 'medium'] },
+    amateur: { mistakes: 6, wordLengths: ['medium', 'long'] },
+    veteran: { mistakes: 5, wordLengths: ['long', 'veryLong'] },
+};
+
+
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
 
-const getRandomWord = () => words[Math.floor(Math.random() * words.length)];
-
 export function HangmanGame() {
+  const [level, setLevel] = useState<Level>('rookie');
   const [word, setWord] = useState("");
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [mistakes, setMistakes] = useState(0);
   const [score, setScore] = useState(0);
   const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
+  const getRandomWord = useCallback((currentLevel: Level) => {
+    const availableLengths = difficultySettings[currentLevel].wordLengths;
+    const randomLengthKey = availableLengths[Math.floor(Math.random() * availableLengths.length)];
+    const words = wordsByLength[randomLengthKey];
+    return words[Math.floor(Math.random() * words.length)];
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
-    setWord(getRandomWord());
+    setWord(getRandomWord(level));
   }, []);
-
-  const maxMistakes = 6;
-
+  
+  const maxMistakes = difficultySettings[level].mistakes;
   const isWinner = isClient && word && word.split('').every(letter => guessedLetters.includes(letter));
   const isLoser = mistakes >= maxMistakes;
   const isGameOver = isWinner || isLoser;
@@ -65,14 +87,18 @@ export function HangmanGame() {
 
   useEffect(() => {
     if (isGameOver && !hasSubmittedScore && word) {
-        const finalScore = isWinner ? (word.length * 10) - (mistakes * 5) + 50 : 0;
+        let finalScore = 0;
+        if (isWinner) {
+            const levelMultiplier = Object.keys(difficultySettings).indexOf(level) + 1;
+            finalScore = (word.length * 10) - (mistakes * 5) + (50 * levelMultiplier);
+        }
         const calculatedScore = finalScore > 0 ? finalScore : 0;
         setScore(calculatedScore);
         if (calculatedScore > 0) {
             submitScore(calculatedScore);
         }
     }
-  }, [isGameOver, hasSubmittedScore, submitScore, isWinner, word, mistakes]);
+  }, [isGameOver, hasSubmittedScore, submitScore, isWinner, word, mistakes, level]);
 
 
   const handleGuess = (letter: string) => {
@@ -85,8 +111,9 @@ export function HangmanGame() {
     }
   };
 
-  const restartGame = () => {
-    setWord(getRandomWord());
+  const restartGame = (newLevel: Level) => {
+    setLevel(newLevel);
+    setWord(getRandomWord(newLevel));
     setGuessedLetters([]);
     setMistakes(0);
     setScore(0);
@@ -112,8 +139,9 @@ export function HangmanGame() {
     const LEFT_LEG = (
       <div key="left_leg" className="absolute w-12 h-1 origin-bottom-right transform -rotate-60 sm:w-16 bg-foreground top-[194px] sm:top-[210px] right-[1px]" />
     );
-
-    const BODY_PARTS = [HEAD, BODY, RIGHT_ARM, LEFT_ARM, RIGHT_LEG, LEFT_LEG];
+    const EXTRA_PART_1 = ( <div key="extra1" className="absolute w-1 h-10 transform rotate-45 bg-foreground top-10 right-10" /> );
+    const EXTRA_PART_2 = ( <div key="extra2" className="absolute w-1 h-10 transform -rotate-45 bg-foreground top-10 right-10" /> );
+    const BODY_PARTS = [HEAD, BODY, RIGHT_ARM, LEFT_ARM, RIGHT_LEG, LEFT_LEG, EXTRA_PART_1, EXTRA_PART_2].reverse();
     return (
       <div className="relative h-[280px] w-full max-w-[200px] sm:max-w-none">
         {BODY_PARTS.slice(0, mistakes)}
@@ -165,7 +193,7 @@ export function HangmanGame() {
                     <h3 className="text-xl font-bold">{isWinner ? "You Win!" : "You Lose!"}</h3>
                     {!isWinner && <p className="text-sm">The word was: <span className="font-bold">{word}</span></p>}
                     <p className="text-sm">Final Score: {score}</p>
-                    <Button onClick={restartGame} size="sm"><RotateCcw className="w-4 h-4 mr-2"/>Play Again</Button>
+                    <Button onClick={() => restartGame(level)} size="sm"><RotateCcw className="w-4 h-4 mr-2"/>Play Again</Button>
                 </div>
             )}
         </div>
@@ -173,6 +201,17 @@ export function HangmanGame() {
             <div className="p-4 rounded-md bg-muted">
                 <h3 className="mb-2 text-lg font-semibold text-center">Your Score</h3>
                  <div className="text-3xl font-bold text-center text-primary">{score}</div>
+            </div>
+            <div className="p-4 rounded-md bg-muted">
+                 <Select value={level} onValueChange={(val: Level) => restartGame(val)} disabled={!isGameOver && mistakes > 0}>
+                    <SelectTrigger><SelectValue placeholder="Difficulty" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="noob">Noob</SelectItem>
+                        <SelectItem value="rookie">Rookie</SelectItem>
+                        <SelectItem value="amateur">Amateur</SelectItem>
+                        <SelectItem value="veteran">Veteran</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="p-4 rounded-md bg-muted">
                 <h3 className="mb-2 text-lg font-semibold text-center">Mistakes</h3>
