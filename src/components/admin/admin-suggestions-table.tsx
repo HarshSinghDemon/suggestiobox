@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import type { Suggestion } from '@/lib/types';
 import {
   Table,
@@ -28,6 +29,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { SEMESTERS } from '@/lib/constants';
+import { useState } from 'react';
 
 function TableSkeleton() {
   return (
@@ -54,6 +58,7 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const suggestionsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc')) : null),
@@ -66,12 +71,10 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
     if (!firestore) return;
 
     try {
-        // First, attempt to delete the file from Supabase Storage if it exists
         if (suggestion.path) {
             await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
         }
         
-        // After successfully deleting the file (or if there was no file), delete the Firestore document
         const docRef = doc(firestore, 'suggestions', suggestion.id);
         await deleteDoc(docRef);
 
@@ -89,6 +92,28 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
         });
     }
   };
+  
+  const handleSemesterChange = async (suggestionId: string, newSemester: string) => {
+    if (!firestore) return;
+    setUpdatingId(suggestionId);
+    const docRef = doc(firestore, 'suggestions', suggestionId);
+    try {
+        await updateDoc(docRef, { semester: newSemester });
+        toast({
+            title: "Semester Updated",
+            description: "The suggestion's semester has been changed.",
+        });
+    } catch(e) {
+        console.error("Failed to update semester:", e);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update the semester.",
+        });
+    } finally {
+        setUpdatingId(null);
+    }
+  }
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -101,7 +126,7 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
           <TableRow>
             <TableHead>Title</TableHead>
             <TableHead className="hidden md:table-cell">User</TableHead>
-            <TableHead className="hidden md:table-cell">Date</TableHead>
+            <TableHead>Semester</TableHead>
             <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -112,7 +137,22 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
               <TableRow key={suggestion.id}>
                 <TableCell className="font-medium max-w-[150px] md:max-w-sm truncate">{suggestion.title}</TableCell>
                 <TableCell className="hidden md:table-cell">{suggestion.userName || 'Anonymous'}</TableCell>
-                <TableCell className="hidden md:table-cell">{suggestion.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell className="w-[150px]">
+                    <Select
+                        defaultValue={suggestion.semester}
+                        onValueChange={(value) => handleSemesterChange(suggestion.id, value)}
+                        disabled={updatingId === suggestion.id}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {SEMESTERS.map(sem => (
+                                <SelectItem key={sem} value={sem}>{sem}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </TableCell>
                 <TableCell>
                   {suggestion.fileUrl ? (
                     <a

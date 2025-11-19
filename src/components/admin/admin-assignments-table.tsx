@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import type { Assignment } from '@/lib/types';
 import {
   Table,
@@ -27,6 +28,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { SEMESTERS } from '@/lib/constants';
+import { useState } from 'react';
 
 function TableSkeleton() {
   return (
@@ -53,6 +57,7 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const assignmentsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc')) : null),
@@ -65,12 +70,10 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
     if (!firestore) return;
 
     try {
-      // First, attempt to delete the file from Supabase Storage.
       if (assignment.path) {
           await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
       }
 
-      // After successfully deleting the file, delete the Firestore document.
       const docRef = doc(firestore, 'assignments', assignment.id);
       await deleteDoc(docRef);
 
@@ -88,6 +91,28 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
         });
     }
   };
+  
+  const handleSemesterChange = async (assignmentId: string, newSemester: string) => {
+    if (!firestore) return;
+    setUpdatingId(assignmentId);
+    const docRef = doc(firestore, 'assignments', assignmentId);
+    try {
+        await updateDoc(docRef, { semester: newSemester });
+        toast({
+            title: "Semester Updated",
+            description: "The assignment's semester has been changed.",
+        });
+    } catch(e) {
+        console.error("Failed to update semester:", e);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update the semester.",
+        });
+    } finally {
+        setUpdatingId(null);
+    }
+  }
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -100,7 +125,7 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
           <TableRow>
             <TableHead>Title</TableHead>
             <TableHead className="hidden md:table-cell">User</TableHead>
-            <TableHead className="hidden md:table-cell">Date</TableHead>
+            <TableHead>Semester</TableHead>
             <TableHead>File</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -111,7 +136,22 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
               <TableRow key={assignment.id}>
                 <TableCell className="font-medium truncate max-w-[150px] md:max-w-sm">{assignment.title}</TableCell>
                 <TableCell className="hidden md:table-cell">{assignment.userName || 'Anonymous'}</TableCell>
-                <TableCell className="hidden md:table-cell">{assignment.createdAt.toDate().toLocaleDateString()}</TableCell>
+                <TableCell className="w-[150px]">
+                    <Select
+                        defaultValue={assignment.semester}
+                        onValueChange={(value) => handleSemesterChange(assignment.id, value)}
+                        disabled={updatingId === assignment.id}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {SEMESTERS.map(sem => (
+                                <SelectItem key={sem} value={sem}>{sem}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </TableCell>
                 <TableCell>
                   <a
                     href={assignment.fileUrl}
