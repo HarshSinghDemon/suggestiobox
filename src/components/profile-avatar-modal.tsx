@@ -27,10 +27,10 @@ interface ProfileAvatarModalProps {
 
 const avatarStyles = [
     { value: 'bottts-neutral', label: 'Robots' },
-    { value: 'adventurer', label: 'Adventurer' },
-    { value: 'pixel-art', label: 'Pixel Art' },
+    { value: 'bottts', label: 'Robots 2.0' },
+    { value: 'micah', label: 'Avatars' },
+    { value: 'identicon', label: 'Geometric' },
     { value: 'initials', label: 'Initials' },
-    { value: 'big-smile', label: 'Big Smile' },
 ];
 type AvatarStyle = typeof avatarStyles[number]['value'];
 
@@ -64,9 +64,11 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
 
   const generateAvatarUrl = (style: AvatarStyle) => {
     const seed = Math.random().toString(36).substring(7);
-    const base = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-    if (style === 'bottts-neutral') {
-        return `${base}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
+    let base = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+    
+    // Add some color variation for the robot styles
+    if (style.startsWith('bottts')) {
+        base += `&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
     }
     return base;
   }

@@ -49,8 +49,8 @@ export function SignUpForm() {
   const avatarUrl = useMemo(() => {
     if (!nameValue) return '';
     const seed = encodeURIComponent(nameValue);
-    // Use the 'adventurer' style for new users as a default
-    return `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
+    // Use the 'bottts-neutral' style for new users as a default
+    return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
   }, [nameValue]);
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
