@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import {
   AlertDialog,
@@ -88,6 +88,11 @@ export function AdminUsersTable() {
     const names = name.split(' ');
     return names.map((n) => n[0]).join('').substring(0, 2);
   };
+  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied!', description: 'User ID copied to clipboard.' });
+  }
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -100,7 +105,8 @@ export function AdminUsersTable() {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Created At</TableHead>
+            <TableHead className="hidden md:table-cell">User ID</TableHead>
+            <TableHead className="hidden lg:table-cell">Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -118,7 +124,15 @@ export function AdminUsersTable() {
                   </div>
                 </TableCell>
                 <TableCell className="truncate">{user.email}</TableCell>
-                <TableCell>
+                <TableCell className="hidden font-mono text-xs md:table-cell">
+                    <div className="flex items-center gap-2">
+                        <span className="truncate">{user.id}</span>
+                        <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => copyToClipboard(user.id)}>
+                            <Copy className="w-3 h-3" />
+                        </Button>
+                    </div>
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
                     {user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
@@ -151,7 +165,7 @@ export function AdminUsersTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
+              <TableCell colSpan={5} className="h-24 text-center">
                 No users found.
               </TableCell>
             </TableRow>
