@@ -34,6 +34,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerRef, YouTubePlayerProps>(({
           autoplay: 0,
           controls: 0,
           loop: 1,
+          playsinline: 1,
           playlist: videoId, // Required for loop to work
         },
         events: {

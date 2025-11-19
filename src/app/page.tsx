@@ -16,6 +16,19 @@ export default function Home() {
   const playerRef = useRef<YouTubePlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  useEffect(() => {
+    const isWindows = navigator.userAgent.includes('Win');
+    if (isWindows) {
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      if (isWindows) {
+        document.body.style.overflow = 'auto';
+      }
+    };
+  }, []);
+  
   const handleGameClick = () => {
     const audio = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_2b2899dbb0.mp3");
     audio.play();
@@ -31,34 +44,20 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    const isWindows = navigator.userAgent.includes('Win');
-    if (isWindows) {
-      document.body.style.overflow = 'hidden';
+  const handlePlayerStateChange = (event: { data: number }) => {
+    if (event.data === window.YT?.PlayerState?.PLAYING) {
+        setIsPlaying(true);
+    } else {
+        setIsPlaying(false);
     }
-    
-    return () => {
-      if (isWindows) {
-        document.body.style.overflow = 'auto';
-      }
-      if(playerRef.current) {
-        playerRef.current.pauseVideo();
-      }
-    };
-  }, []);
+  };
 
   return (
     <>
       <YouTubePlayer 
         ref={playerRef}
         videoId="rqJSJQww8z4"
-        onStateChange={(event) => {
-            if (event.data === window.YT?.PlayerState?.PLAYING) {
-              setIsPlaying(true);
-            } else {
-              setIsPlaying(false);
-            }
-        }}
+        onStateChange={handlePlayerStateChange}
       />
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
         <WavyBackground 
