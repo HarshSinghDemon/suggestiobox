@@ -15,6 +15,7 @@ import {
   fetchSignInMethodsForEmail,
   linkWithCredential,
   OAuthProvider,
+  EmailAuthProvider,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -107,24 +108,34 @@ async function handleSocialSignIn(auth: Auth, provider: GoogleAuthProvider | Git
   } catch (error: any) {
     if (error.code === 'auth/account-exists-with-different-credential' && error.customData?.email) {
       const email = error.customData.email;
-      const credential = (provider.providerId === 'google.com' 
-          ? GoogleAuthProvider.credentialFromError(error) 
-          : GithubAuthProvider.credentialFromError(error));
-
       const methods = await fetchSignInMethodsForEmail(auth, email);
 
-      if (methods[0] === 'password' && auth.currentUser) {
-        const result = await linkWithCredential(auth.currentUser, credential!);
-        const isNewUser = await handleNewUser(result.user);
-        return { user: result.user, isNewUser };
+      // Extract the pending credential
+      let pendingCredential;
+      if (provider.providerId === 'google.com') {
+        pendingCredential = GoogleAuthProvider.credentialFromError(error);
+      } else if (provider.providerId === 'github.com') {
+        pendingCredential = GithubAuthProvider.credentialFromError(error);
       }
       
-      // If user is not signed in with password, or some other issue, we can't link automatically.
-      // For a better UX, you might prompt user to sign in with their password first.
-      // For now, we re-throw a more user-friendly error.
-      throw new Error(
-        `An account with ${email} already exists. Please sign in with your password to link your ${provider.providerId.split('.')[0]} account.`
-      );
+      if (!pendingCredential) {
+          throw new Error("Could not retrieve credential from social sign-in error.");
+      }
+
+      // For this flow, we will assume the user wants to link the accounts.
+      // We sign them in with their existing provider and then link the new one.
+      const existingProviderId = methods[0];
+      const existingProvider = new (existingProviderId === 'google.com' ? GoogleAuthProvider : GithubAuthProvider)();
+      
+      // We must sign in with the *existing* provider first to get an authenticated user
+      const result = await signInWithPopup(auth, existingProvider);
+      
+      // Then, link the new credential to the now-signed-in user
+      await linkWithCredential(result.user, pendingCredential);
+      
+      const isNewUser = await handleNewUser(result.user); // This will likely return false, which is fine
+      return { user: result.user, isNewUser };
+      
     }
     console.error(`Error signing in with ${provider.providerId}: `, error);
     throw error;
