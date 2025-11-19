@@ -9,10 +9,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useEffect, useState } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 
 export function JukeboxControls() {
   const { isPlaying, togglePlayPause, playNext, playPrevious, currentSong } = useMusic();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <Skeleton className="h-12 w-[164px] rounded-full" />;
+  }
   
   return (
     <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm">
