@@ -104,6 +104,9 @@ export default {
           '0%, 100%': { transform: 'translateX(0)' },
           '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
           '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' },
+        },
+        'shine': {
+          'to': { 'background-position': '-200% center' },
         }
       },
       animation: {
@@ -111,6 +114,7 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-scale': 'pulse-scale 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'shine': 'shine 2s linear infinite',
       },
     },
   },
