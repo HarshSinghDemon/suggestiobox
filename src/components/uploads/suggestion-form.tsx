@@ -80,10 +80,10 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 100 * 1024 * 1024) { // 100MB limit
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
       setFileUpload({
         ...initialFileUploadState,
-        error: 'File size must be less than 100MB.',
+        error: 'File size must be less than 50MB.',
       });
       return;
     }
