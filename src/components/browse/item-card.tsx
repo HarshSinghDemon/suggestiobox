@@ -22,7 +22,7 @@ type ItemCardProps = {
 };
 
 export function ItemCard({ item, type, variant = 'default' }: ItemCardProps) {
-  const { id, subject, createdAt, userName, userImage } = item;
+  const { id, subject, createdAt, userName, userImage, semester } = item;
   const date = createdAt ? createdAt.toDate().toLocaleDateString() : 'N/A';
 
   const getInitials = (name: string | null | undefined) => {
@@ -63,7 +63,10 @@ export function ItemCard({ item, type, variant = 'default' }: ItemCardProps) {
                 </Avatar>
                 <span className="text-sm font-medium">{userName || 'Anonymous'}</span>
             </div>
-            <Badge variant="secondary">{subject}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{semester}</Badge>
+              <Badge variant="secondary">{subject}</Badge>
+            </div>
         </div>
         
         <Button asChild className="w-full" variant="outline">
