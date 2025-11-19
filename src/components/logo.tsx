@@ -1,7 +1,7 @@
 export function Logo() {
   return (
     <div className="flex items-center gap-2">
-      <div className="w-7 h-7 flex flex-col items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="w-7 h-7 flex flex-col items-center justify-center rounded-md bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="20"
