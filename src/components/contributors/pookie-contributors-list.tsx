@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Suggestion, Assignment, FirebaseUser } from '@/lib/types';
-import { collection } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { useMemo } from 'react';
 import {
   Table,
