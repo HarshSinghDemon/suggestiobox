@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  sendEmailVerification,
   Auth,
   User,
 } from 'firebase/auth';
@@ -42,6 +43,8 @@ export const signUpWithEmail = async (
     const user = userCredential.user;
 
     await updateProfile(user, { displayName, photoURL });
+    await sendEmailVerification(user);
+
 
     // We need to re-fetch the user to get the updated profile
     const updatedUser = auth.currentUser;

@@ -13,12 +13,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendEmailVerification, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -28,9 +29,11 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [unverifiedUser, setUnverifiedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const auth = useFirebaseAuth();
   const { isUserLoading } = useUser();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,13 +43,40 @@ export function LoginForm() {
     },
   });
 
+  const handleResendVerification = async () => {
+    if (unverifiedUser) {
+        try {
+            await sendEmailVerification(unverifiedUser);
+            toast({
+                title: "Verification Email Sent",
+                description: "A new verification link has been sent to your email address."
+            });
+        } catch (error) {
+            console.error("Resend verification error:", error);
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Failed to resend verification email."
+            })
+        }
+    }
+  }
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     setError(null);
+    setUnverifiedUser(null);
     setIsLoading(true);
 
     signInWithEmailAndPassword(auth, values.email, values.password)
       .then(userCredential => {
-        router.push('/');
+        const user = userCredential.user;
+        if (!user.emailVerified) {
+            setError('Please verify your email before logging in.');
+            setUnverifiedUser(user);
+            auth.signOut(); // Sign out the unverified user
+        } else {
+            router.push('/');
+        }
       })
       .catch(error => {
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -74,7 +104,14 @@ export function LoginForm() {
               <Alert variant="destructive">
                   <AlertCircle className="w-4 h-4" />
                   <AlertTitle>Login Failed</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>
+                    {error}
+                    {unverifiedUser && (
+                        <Button variant="link" className="p-0 h-auto mt-1" onClick={handleResendVerification}>
+                            Resend verification email
+                        </Button>
+                    )}
+                  </AlertDescription>
               </Alert>
           )}
           <FormField

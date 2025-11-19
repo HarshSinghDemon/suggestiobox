@@ -59,7 +59,7 @@ export function SignUpForm() {
     
     try {
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
-        router.push('/');
+        router.push('/verify-email');
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');
