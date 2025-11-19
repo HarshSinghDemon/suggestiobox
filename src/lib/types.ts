@@ -1,5 +1,6 @@
+
 import type { Timestamp } from "firebase/firestore";
-import type { Subject } from "./constants";
+import type { Subject, Year, Semester } from "./constants";
 
 export type FirebaseUser = {
   uid: string;
@@ -13,6 +14,8 @@ export type Suggestion = {
   title: string;
   description: string;
   subject: Subject;
+  year: Year;
+  semester: Semester;
   createdAt: Timestamp;
   userId: string;
   userName: string | null;
@@ -27,6 +30,8 @@ export type Assignment = {
   id: string;
   title: string;
   subject: Subject;
+  year: Year;
+  semester: Semester;
   createdAt: Timestamp;
   userId: string;
   userName: string | null;
@@ -66,5 +71,3 @@ export type GameScore = {
   score: number;
   createdAt: Timestamp;
 };
-
-    

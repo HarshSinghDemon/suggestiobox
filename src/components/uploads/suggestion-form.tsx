@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { validateSuggestion, type SuggestionFormState } from '@/lib/actions';
-import { SUBJECTS } from '@/lib/constants';
+import { SEMESTERS, SEMESTER_SUBJECTS, YEARS, type Semester } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -66,6 +67,12 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileUpload, setFileUpload] =
     useState<FileUploadState>(initialFileUploadState);
+  const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null);
+
+  const availableSubjects = useMemo(() => {
+    if (!selectedSemester) return [];
+    return SEMESTER_SUBJECTS[selectedSemester];
+  }, [selectedSemester]);
 
   const isDescriptionRequired = !fileUpload.url;
 
@@ -159,6 +166,8 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
         title: formData.get('title') as string,
         description: formData.get('description') as string,
         subject: formData.get('subject') as string,
+        year: Number(formData.get('year')),
+        semester: formData.get('semester') as string,
         userId: user?.uid || 'anonymous',
         userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
         userImage: user?.photoURL || null,
@@ -175,6 +184,7 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
 
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
+      setSelectedSemester(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -227,6 +237,49 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
           </div>
         )}
       </div>
+      
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+         <div className="space-y-2">
+          <Label htmlFor="year">Year</Label>
+          <Select name="year" required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a year" />
+            </SelectTrigger>
+            <SelectContent>
+              {YEARS.map((year) => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+           {formState.errors?.year && (
+            <p className="text-sm font-medium text-destructive">
+              {formState.errors.year}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="semester">Semester</Label>
+            <Select name="semester" required onValueChange={(value) => setSelectedSemester(value as Semester)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a semester" />
+                </SelectTrigger>
+                <SelectContent>
+                    {SEMESTERS.map((semester) => (
+                        <SelectItem key={semester} value={semester}>
+                            {semester}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {formState.errors?.semester && (
+                <p className="text-sm font-medium text-destructive">
+                {formState.errors.semester}
+                </p>
+            )}
+        </div>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="description">
@@ -249,12 +302,12 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
-          <Select name="subject" required>
+          <Select name="subject" required disabled={!selectedSemester}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a subject" />
+              <SelectValue placeholder={selectedSemester ? "Select a subject" : "Select a semester first"} />
             </SelectTrigger>
             <SelectContent>
-              {SUBJECTS.map((subject) => (
+              {availableSubjects.map((subject) => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
                 </SelectItem>

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { validateAssignment } from '@/lib/actions';
-import { ASSIGNMENT_SUBJECTS } from '@/lib/constants';
+import { SEMESTER_ASSIGNMENT_SUBJECTS, SEMESTERS, YEARS, type Semester } from '@/lib/constants';
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -57,6 +58,12 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileUpload, setFileUpload] =
     useState<FileUploadState>(initialFileUploadState);
+  const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null);
+
+  const availableSubjects = useMemo(() => {
+    if (!selectedSemester) return [];
+    return SEMESTER_ASSIGNMENT_SUBJECTS[selectedSemester];
+  }, [selectedSemester]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -154,6 +161,8 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
       const docData = {
         title: formData.get('title') as string,
         subject: formData.get('subject') as string,
+        year: Number(formData.get('year')),
+        semester: formData.get('semester') as string,
         userId: user?.uid || 'anonymous',
         userName: user?.displayName || 'Anonymous',
         userImage: user?.photoURL || null,
@@ -170,6 +179,7 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
 
       formRef.current?.reset();
       setFileUpload(initialFileUploadState);
+      setSelectedSemester(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -194,15 +204,48 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
         />
       </div>
 
+       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+         <div className="space-y-2">
+          <Label htmlFor="year">Year</Label>
+          <Select name="year" required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a year" />
+            </SelectTrigger>
+            <SelectContent>
+              {YEARS.map((year) => (
+                <SelectItem key={year} value={String(year)}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+            <Label htmlFor="semester">Semester</Label>
+            <Select name="semester" required onValueChange={(value) => setSelectedSemester(value as Semester)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a semester" />
+                </SelectTrigger>
+                <SelectContent>
+                    {SEMESTERS.map((semester) => (
+                        <SelectItem key={semester} value={semester}>
+                            {semester}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
-          <Select name="subject" required>
+          <Select name="subject" required disabled={!selectedSemester}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a subject" />
+              <SelectValue placeholder={selectedSemester ? "Select a subject" : "Select a semester first"} />
             </SelectTrigger>
             <SelectContent>
-              {ASSIGNMENT_SUBJECTS.map((subject) => (
+              {availableSubjects.map((subject) => (
                 <SelectItem key={subject} value={subject}>
                   {subject}
                 </SelectItem>

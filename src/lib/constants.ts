@@ -1,3 +1,4 @@
+
 export const SUBJECTS = [
   "Computer Networks",
   "Data Analytics",
@@ -17,3 +18,34 @@ export const ASSIGNMENT_SUBJECTS = [
 
 export type Subject = (typeof SUBJECTS)[number];
 export type AssignmentSubject = (typeof ASSIGNMENT_SUBJECTS)[number];
+
+export const YEARS = [2024, 2023, 2022, 2021] as const;
+export type Year = (typeof YEARS)[number];
+
+export const SEMESTERS = ["1st", "3rd", "5th"] as const;
+export type Semester = (typeof SEMESTERS)[number];
+
+export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
+    "1st": [],
+    "3rd": [],
+    "5th": [
+        "Computer Networks",
+        "Data Analytics",
+        "DBMS",
+        "Cloud Computing",
+        "Artificial Intelligence",
+        "Compiler Design",
+    ]
+};
+
+export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]> = {
+    "1st": [],
+    "3rd": [],
+    "5th": [
+        "Computer Networks",
+        "Data Analytics",
+        "DBMS",
+        "Cloud Computing",
+        "Artificial Intelligence",
+    ]
+};

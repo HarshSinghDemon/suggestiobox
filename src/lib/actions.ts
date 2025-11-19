@@ -1,19 +1,24 @@
+
 'use server';
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { SUBJECTS, ASSIGNMENT_SUBJECTS } from './constants';
+import { SUBJECTS, ASSIGNMENT_SUBJECTS, SEMESTERS, YEARS } from './constants';
 import { checkSuggestionForOffensiveLanguage } from '@/ai/flows/check-suggestion-for-offensive-language';
 
 const suggestionSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().optional(),
   subject: z.enum(SUBJECTS),
+  year: z.coerce.number().int().min(2021).max(2024),
+  semester: z.enum(SEMESTERS),
 });
 
 const assignmentSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   subject: z.enum(ASSIGNMENT_SUBJECTS),
+  year: z.coerce.number().int().min(2021).max(2024),
+  semester: z.enum(SEMESTERS),
 });
 
 export type SuggestionFormState = {
@@ -22,6 +27,8 @@ export type SuggestionFormState = {
     title?: string[];
     description?: string[];
     subject?: string[];
+    year?: string[];
+    semester?: string[];
     file?: string[];
     ai?: string;
   };
@@ -39,6 +46,8 @@ export async function validateSuggestion(
     title: formData.get('title'),
     description: formData.get('description'),
     subject: formData.get('subject'),
+    year: formData.get('year'),
+    semester: formData.get('semester'),
   });
 
   if (!validatedFields.success) {
@@ -85,6 +94,8 @@ export type AssignmentFormState = {
     errors?: {
       title?: string[];
       subject?: string[];
+      year?: string[];
+      semester?: string[];
     };
     success: boolean;
 };
@@ -96,6 +107,8 @@ export async function validateAssignment(
     const validatedFields = assignmentSchema.safeParse({
       title: formData.get('title'),
       subject: formData.get('subject'),
+      year: formData.get('year'),
+      semester: formData.get('semester'),
     });
   
     if (!validatedFields.success) {
