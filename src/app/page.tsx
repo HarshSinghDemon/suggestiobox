@@ -2,10 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronRight, Gamepad2 } from 'lucide-react';
+import { ChevronRight, Gamepad2, Music } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
@@ -13,48 +13,39 @@ const WavyBackground = dynamic(() => import('@/components/wavy-background').then
 
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const hasInteracted = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handleGameClick = () => {
     const audio = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_2b2899dbb0.mp3");
     audio.play();
   };
+  
+  const toggleMusic = () => {
+    if (audioRef.current) {
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.volume = 0.2;
+            audioRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+    }
+  }
 
   useEffect(() => {
     const isWindows = navigator.userAgent.includes('Win');
     if (isWindows) {
       document.body.style.overflow = 'hidden';
     }
-
-    const tryPlayAudio = () => {
-      if (audioRef.current && !hasInteracted.current) {
-        hasInteracted.current = true; // Mark that we've tried
-        audioRef.current.volume = 0.2;
-        audioRef.current.play().catch(() => {
-          // Autoplay was prevented. Re-enable interaction listener.
-          hasInteracted.current = false;
-          document.body.addEventListener('click', playOnClick, { once: true });
-        });
-      }
-    };
     
-    const playOnClick = () => {
-        if (audioRef.current && !hasInteracted.current) {
-            hasInteracted.current = true;
-            audioRef.current.volume = 0.2;
-            audioRef.current.play();
-        }
-    }
-
-    // Attempt to play automatically first
-    tryPlayAudio();
-
     return () => {
       if (isWindows) {
         document.body.style.overflow = 'auto';
       }
-      // Clean up the event listener if it was added
-      document.body.removeEventListener('click', playOnClick);
+      // Clean up the audio when component unmounts
+      if(audioRef.current) {
+        audioRef.current.pause();
+      }
     };
   }, []);
 
@@ -102,13 +93,19 @@ export default function Home() {
                     </Link>
                 </Button>
               </div>
-              <div onClick={handleGameClick} className="w-full sm:w-auto">
-                  <Button asChild size="lg" className="w-full px-8 py-6 text-lg rounded-full sm:w-auto font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-orange-500/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white bg-[length:200%_auto] animate-wave">
-                      <Link href="/community-game" prefetch={true}>
-                          Play Games
-                          <Gamepad2 className="w-6 h-6 ml-2" />
-                      </Link>
-                  </Button>
+              <div className="flex flex-col items-center w-full gap-2 sm:flex-row sm:justify-center">
+                  <div onClick={handleGameClick} className="w-full sm:w-auto">
+                      <Button asChild size="lg" className="w-full px-8 py-6 text-lg rounded-full sm:w-auto font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-orange-500/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white bg-[length:200%_auto] animate-wave">
+                          <Link href="/community-game" prefetch={true}>
+                              Play Games
+                              <Gamepad2 className="w-6 h-6 ml-2" />
+                          </Link>
+                      </Button>
+                  </div>
+                   <Button onClick={toggleMusic} size="lg" variant="outline" className="w-full px-8 py-6 text-lg rounded-full sm:w-auto transition-all duration-300 hover:scale-105">
+                        <Music className="w-6 h-6 mr-2" />
+                        {isPlaying ? "Mute" : "Wanna hear it?"}
+                    </Button>
               </div>
             </div>
             <div className="pt-8">
