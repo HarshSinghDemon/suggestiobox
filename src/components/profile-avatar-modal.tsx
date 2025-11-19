@@ -18,22 +18,13 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const avatarStyles = [
-    { value: 'bottts-neutral', label: 'Robots' },
-    { value: 'bottts', label: 'Robots 2.0' },
-    { value: 'micah', label: 'Avatars' },
-    { value: 'identicon', label: 'Geometric' },
-    { value: 'initials', label: 'Initials' },
-];
-type AvatarStyle = typeof avatarStyles[number]['value'];
-
+const AVATAR_STYLE = 'bottts-neutral';
 
 export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalProps) {
   const { user } = useUser();
@@ -43,38 +34,18 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<AvatarStyle>('bottts-neutral');
-
-  useEffect(() => {
-    // When the modal opens, if the user has an existing DiceBear avatar,
-    // try to determine its style.
-    if (isOpen && user?.photoURL) {
-      const url = user.photoURL;
-      const matchedStyle = avatarStyles.find(style => url.includes(`/${style.value}/`));
-      if (matchedStyle) {
-        setSelectedStyle(matchedStyle.value);
-      }
-    }
-  }, [isOpen, user?.photoURL]);
-
 
   const currentAvatarUrl = useMemo(() => {
     return newAvatarUrl || user?.photoURL || '';
   }, [newAvatarUrl, user?.photoURL]);
 
-  const generateAvatarUrl = (style: AvatarStyle) => {
+  const generateAvatarUrl = () => {
     const seed = Math.random().toString(36).substring(7);
-    let base = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
-    
-    // Add some color variation for the robot styles
-    if (style.startsWith('bottts')) {
-        base += `&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
-    }
-    return base;
+    return `https://api.dicebear.com/7.x/${AVATAR_STYLE}/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
   }
 
   const handleRandomize = () => {
-    setNewAvatarUrl(generateAvatarUrl(selectedStyle));
+    setNewAvatarUrl(generateAvatarUrl());
   };
   
   const handleSave = async () => {
@@ -127,7 +98,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
         <DialogHeader>
           <DialogTitle>Change Your Avatar</DialogTitle>
           <DialogDescription>
-            Select a style, randomize, and save your new look.
+            Randomize your robot avatar and save your new look.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-4">
@@ -148,22 +119,9 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
           </div>
           
           <div className="flex items-center w-full gap-2">
-            <Select value={selectedStyle} onValueChange={(value: AvatarStyle) => setSelectedStyle(value)}>
-                <SelectTrigger className='flex-1'>
-                    <SelectValue placeholder="Select a style" />
-                </SelectTrigger>
-                <SelectContent>
-                    {avatarStyles.map(style => (
-                        <SelectItem key={style.value} value={style.value}>
-                            {style.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={handleRandomize} className='flex-shrink-0'>
+            <Button variant="outline" onClick={handleRandomize} className='w-full'>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Randomize
+                Randomize Robot
             </Button>
           </div>
 
