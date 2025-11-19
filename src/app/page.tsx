@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Gamepad2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,7 +28,7 @@ export default function Home() {
               You can also upload helpful files for the community. Made with love by SectionB #ProudtobesectionB
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
                 <Link href="/suggestions/new" prefetch={true}>
                     Give a Suggestion
@@ -39,6 +39,12 @@ export default function Home() {
                 <Link href="/browse" prefetch={true}>
                     Explore Content
                     <ChevronRight className="w-6 h-6 ml-2" />
+                </Link>
+            </Button>
+            <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
+                <Link href="/community-game" prefetch={true}>
+                    Play Games
+                    <Gamepad2 className="w-6 h-6 ml-2" />
                 </Link>
             </Button>
           </div>
