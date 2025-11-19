@@ -57,23 +57,25 @@ export function SocialLogins() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <Button variant="outline" type="button" disabled={googleLoading || githubLoading} onClick={() => handleSocialLogin('google')}>
-        {googleLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
-        <span className='ml-2'>Google</span>
-      </Button>
-      <Button variant="outline" type="button" disabled={googleLoading || githubLoading} onClick={() => handleSocialLogin('github')}>
-        {githubLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <GitHubIcon />
-        )}
-        <span className='ml-2'>GitHub</span>
-      </Button>
+    <div className="flex justify-center -ml-2">
+        <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" type="button" disabled={googleLoading || githubLoading} onClick={() => handleSocialLogin('google')}>
+                {googleLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                <GoogleIcon />
+                )}
+                <span className='ml-2'>Google</span>
+            </Button>
+            <Button variant="outline" type="button" disabled={googleLoading || githubLoading} onClick={() => handleSocialLogin('github')}>
+                {githubLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                <GitHubIcon />
+                )}
+                <span className='ml-2'>GitHub</span>
+            </Button>
+        </div>
     </div>
   );
 }
