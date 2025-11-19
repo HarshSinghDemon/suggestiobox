@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
 import { JukeboxControls } from '../jukebox-controls';
+import { Separator } from '../ui/separator';
 
 const ADMIN_EMAIL = 'harshroop100@gmail.com';
 
@@ -129,7 +130,7 @@ export function Header() {
         <div className="flex items-center justify-end flex-1 ml-auto">
             <JukeboxControls />
           {user ? (
-            <div className="relative group ml-2">
+            <div className="relative group ml-2 hidden md:block">
               <div className={cn(
                 "absolute -inset-0.5 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
               )}></div>
@@ -178,7 +179,7 @@ export function Header() {
           )}
 
           {/* Mobile Navigation Trigger */}
-          <div className="md:hidden">
+          <div className="ml-2 md:hidden">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -196,6 +197,22 @@ export function Header() {
                                 </Button>
                             </SheetClose>
                         </div>
+
+                        {user && (
+                            <div className="p-4 border-b">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="w-10 h-10">
+                                        <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                        <p className="font-semibold">{user.displayName}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <nav className="flex flex-col p-4 space-y-2">
                            <NavLink href="/browse" onNavigate={() => setIsSheetOpen(false)}>
                                 <Compass className="w-5 h-5 mr-3" /> Browse
@@ -228,7 +245,11 @@ export function Header() {
                             )}
                         </nav>
                         <div className="p-4 mt-auto border-t">
-                            {!user && (
+                            {user ? (
+                                <Button variant="outline" className="w-full" onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>
+                                    <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                                </Button>
+                            ) : (
                                 <Button asChild className="w-full" onClick={() => setIsSheetOpen(false)}>
                                     <Link href="/login">
                                         <LogIn className="w-4 h-4 mr-2" /> Login
