@@ -57,6 +57,10 @@ export function BrowseSection({
     params.set('tab', value);
     router.push(`${pathname}?${params.toString()}`);
   };
+  
+  const variants: ('default' | 'fiery' | 'ocean')[] = ['default', 'fiery', 'ocean'];
+  const getRandomVariant = () => variants[Math.floor(Math.random() * variants.length)];
+
 
   return (
     <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
@@ -71,8 +75,8 @@ export function BrowseSection({
             <ItemGridSkeleton />
         ) : suggestions && suggestions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {suggestions.map((item, index) => (
-              <ItemCard key={item.id} item={item} type="suggestion" variant={index % 2 === 0 ? 'default' : 'fiery'} />
+            {suggestions.map((item) => (
+              <ItemCard key={item.id} item={item} type="suggestion" variant={getRandomVariant()} />
             ))}
           </div>
         ) : (
@@ -86,8 +90,8 @@ export function BrowseSection({
           <ItemGridSkeleton />
       ) : assignments && assignments.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {assignments.map((item, index) => (
-              <ItemCard key={item.id} item={item} type="assignment" variant={index % 2 === 0 ? 'default' : 'fiery'} />
+            {assignments.map((item) => (
+              <ItemCard key={item.id} item={item} type="assignment" variant={getRandomVariant()} />
             ))}
           </div>
         ) : (

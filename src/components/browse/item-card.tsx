@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 type ItemCardProps = {
   item: Suggestion | Assignment;
   type: 'suggestion' | 'assignment';
-  variant?: 'default' | 'fiery';
+  variant?: 'default' | 'fiery' | 'ocean';
 };
 
 export function ItemCard({ item, type, variant = 'default' }: ItemCardProps) {
@@ -39,11 +39,12 @@ export function ItemCard({ item, type, variant = 'default' }: ItemCardProps) {
     <Card className={cn(
       "flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group",
       variant === 'default' && "hover:border-primary/50",
-      variant === 'fiery' && "bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20"
+      variant === 'fiery' && "bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20",
+      variant === 'ocean' && "bg-gradient-to-br from-blue-400/10 via-violet-500/10 to-purple-600/10 border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/20"
     )}>
       <CardHeader>
         <div className="flex items-start gap-4">
-          <SubjectIcon subject={subject} className={cn("w-8 h-8 mt-1", variant === 'default' ? "text-primary" : "text-orange-400")}/>
+          <SubjectIcon subject={subject} className={cn("w-8 h-8 mt-1", variant === 'fiery' ? 'text-orange-400' : variant === 'ocean' ? 'text-blue-400' : 'text-primary')}/>
           <div className="flex-1">
             <CardTitle className="text-lg leading-tight">{title}</CardTitle>
             <CardDescription className="mt-1 text-xs text-muted-foreground">{date}</CardDescription>
