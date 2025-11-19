@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,13 +12,15 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { useUser, useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
+import { Loader2, RefreshCw, LogOut } from 'lucide-react';
+import { useUser, useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { signOut } from '@/lib/firebase/auth';
+import { useRouter } from 'next/navigation';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
@@ -44,6 +46,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   const auth = useFirebaseAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,6 +65,16 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
     setNewAvatarUrl(generateAvatarUrl(selectedStyle));
   };
   
+  const handleSignOut = async () => {
+    await signOut(auth);
+    onOpenChange(false);
+    router.push('/');
+    toast({
+      title: 'Signed Out',
+      description: 'You have been successfully signed out.',
+    });
+  };
+
   const handleSave = async () => {
     if (!newAvatarUrl || !user || !auth.currentUser || !firestore) return;
 
@@ -112,7 +125,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
         <DialogHeader>
           <DialogTitle>Change Your Avatar</DialogTitle>
           <DialogDescription>
-            Randomize your robot avatar and save your new look.
+            Randomize your avatar and save your new look.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-4">
@@ -149,12 +162,18 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
           </div>
 
         </div>
-        <DialogFooter>
-          <Button variant="secondary" onClick={() => onModalStateChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={isSaving || !newAvatarUrl}>
-            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save Changes
+        <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:justify-between">
+          <Button variant="destructive" onClick={handleSignOut} className='sm:mr-auto'>
+              <LogOut className="w-4 h-4 mr-2" />
+              Log Out
           </Button>
+          <div className='flex justify-end gap-2'>
+            <Button variant="secondary" onClick={() => onModalStateChange(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving || !newAvatarUrl}>
+                {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
