@@ -45,13 +45,13 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-center justify-center w-full gap-4">
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
+              <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105">
                   <Link href="/suggestions/new" prefetch={true}>
                       Give a Suggestion
                       <ChevronRight className="w-6 h-6 ml-2" />
                   </Link>
               </Button>
-              <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
+              <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg shadow-lg hover:shadow-muted/30 transition-all duration-300 hover:scale-105">
                   <Link href="/browse" prefetch={true}>
                       Explore Content
                       <ChevronRight className="w-6 h-6 ml-2" />
