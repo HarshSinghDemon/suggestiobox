@@ -9,12 +9,17 @@ const WavyBackground = dynamic(() => import('@/components/wavy-background').then
 });
 
 export default function Home() {
+  const handleGameClick = () => {
+    const audio = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_2b2899dbb0.mp3");
+    audio.play();
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
       <WavyBackground className="w-full max-w-4xl mx-auto">
         <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
-          <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_4px_12px_hsl(var(--primary)/0.3)]">
-            <span className="text-transparent bg-clip-text bg-gradient-to-br from-violet-400 via-cyan-300 to-violet-400">
+        <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed animate-pulse-scale [text-shadow:0_4px_12px_hsl(var(--primary)/0.3)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-violet-300 via-cyan-200 to-violet-300">
                 The
                 <br />
                 Suggestion
@@ -45,12 +50,14 @@ export default function Home() {
                   </Link>
               </Button>
             </div>
-            <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-primary/30">
-                <Link href="/community-game" prefetch={true}>
-                    Play Games
-                    <Gamepad2 className="w-6 h-6 ml-2" />
-                </Link>
-            </Button>
+            <div onClick={handleGameClick}>
+                <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-primary/30">
+                    <Link href="/community-game" prefetch={true}>
+                        Play Games
+                        <Gamepad2 className="w-6 h-6 ml-2" />
+                    </Link>
+                </Button>
+            </div>
           </div>
           <div className="pt-8">
             <p className="text-sm text-foreground/60 font-arcade">
