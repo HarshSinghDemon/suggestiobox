@@ -125,10 +125,10 @@ export function CommunityMembersList() {
                         <Popover key={user.id}>
                             <PopoverTrigger asChild>
                                 <div 
-                                    className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer opacity-0"
-                                    style={{ animation: `fade-in-up 0.6s ease-out forwards ${index * 75}ms` }}
+                                    className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer opacity-0 animate-fade-in-up"
+                                    style={{ animationDelay: `${index * 75}ms` }}
                                 >
-                                    <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
+                                    <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
                                         <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
                                         <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
                                     </Avatar>

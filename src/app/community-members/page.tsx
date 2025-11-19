@@ -3,6 +3,7 @@ import { CommunityMembersList } from '@/components/community-members/members-lis
 import { Users } from 'lucide-react';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function MemberListSkeleton() {
     return (
@@ -24,7 +25,10 @@ function MemberListSkeleton() {
 export default function CommunityMembersPage() {
   return (
     <div className="container py-12 mx-auto">
-      <Card className="max-w-6xl mx-auto">
+      <Card className={cn(
+          "max-w-6xl mx-auto opacity-0 animate-fade-in-scale",
+          "animation-delay-200"
+      )}>
         <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
                 <Users className="w-16 h-16 text-primary" />
