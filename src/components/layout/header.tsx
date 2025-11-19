@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -116,6 +116,10 @@ export function Header() {
                 <DropdownMenuItem onClick={() => router.push('/community-game')}>
                   <Gamepad2 className="w-4 h-4 mr-2" />
                   Community Games
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/request-music')}>
+                  <Music className="w-4 h-4 mr-2" />
+                  Request Music
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -261,6 +265,9 @@ export function Header() {
                             </NavLink>
                             <NavLink href="/community-game" onNavigate={() => setIsSheetOpen(false)}>
                                 <Gamepad2 className="w-5 h-5 mr-3" /> Games
+                            </NavLink>
+                            <NavLink href="/request-music" onNavigate={() => setIsSheetOpen(false)}>
+                                <Music className="w-5 h-5 mr-3" /> Request Music
                             </NavLink>
                             <NavLink href="/pookie-contributors" onNavigate={() => setIsSheetOpen(false)}>
                                 <Trophy className="w-5 h-5 mr-3" /> Contributors

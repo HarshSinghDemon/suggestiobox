@@ -58,7 +58,12 @@ service cloud.firestore {
       allow list: if isUser();
       allow create: if isOwner(request.resource.data.userId);
     }
+
+    match /musicRequests/{requestId} {
+      allow read: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isUser();
+      allow delete: if isAdmin();
+    }
   }
 }
-
-    
