@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -130,7 +131,7 @@ export function Header() {
         <div className="flex items-center justify-end flex-1 ml-auto">
             <JukeboxControls />
           {user ? (
-            <div className="relative group ml-2 hidden md:block">
+            <div className="relative group ml-2">
               <div className={cn(
                 "absolute -inset-0.5 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
               )}></div>
@@ -187,7 +188,7 @@ export function Header() {
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-xs p-0">
+                <SheetContent side="right" className="w-full max-w-xs p-0 backdrop-blur-lg bg-background/80">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between p-4 border-b">
                            <Logo />
