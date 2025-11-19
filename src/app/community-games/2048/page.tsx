@@ -18,5 +18,3 @@ export default function Game2048Page() {
     </div>
   );
 }
-
-    
