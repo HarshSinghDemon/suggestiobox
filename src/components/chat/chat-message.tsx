@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import React from 'react';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 type ChatMessageProps = {
   message: Message;
@@ -64,6 +65,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
     const messageRef = doc(firestore, 'messages', message.id);
     deleteDocumentNonBlocking(messageRef);
   };
+  
+  const yearBadgeClass = cn({
+    'border-sky-500/30 bg-sky-500/20 text-sky-400': message.userYear === '1st',
+    'border-amber-500/30 bg-amber-500/20 text-amber-400': message.userYear === '2nd',
+    'border-emerald-500/30 bg-emerald-500/20 text-emerald-400': message.userYear === '3rd',
+  });
 
   return (
     <div className="flex items-start gap-4 group">
@@ -74,7 +81,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <p className="font-semibold">{message.userName || 'Anonymous'}</p>
-          {message.userYear && <Badge variant="secondary">{message.userYear} Year</Badge>}
+          {message.userYear && <Badge variant="outline" className={yearBadgeClass}>{message.userYear} Year</Badge>}
           <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
         <p className="text-foreground/90">{renderMessageWithMentions(message.text)}</p>
