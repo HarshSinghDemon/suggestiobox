@@ -49,12 +49,15 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     audio.volume = 0;
     audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     
+    if (targetVolume === 0) return;
+
     let currentVol = 0;
     fadeIntervalRef.current = setInterval(() => {
         currentVol += 0.05;
         if (currentVol >= targetVolume) {
             audio.volume = targetVolume;
             if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+            fadeIntervalRef.current = null;
         } else {
             audio.volume = currentVol;
         }
@@ -63,12 +66,19 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
 
   const fadeOut = useCallback((audio: HTMLAudioElement, onComplete: () => void) => {
     if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+    
+    if (audio.volume === 0) {
+        onComplete();
+        return;
+    }
+
     let currentVol = audio.volume;
     fadeIntervalRef.current = setInterval(() => {
         currentVol -= 0.05;
         if (currentVol <= 0) {
             audio.volume = 0;
             if(fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+            fadeIntervalRef.current = null;
             onComplete();
         } else {
             audio.volume = currentVol;
@@ -97,13 +107,22 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   const changeTrack = useCallback((newIndex: number) => {
     if (!audioElement) return;
 
-    fadeOut(audioElement, () => {
+    const playNewTrack = () => {
         setCurrentSongIndex(newIndex);
         const newSong = playlist[newIndex];
         audioElement.src = newSong.url;
         fadeIn(audioElement, volume);
-    });
-  }, [audioElement, fadeOut, fadeIn, volume, playlist]);
+    };
+
+    if (isPlaying) {
+        fadeOut(audioElement, playNewTrack);
+    } else {
+        // If paused, just change the track and keep it paused.
+        setCurrentSongIndex(newIndex);
+        const newSong = playlist[newIndex];
+        audioElement.src = newSong.url;
+    }
+  }, [audioElement, fadeOut, fadeIn, volume, playlist, isPlaying]);
   
   const playNext = useCallback(() => {
     const nextIndex = (currentSongIndex + 1) % playlist.length;
