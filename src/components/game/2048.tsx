@@ -189,8 +189,31 @@ export function Game2048() {
 
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-4">
-                <div className="flex justify-between w-full p-2 rounded-md bg-muted">
+            <div 
+                className="relative p-2 rounded-md bg-muted-foreground/50 touch-none order-2 md:order-1 md:col-span-2"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
+                <div className="grid grid-cols-4 gap-2">
+                    {board.map((val, i) => (
+                        <div key={i} className={cn(
+                            "w-full aspect-square flex items-center justify-center text-xl sm:text-3xl font-bold rounded-md transition-all duration-100",
+                            TILE_COLORS[val] || 'bg-purple-600 text-white'
+                        )}>
+                            {val > 0 && val}
+                        </div>
+                    ))}
+                </div>
+                {(isGameOver || isWinner) && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                        <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
+                        <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
+                        <Button onClick={resetGame} className="mt-4">Play Again</Button>
+                    </div>
+                )}
+            </div>
+            <div className="order-1 md:order-2 col-span-1 space-y-4">
+                <div className="flex justify-between w-full p-4 rounded-md bg-muted">
                     <div className="text-center">
                         <div className="text-sm font-semibold">SCORE</div>
                         <div className="text-2xl font-bold">{score}</div>
@@ -200,35 +223,8 @@ export function Game2048() {
                         New Game
                     </Button>
                 </div>
-                <div 
-                    className="relative p-2 rounded-md bg-muted-foreground/50 touch-none"
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                >
-                    <div className="grid grid-cols-4 gap-2">
-                        {board.map((val, i) => (
-                            <div key={i} className={cn(
-                                "w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-xl sm:text-3xl font-bold rounded-md transition-all duration-100",
-                                TILE_COLORS[val] || 'bg-purple-600 text-white'
-                            )}>
-                                {val > 0 && val}
-                            </div>
-                        ))}
-                    </div>
-                    {(isGameOver || isWinner) && (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
-                            <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
-                            <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
-                            <Button onClick={resetGame} className="mt-4">Play Again</Button>
-                        </div>
-                    )}
-                </div>
-            </div>
-            <div className="col-span-1">
                 <Leaderboard gameId="2048" />
             </div>
         </div>
     );
 }
-
-    

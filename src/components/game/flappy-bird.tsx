@@ -54,7 +54,7 @@ export function FlappyBirdGame() {
         canvas.width = 320;
         canvas.height = 480;
 
-        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.3, lift: -6, velocity: 0 };
+        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.1, lift: -3, velocity: 0 };
         let pipes: { x: number, y: number, width: number, height: number, passed: boolean }[] = [];
         let pipeWidth = 52;
         let pipeGap = 150;
@@ -63,7 +63,7 @@ export function FlappyBirdGame() {
         let animationFrameId: number;
         
         const resetGame = () => {
-            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.3, lift: -6, velocity: 0 };
+            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.1, lift: -3, velocity: 0 };
             pipes = [];
             frameCount = 0;
             localScore = 0;
@@ -111,14 +111,14 @@ export function FlappyBirdGame() {
             ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
 
             // Pipes
-            if (frameCount % 120 === 0) {
+            if (frameCount % 200 === 0) {
                 const pipeY = Math.random() * (canvas.height - pipeGap - 120) + 60;
                 pipes.push({ x: canvas.width, y: 0, width: pipeWidth, height: pipeY, passed: false });
                 pipes.push({ x: canvas.width, y: pipeY + pipeGap, width: pipeWidth, height: canvas.height - pipeY - pipeGap, passed: true });
             }
 
             pipes.forEach(pipe => {
-                pipe.x -= 2;
+                pipe.x -= 1;
                 ctx.fillStyle = '#4ade80'; // green-400
                 ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
                 
@@ -176,7 +176,9 @@ export function FlappyBirdGame() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center justify-center col-span-1 md:col-span-2">
                 <canvas ref={canvasRef} className="rounded-md bg-sky-300" />
-                <div className="flex items-center justify-between w-full max-w-sm mt-4">
+            </div>
+            <div className="col-span-1 space-y-4">
+                 <div className="flex items-center justify-between w-full p-4 rounded-md bg-muted">
                     <p className="font-semibold text-lg">Score: {score}</p>
                     {gameState === 'gameOver' && (
                         <Button onClick={handleRestart} size="sm">
@@ -185,12 +187,8 @@ export function FlappyBirdGame() {
                         </Button>
                     )}
                 </div>
-            </div>
-            <div className="col-span-1">
                 <Leaderboard gameId="flappy-bird" />
             </div>
         </div>
     );
 }
-
-    

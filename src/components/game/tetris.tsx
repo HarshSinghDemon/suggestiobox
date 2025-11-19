@@ -50,6 +50,8 @@ export function TetrisGame() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
 
     function getRandomPiece() {
         const randIndex = Math.floor(Math.random() * SHAPES.length);
@@ -132,6 +134,7 @@ export function TetrisGame() {
                 currentPiece.shape.forEach((row, y) => {
                     row.forEach((value, x) => {
                         if (value) {
+                            if (currentPiece.pos.y + y < 0) return; // Prevent writing out of bounds
                             newBoard[currentPiece.pos.y + y][currentPiece.pos.x + x] = currentPiece.colorIndex;
                         }
                     });
@@ -194,28 +197,7 @@ export function TetrisGame() {
         }
     }, [isGameOver, hasSubmittedScore, submitScore]);
     
-    useEffect(() => {
-        const update = (time = 0) => {
-            if (isGameOver) return;
-            const deltaTime = time - lastTime.current;
-            lastTime.current = time;
-            dropCounter.current += deltaTime;
-            const dropInterval = 1000 - (score / 100);
-            if (dropCounter.current > Math.max(200, dropInterval)) {
-                dropPiece();
-            }
-            gameLoopRef.current = requestAnimationFrame(update);
-        }
-        
-        resetGame();
-        update();
-
-        return () => {
-            if(gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
-        }
-    }, []);
-
-    const draw = (ctx: CanvasRenderingContext2D) => {
+    const draw = useCallback((ctx: CanvasRenderingContext2D) => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
         ctx.fillStyle = 'hsl(var(--card))';
@@ -242,17 +224,42 @@ export function TetrisGame() {
                 }
             });
         });
-    };
+    }, [board, currentPiece]);
     
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (ctx) draw(ctx);
-    }, [board, currentPiece, draw]);
+        let animationFrameId: number;
+        const update = (time = 0) => {
+            if (isGameOver) {
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                return;
+            }
+            const deltaTime = time - lastTime.current;
+            lastTime.current = time;
+            dropCounter.current += deltaTime;
+            const dropInterval = 1000 - (score / 100);
+            if (dropCounter.current > Math.max(200, dropInterval)) {
+                dropPiece();
+            }
+            
+            const canvas = canvasRef.current;
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) draw(ctx);
+            }
+            animationFrameId = requestAnimationFrame(update);
+        }
+        
+        resetGame();
+        update();
+
+        return () => {
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+    }, [resetGame, dropPiece, draw, isGameOver, score]);
+
 
     const NextPieceDisplay = () => (
-        <div className='grid grid-cols-4 gap-1 p-2 bg-muted rounded-md'>
+        <div className='grid grid-cols-4 gap-1 p-2 bg-card rounded-md'>
             {nextPiece.shape.map((row, y) => row.map((val, x) => (
                 <div key={`${y}-${x}`} className="w-4 h-4" style={{
                     backgroundColor: val ? COLORS[nextPiece.colorIndex] : 'transparent'
@@ -281,7 +288,7 @@ export function TetrisGame() {
                         </div>
                     )}
                 </div>
-                <div className="grid grid-cols-3 gap-2 md:hidden">
+                <div className="grid grid-cols-3 gap-2 mt-4 md:hidden">
                     <Button size="icon" onClick={() => movePiece(-1)}><ArrowLeft/></Button>
                     <Button size="icon" onClick={() => rotatePiece()}><RotateCw/></Button>
                     <Button size="icon" onClick={() => movePiece(1)}><ArrowRight/></Button>
@@ -310,5 +317,3 @@ export function TetrisGame() {
         </div>
     );
 }
-
-    

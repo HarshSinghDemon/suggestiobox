@@ -104,16 +104,6 @@ export function RockPaperScissorsGame() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="flex flex-col items-center order-2 col-span-1 md:order-1 md:col-span-2 gap-8">
-            <div className="flex justify-around w-full max-w-sm">
-                <div className="text-center">
-                <div className="text-lg font-semibold">Player</div>
-                <div className="text-3xl font-bold">{scores.player}</div>
-                </div>
-                <div className="text-center">
-                <div className="text-lg font-semibold">Computer</div>
-                <div className="text-3xl font-bold">{scores.computer}</div>
-                </div>
-            </div>
 
             <div className="flex items-center justify-center w-full gap-8 min-h-[80px]">
                 <div className="flex flex-col items-center gap-2">
@@ -169,13 +159,23 @@ export function RockPaperScissorsGame() {
                 ))}
                 </div>
             )}
-            <p className="text-sm text-muted-foreground">First to 5 points wins!</p>
+            <p className="text-sm text-center text-muted-foreground">First to 5 points wins!</p>
         </div>
-        <div className="order-1 col-span-1 md:order-2">
+        <div className="order-1 col-span-1 space-y-4 md:order-2">
+            <div className="p-4 rounded-md bg-muted">
+                <div className="flex justify-around w-full">
+                    <div className="text-center">
+                    <div className="text-lg font-semibold">Player</div>
+                    <div className="text-3xl font-bold">{scores.player}</div>
+                    </div>
+                    <div className="text-center">
+                    <div className="text-lg font-semibold">Computer</div>
+                    <div className="text-3xl font-bold">{scores.computer}</div>
+                    </div>
+                </div>
+            </div>
             <Leaderboard gameId="rock-paper-scissors" />
         </div>
     </div>
   );
 }
-
-    

@@ -181,14 +181,7 @@ export function SnakeGame() {
                         </div>
                     )}
                 </div>
-                 <div className="flex items-center justify-between w-full max-w-sm">
-                    <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
-                    <Button onClick={resetGame} size="sm" variant="outline">
-                        <RotateCcw className="w-4 h-4 mr-2"/>
-                        Reset
-                    </Button>
-                </div>
-                <div className="grid grid-cols-3 gap-2 md:hidden">
+                 <div className="grid grid-cols-3 gap-2 mt-4 md:hidden">
                     <div></div>
                     <Button size="icon" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
                     <div></div>
@@ -197,11 +190,16 @@ export function SnakeGame() {
                     <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
                 </div>
             </div>
-            <div className="col-span-1">
+            <div className="col-span-1 space-y-4">
+                 <div className="flex items-center justify-between w-full p-4 rounded-md bg-muted">
+                    <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
+                    <Button onClick={resetGame} size="sm" variant="outline">
+                        <RotateCcw className="w-4 h-4 mr-2"/>
+                        Reset
+                    </Button>
+                </div>
                 <Leaderboard gameId="snake" />
             </div>
         </div>
     );
 }
-
-    
