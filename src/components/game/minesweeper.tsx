@@ -214,10 +214,10 @@ export function MinesweeperGame() {
         "text-orange-500", "text-yellow-500", "text-pink-500", "text-indigo-500"
     ];
     
-    const cellSize = "w-6 h-6 sm:w-8 sm:h-8";
+    const cellSize = "w-6 h-6 sm:w-7 sm:h-7";
 
     return (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div className="flex flex-wrap justify-between w-full items-center gap-2 sm:gap-4">
                     <div className='flex items-center gap-2'>
@@ -276,13 +276,13 @@ export function MinesweeperGame() {
                             disabled={isGameOver && !isWinner}
                         >
                             {cell.isRevealed ? (
-                                cell.isMine ? <Bomb className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" /> : (cell.adjacentMines > 0 && <span className={cn("text-sm sm:text-lg", numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
+                                cell.isMine ? <Bomb className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" /> : (cell.adjacentMines > 0 && <span className={cn("text-xs sm:text-base", numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
                             ) : cell.isFlagged ? <Flag className="w-4 h-4 sm:w-5 sm:h-5" /> : ''}
                         </button>
                     ))) : (
                         <div 
                             className="flex items-center justify-center text-center text-muted-foreground p-4 sm:p-8"
-                            style={{gridColumn: `span ${LEVELS[level].size}`, height: `${LEVELS[level].size * 32}px`}}
+                            style={{gridColumn: `span ${LEVELS[level].size}`, height: `${LEVELS[level].size * 28}px`}}
                         >
                             Click any cell to start
                         </div>

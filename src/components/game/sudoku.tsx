@@ -126,13 +126,13 @@ export function SudokuGame() {
         }
     };
 
-    if (!isClient) return null;
+    if (!isClient || !playerBoard) return null;
 
     return (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div className="grid grid-cols-9 bg-muted-foreground/50 p-1 rounded-md w-full max-w-[450px] aspect-square">
-                    {playerBoard && playerBoard.map((row, r) => row.map((cell, c) => {
+                    {playerBoard.map((row, r) => row.map((cell, c) => {
                         const isPuzzleCell = puzzle![r][c] !== 0;
                         const isSelected = selectedCell?.r === r && selectedCell?.c === c;
                         const isSameValue = selectedCell && playerBoard[selectedCell.r][selectedCell.c] !== 0 && playerBoard[selectedCell.r][selectedCell.c] === cell;
@@ -160,11 +160,11 @@ export function SudokuGame() {
                 </div>
                  <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
                     {Array.from({ length: 9 }, (_, i) => i + 1).map(num => (
-                        <Button key={num} variant="outline" size="sm" className='w-9 h-9 sm:w-10 sm:h-10' onClick={() => handleNumberInput(num)} disabled={isGameOver}>
+                        <Button key={num} variant="outline" size="sm" className='w-8 h-8 sm:w-10 sm:h-10' onClick={() => handleNumberInput(num)} disabled={isGameOver}>
                             {num}
                         </Button>
                     ))}
-                    <Button variant="destructive" size="sm" className='w-9 h-9 sm:w-10 sm:h-10' onClick={handleErase} disabled={isGameOver}>Erase</Button>
+                    <Button variant="destructive" size="sm" className='w-8 h-8 sm:w-10 sm:h-10' onClick={handleErase} disabled={isGameOver}>Erase</Button>
                 </div>
             </div>
              <div className="space-y-4 md:col-span-1">

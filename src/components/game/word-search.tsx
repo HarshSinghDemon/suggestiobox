@@ -142,12 +142,12 @@ export function WordSearchGame() {
     }, [startTime, isGameOver]);
 
     useEffect(() => {
-        if (!isGameOver && foundWords.length === themes[theme].length) {
+        if (!isGameOver && puzzleData && foundWords.length === themes[theme].length) {
             setIsGameOver(true);
             const score = Math.max(10, (themes[theme].length * 100) - time);
             submitScore(score);
         }
-    }, [foundWords, isGameOver, theme, time, submitScore]);
+    }, [foundWords, isGameOver, theme, time, submitScore, puzzleData]);
 
     const handleMouseUp = () => {
         isMouseDown.current = false;
@@ -195,6 +195,16 @@ export function WordSearchGame() {
         setCurrentPath(newPath);
     };
 
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.getAttribute('data-r') && element.getAttribute('data-c')) {
+            const r = parseInt(element.getAttribute('data-r')!, 10);
+            const c = parseInt(element.getAttribute('data-c')!, 10);
+            handleMouseEnter(r, c);
+        }
+    };
+
     const isCellInPath = (r: number, c: number) => currentPath.some(([pr, pc]) => pr === r && pc === c);
     
     if (!isClient || !puzzleData) return null;
@@ -203,11 +213,12 @@ export function WordSearchGame() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div
-                    className="grid p-1 bg-muted-foreground/50 rounded-md select-none touch-none"
+                    className="relative grid p-1 bg-muted-foreground/50 rounded-md select-none touch-none"
                     style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                     onTouchEnd={handleMouseUp}
+                    onTouchMove={handleTouchMove}
                 >
                     {puzzleData.grid.map((row, r) => row.map((cell, c) => (
                         <div
@@ -219,21 +230,19 @@ export function WordSearchGame() {
                             onMouseDown={() => handleMouseDown(r, c)}
                             onMouseEnter={() => handleMouseEnter(r, c)}
                             onTouchStart={() => handleMouseDown(r,c)}
-                            onTouchMove={(e) => {
-                                const touch = e.touches[0];
-                                const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                                if (element && element.getAttribute('data-r') && element.getAttribute('data-c')) {
-                                    const newR = parseInt(element.getAttribute('data-r')!, 10);
-                                    const newC = parseInt(element.getAttribute('data-c')!, 10);
-                                    handleMouseEnter(newR, newC);
-                                }
-                            }}
                             data-r={r}
                             data-c={c}
                         >
                             {cell}
                         </div>
                     )))}
+                     {isGameOver && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
+                            <Award className="w-16 h-16 text-yellow-500" />
+                            <h2 className="text-3xl font-bold">You Win!</h2>
+                            <Button onClick={() => resetGame(theme)} className="mt-4">Play Again</Button>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="space-y-4 md:col-span-1">

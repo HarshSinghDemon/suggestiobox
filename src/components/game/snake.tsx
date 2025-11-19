@@ -187,11 +187,11 @@ export function SnakeGame() {
                 </div>
                  <div className="grid grid-cols-3 gap-2 mt-4 md:hidden">
                     <div />
-                    <Button size="icon" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
+                    <Button size="lg" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
                     <div />
-                    <Button size="icon" onClick={() => handleDirectionChange('LEFT')}><ArrowLeft /></Button>
-                    <Button size="icon" onClick={() => handleDirectionChange('DOWN')}><ArrowDown /></Button>
-                    <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
+                    <Button size="lg" onClick={() => handleDirectionChange('LEFT')}><ArrowLeft /></Button>
+                    <Button size="lg" onClick={() => handleDirectionChange('DOWN')}><ArrowDown /></Button>
+                    <Button size="lg" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
                 </div>
             </div>
             <div className="space-y-4 md:col-span-1">
