@@ -12,6 +12,9 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   signInWithPopup,
+  fetchSignInMethodsForEmail,
+  linkWithCredential,
+  OAuthProvider,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -96,26 +99,45 @@ export const signOut = async (auth: Auth) => {
   }
 };
 
-export const signInWithGoogle = async (auth: Auth) => {
-  const provider = new GoogleAuthProvider();
+async function handleSocialSignIn(auth: Auth, provider: GoogleAuthProvider | GithubAuthProvider) {
   try {
     const result = await signInWithPopup(auth, provider);
     const isNewUser = await handleNewUser(result.user);
     return { user: result.user, isNewUser };
-  } catch (error) {
-    console.error('Error signing in with Google: ', error);
+  } catch (error: any) {
+    if (error.code === 'auth/account-exists-with-different-credential' && error.customData?.email) {
+      const email = error.customData.email;
+      const credential = (provider.providerId === 'google.com' 
+          ? GoogleAuthProvider.credentialFromError(error) 
+          : GithubAuthProvider.credentialFromError(error));
+
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+
+      if (methods[0] === 'password' && auth.currentUser) {
+        const result = await linkWithCredential(auth.currentUser, credential!);
+        const isNewUser = await handleNewUser(result.user);
+        return { user: result.user, isNewUser };
+      }
+      
+      // If user is not signed in with password, or some other issue, we can't link automatically.
+      // For a better UX, you might prompt user to sign in with their password first.
+      // For now, we re-throw a more user-friendly error.
+      throw new Error(
+        `An account with ${email} already exists. Please sign in with your password to link your ${provider.providerId.split('.')[0]} account.`
+      );
+    }
+    console.error(`Error signing in with ${provider.providerId}: `, error);
     throw error;
   }
 }
 
+
+export const signInWithGoogle = async (auth: Auth) => {
+  const provider = new GoogleAuthProvider();
+  return handleSocialSignIn(auth, provider);
+}
+
 export const signInWithGitHub = async (auth: Auth) => {
     const provider = new GithubAuthProvider();
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const isNewUser = await handleNewUser(result.user);
-        return { user: result.user, isNewUser };
-    } catch (error) {
-        console.error('Error signing in with GitHub: ', error);
-        throw error;
-    }
+    return handleSocialSignIn(auth, provider);
 }
