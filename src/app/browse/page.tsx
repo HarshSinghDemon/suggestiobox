@@ -2,6 +2,7 @@
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 const BrowseSection = dynamic(() => import('@/components/browse/browse-section').then(mod => mod.BrowseSection), {
   loading: () => (
@@ -36,15 +37,17 @@ export default function BrowsePage({ searchParams }: BrowsePageProps) {
   const { tab = 'suggestions', semester, subject } = searchParams;
 
   return (
-    <div className="container px-4 py-8 mx-auto md:px-6">
-      <h1 className="mb-8 text-3xl font-bold tracking-tight">Dashboard</h1>
-      <Suspense fallback={<p>Loading...</p>}>
-        <BrowseSection 
-          activeTab={tab} 
-          activeSemester={semester} 
-          activeSubject={subject} 
-        />
-      </Suspense>
-    </div>
+    <AuthWrapper>
+      <div className="container px-4 py-8 mx-auto md:px-6">
+        <h1 className="mb-8 text-3xl font-bold tracking-tight">Dashboard</h1>
+        <Suspense fallback={<p>Loading...</p>}>
+          <BrowseSection 
+            activeTab={tab} 
+            activeSemester={semester} 
+            activeSubject={subject} 
+          />
+        </Suspense>
+      </div>
+    </AuthWrapper>
   );
 }

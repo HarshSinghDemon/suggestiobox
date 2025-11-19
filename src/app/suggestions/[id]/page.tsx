@@ -1,4 +1,5 @@
 import { SuggestionDetails } from '@/components/details/suggestion-details';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 type SuggestionPageProps = {
   params: {
@@ -8,8 +9,10 @@ type SuggestionPageProps = {
 
 export default function SuggestionPage({ params }: SuggestionPageProps) {
   return (
-    <div className="container py-8 mx-auto">
-      <SuggestionDetails suggestionId={params.id} />
-    </div>
+    <AuthWrapper>
+      <div className="container py-8 mx-auto">
+        <SuggestionDetails suggestionId={params.id} />
+      </div>
+    </AuthWrapper>
   );
 }
