@@ -53,7 +53,7 @@ export default function Home() {
             </Button>
           </div>
           <div className="pt-8">
-            <p className="text-sm text-foreground/60">
+            <p className="text-sm text-foreground/60 font-arcade">
                 Made with ❤️ by sectionB
             </p>
           </div>
