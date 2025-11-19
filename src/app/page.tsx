@@ -52,6 +52,11 @@ export default function Home() {
                 </Link>
             </Button>
           </div>
+          <div className="pt-8">
+            <p className="text-sm text-foreground/60">
+                Made with ❤️ by sectionB
+            </p>
+          </div>
         </div>
       </WavyBackground>
     </div>
