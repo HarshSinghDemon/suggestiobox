@@ -106,7 +106,7 @@ export default {
           '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' },
         },
         'shine': {
-          'to': { 'background-position': '-200% center' },
+          'to': { 'background-position': '200% center' },
         }
       },
       animation: {
