@@ -29,20 +29,6 @@ const games = [
         variant: 'fiery',
     },
     {
-        name: 'Snake',
-        description: 'Guide the snake to eat the food.',
-        href: '/community-games/snake',
-        icon: SnakeIcon,
-        variant: 'fiery',
-    },
-    {
-        name: 'Minesweeper',
-        description: 'Clear the board without hitting a mine.',
-        href: '/community-games/minesweeper',
-        icon: Bomb,
-        variant: 'ocean',
-    },
-    {
         name: '2048',
         description: 'Slide tiles to get the 2048 tile.',
         href: '/community-games/2048',
