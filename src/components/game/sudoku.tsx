@@ -9,9 +9,18 @@ import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
-import { generate, solve, check, difficulty as SudokuDifficulty } from 'sudoku-javascript';
+import sudoku from 'sudoku';
 
 type Level = 'easy' | 'medium' | 'hard' | 'very-hard' | 'insane' | 'inhuman';
+
+const levelMapping = {
+    'easy': 0.2,
+    'medium': 0.4,
+    'hard': 0.6,
+    'very-hard': 0.8,
+    'insane': 0.9,
+    'inhuman': 1,
+}
 
 export function SudokuGame() {
     const [level, setLevel] = useState<Level>('easy');
@@ -49,22 +58,22 @@ export function SudokuGame() {
     }, [user, firestore, toast, hasSubmittedScore]);
 
     const createNewPuzzle = useCallback((newLevel: Level) => {
-        const generatedPuzzleString = generate(newLevel as SudokuDifficulty);
-        const solvedPuzzleString = solve(generatedPuzzleString);
-        
-        const stringToBoard = (str: string) => {
-            const board: number[][] = [];
-            for (let i = 0; i < 9; i++) {
-                const row = str.substring(i * 9, (i + 1) * 9).split('').map(char => char === '.' ? 0 : parseInt(char));
-                board.push(row);
-            }
-            return board;
-        };
+        const rawPuzzle: (number|null)[] = sudoku.makepuzzle();
+        const rawSolution = sudoku.solvepuzzle(rawPuzzle);
 
-        const newPuzzle = stringToBoard(generatedPuzzleString);
+        const boardTo2D = (board: (number|null)[]) => {
+            const newBoard: number[][] = [];
+            for (let i = 0; i < 9; i++) {
+                const row = board.slice(i * 9, (i + 1) * 9).map(n => n === null ? 0 : n + 1);
+                newBoard.push(row);
+            }
+            return newBoard;
+        }
+
+        const newPuzzle = boardTo2D(rawPuzzle);
         setPuzzle(newPuzzle);
         setPlayerBoard(JSON.parse(JSON.stringify(newPuzzle)));
-        setSolution(stringToBoard(solvedPuzzleString));
+        setSolution(boardTo2D(rawSolution));
         
         setIsGameOver(false);
         setIsWinner(false);
