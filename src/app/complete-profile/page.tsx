@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useUser, useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -33,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateProfile } from 'firebase/auth';
 
 const formSchema = z.object({
+  displayName: z.string().min(2, 'Name must be at least 2 characters.'),
   year: z.enum(['1st', '2nd', '3rd'], { required_error: 'Please select your year.'}),
 });
 
@@ -47,7 +49,17 @@ export default function CompleteProfilePage() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      displayName: user?.displayName || '',
+      year: '1st',
+    },
   });
+  
+  useEffect(() => {
+    if (user?.displayName) {
+      form.setValue('displayName', user.displayName);
+    }
+  }, [user, form]);
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -55,12 +67,20 @@ export default function CompleteProfilePage() {
   };
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user || !firestore) return;
+    if (!user || !firestore || !auth.currentUser) return;
     
     setIsSubmitting(true);
     try {
         const userDocRef = doc(firestore, 'users', user.uid);
-        await updateDoc(userDocRef, { year: values.year });
+        
+        // Update both Firestore and Firebase Auth
+        await Promise.all([
+          updateProfile(auth.currentUser, { displayName: values.displayName }),
+          updateDoc(userDocRef, { 
+              year: values.year,
+              displayName: values.displayName,
+          }),
+        ]);
 
         toast({
             title: 'Profile Complete!',
@@ -109,6 +129,19 @@ export default function CompleteProfilePage() {
             </div>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="year"
