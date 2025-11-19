@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns } from 'lucide-react';
 import Link from 'next/link';
 
 const SnakeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -65,6 +65,18 @@ const games = [
         description: 'Fit the falling blocks together.',
         href: '/community-games/tetris',
         icon: AlignEndVertical,
+    },
+    {
+        name: 'Sudoku',
+        description: 'Fill the grid with numbers 1-9.',
+        href: '/community-games/sudoku',
+        icon: Columns,
+    },
+    {
+        name: 'Word Search',
+        description: 'Find the hidden words in the puzzle.',
+        href: '/community-games/word-search',
+        icon: Search,
     },
 ];
 

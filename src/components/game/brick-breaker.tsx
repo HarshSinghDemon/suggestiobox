@@ -1,12 +1,49 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { Leaderboard } from './leaderboard';
+import { useToast } from '@/hooks/use-toast';
+import { RotateCcw } from 'lucide-react';
 
 export function BrickBreakerGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<'start' | 'playing' | 'gameOver' | 'won'>('start');
   const [score, setScore] = useState(0);
+  const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const submitScore = useCallback(async (finalScore: number) => {
+    if (!user || !firestore || finalScore === 0 || hasSubmittedScore) return;
+
+    try {
+        const scoresCollection = collection(firestore, 'games', 'brick-breaker', 'scores');
+        await addDocumentNonBlocking(scoresCollection, {
+            userId: user.uid,
+            userName: user.displayName || 'Anonymous',
+            userImage: user.photoURL,
+            score: finalScore,
+            createdAt: serverTimestamp(),
+        });
+        setHasSubmittedScore(true);
+        toast({
+          title: "Game Over!",
+          description: `Your score of ${finalScore} has been submitted.`,
+        });
+    } catch (error) {
+        console.error("Error submitting score:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not submit your score.",
+        });
+    }
+  }, [user, firestore, toast, hasSubmittedScore]);
 
   useEffect(() => {
     if (gameState !== 'playing') return;
@@ -29,10 +66,10 @@ export function BrickBreakerGame() {
     let paddleWidth = 75;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 3;
-    let brickColumnCount = 5;
-    let brickWidth = 75;
-    let brickHeight = 20;
+    let brickRowCount = 5;
+    let brickColumnCount = 7;
+    let brickWidth = 55;
+    let brickHeight = 15;
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 30;
@@ -87,10 +124,11 @@ export function BrickBreakerGame() {
                     if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
                         dy = -dy;
                         b.status = 0;
-                        localScore++;
+                        localScore += 10;
                         setScore(localScore);
-                        if(localScore == brickRowCount*brickColumnCount) {
+                        if(localScore == brickRowCount*brickColumnCount*10) {
                             setGameState('won');
+                            submitScore(localScore);
                         }
                     }
                 }
@@ -146,6 +184,7 @@ export function BrickBreakerGame() {
             }
             else {
                 setGameState('gameOver');
+                submitScore(localScore);
                 return;
             }
         }
@@ -167,30 +206,34 @@ export function BrickBreakerGame() {
       document.removeEventListener("mousemove", mouseMoveHandler);
       canvas.removeEventListener("touchmove", touchMoveHandler);
     };
-  }, [gameState]);
+  }, [gameState, submitScore]);
   
   const startGame = () => {
       setGameState('playing');
       setScore(0);
+      setHasSubmittedScore(false);
   }
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <canvas ref={canvasRef} className="rounded-md bg-card-foreground/10" />
-      <div className="flex items-center justify-between w-full mt-4">
-        <p className="font-semibold">Score: {score}</p>
-        {(gameState !== 'playing') && (
-            <Button onClick={startGame} size="sm">
-                {gameState === 'start' ? 'Start Game' : 'Play Again'}
-            </Button>
-        )}
-      </div>
-      {(gameState === 'gameOver' || gameState === 'won') && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50">
-          <h2 className="text-3xl font-bold text-white">{gameState === 'won' ? 'You Win!' : 'Game Over'}</h2>
-          <Button onClick={startGame} className="mt-4">Play Again</Button>
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="relative md:col-span-2">
+            <canvas ref={canvasRef} className="w-full rounded-md bg-card-foreground/10 aspect-[3/2]" />
+             {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                    <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
+                    <Button onClick={startGame} className="mt-4">
+                        {gameState === 'start' ? 'Start Game' : 'Play Again'}
+                    </Button>
+                </div>
+            )}
         </div>
-      )}
+        <div className="space-y-4 md:col-span-1">
+            <div className="flex flex-col items-center justify-center p-4 rounded-md bg-muted">
+                <p className="text-lg font-semibold">Score</p>
+                <p className="text-3xl font-bold text-primary">{score}</p>
+            </div>
+            <Leaderboard gameId="brick-breaker" />
+        </div>
     </div>
   );
 }
