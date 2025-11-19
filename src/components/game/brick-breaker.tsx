@@ -53,7 +53,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = container.clientWidth * (2/3);
+            canvas.height = container.clientWidth * 0.6; // Adjusted aspect ratio for a wider game
         }
     };
     
@@ -77,15 +77,15 @@ export function BrickBreakerGame() {
     let ballRadius = 8;
     let x = canvas.width / 2;
     let y = canvas.height - 30;
-    let dx = 2;
-    let dy = -2;
+    let dx = 1.5; // Slower horizontal speed
+    let dy = -1.5; // Slower vertical speed
 
     let paddleHeight = 10;
     let paddleWidth = canvas.width / 6.4;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
     let brickRowCount = 5;
-    let brickColumnCount = 7;
+    let brickColumnCount = 9; // Increased brick count for wider screen
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 30;
