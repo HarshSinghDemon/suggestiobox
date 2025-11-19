@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -48,7 +49,8 @@ export function SignUpForm() {
   const avatarUrl = useMemo(() => {
     if (!nameValue) return '';
     const seed = encodeURIComponent(nameValue);
-    return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
+    // Use the 'adventurer' style for new users as a default
+    return `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
   }, [nameValue]);
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {

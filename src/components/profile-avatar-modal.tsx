@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,11 +18,22 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const avatarStyles = [
+    { value: 'bottts-neutral', label: 'Robots' },
+    { value: 'adventurer', label: 'Adventurer' },
+    { value: 'pixel-art', label: 'Pixel Art' },
+    { value: 'initials', label: 'Initials' },
+    { value: 'big-smile', label: 'Big Smile' },
+];
+type AvatarStyle = typeof avatarStyles[number]['value'];
+
 
 export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalProps) {
   const { user } = useUser();
@@ -32,15 +43,36 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<AvatarStyle>('bottts-neutral');
+
+  useEffect(() => {
+    // When the modal opens, if the user has an existing DiceBear avatar,
+    // try to determine its style.
+    if (isOpen && user?.photoURL) {
+      const url = user.photoURL;
+      const matchedStyle = avatarStyles.find(style => url.includes(`/${style.value}/`));
+      if (matchedStyle) {
+        setSelectedStyle(matchedStyle.value);
+      }
+    }
+  }, [isOpen, user?.photoURL]);
+
 
   const currentAvatarUrl = useMemo(() => {
     return newAvatarUrl || user?.photoURL || '';
   }, [newAvatarUrl, user?.photoURL]);
 
-  const handleRandomize = () => {
+  const generateAvatarUrl = (style: AvatarStyle) => {
     const seed = Math.random().toString(36).substring(7);
-    const url = `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
-    setNewAvatarUrl(url);
+    const base = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+    if (style === 'bottts-neutral') {
+        return `${base}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
+    }
+    return base;
+  }
+
+  const handleRandomize = () => {
+    setNewAvatarUrl(generateAvatarUrl(selectedStyle));
   };
   
   const handleSave = async () => {
@@ -91,9 +123,9 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
     <Dialog open={isOpen} onOpenChange={onModalStateChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Your Avatar</DialogTitle>
+          <DialogTitle>Change Your Avatar</DialogTitle>
           <DialogDescription>
-            View and randomize your profile avatar. Click save to apply changes.
+            Select a style, randomize, and save your new look.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-4">
@@ -112,10 +144,27 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
                 </div>
              )}
           </div>
-          <Button variant="outline" onClick={handleRandomize}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Randomize Avatar
-          </Button>
+          
+          <div className="flex items-center w-full gap-2">
+            <Select value={selectedStyle} onValueChange={(value: AvatarStyle) => setSelectedStyle(value)}>
+                <SelectTrigger className='flex-1'>
+                    <SelectValue placeholder="Select a style" />
+                </SelectTrigger>
+                <SelectContent>
+                    {avatarStyles.map(style => (
+                        <SelectItem key={style.value} value={style.value}>
+                            {style.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={handleRandomize} className='flex-shrink-0'>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Randomize
+            </Button>
+          </div>
+
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={() => onModalStateChange(false)}>Cancel</Button>
