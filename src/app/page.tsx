@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Gamepad2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect } from 'react';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
@@ -15,6 +16,21 @@ export default function Home() {
     const audio = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_2b2899dbb0.mp3");
     audio.play();
   };
+
+  useEffect(() => {
+    // This effect runs only on the client side
+    const isWindows = navigator.userAgent.includes('Win');
+    if (isWindows) {
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Cleanup function to restore scrolling when the component unmounts
+    return () => {
+      if (isWindows) {
+        document.body.style.overflow = 'auto';
+      }
+    };
+  }, []); // Empty dependency array means this runs once when the component mounts
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
