@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { MusicProvider } from '@/context/music-context';
 import { SiteWidePlayer } from '@/components/site-wide-player';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const pressStart2P = Press_Start_2P({
@@ -48,6 +49,7 @@ export default function RootLayout({
             </MusicProvider>
           </FirebaseClientProvider>
         </TooltipProvider>
+        <Analytics />
       </body>
     </html>
   );
