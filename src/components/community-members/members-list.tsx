@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
+import { ShieldCheck, Star } from 'lucide-react';
+import { Card } from '../ui/card';
 
 function MemberListSkeleton() {
   return (
@@ -49,6 +51,15 @@ export function CommunityMembersList() {
   const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
   const totalMembers = users?.length ?? 0;
+  
+  const adminUser: FirebaseUser = {
+      id: 'admin-harsh',
+      uid: 'admin-harsh',
+      displayName: 'Harsh Singh',
+      email: 'harshroop100@gmail.com',
+      photoURL: 'https://github.com/shadcn.png',
+      year: '3rd',
+  };
 
   if (isLoading) {
     return <MemberListSkeleton />;
@@ -62,36 +73,78 @@ export function CommunityMembersList() {
 
   return (
     <div>
-        <div className="mb-6 text-center">
+        <div className="mb-8 text-center">
             <h3 className="text-xl font-semibold">
                 Total Members: <span className="text-primary">{totalMembers}</span>
             </h3>
         </div>
+
+        <div className="mb-12">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-primary/50 bg-gradient-to-tr from-card to-primary/10 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2">
+                         <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-primary">Admin</div>
+                        <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-primary">
+                            <AvatarImage src={adminUser.photoURL} alt={adminUser.displayName ?? ''} />
+                            <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
+                        </Avatar>
+                        <h4 className="text-xl font-bold">{adminUser.displayName}</h4>
+                        <p className="text-sm text-muted-foreground">{adminUser.email}</p>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                            <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/20 text-emerald-400">3rd Year</Badge>
+                            <Badge className="border-transparent animate-super-senior-shine text-purple-200 transition-all hover:shadow-purple-400/30 hover:scale-105">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M12 2L9 9l-7 2.5 7 2.5 3 6.5 3-6.5 7-2.5-7-2.5L12 2z"/><path d="M18 9l-2.25 4.75L12 15l-3.75-1.25L6 9"/><path d="M12 15l3 6.5 3-6.5"/></svg>
+                                Super Senior
+                            </Badge>
+                        </div>
+                    </Card>
+                </PopoverTrigger>
+                 <PopoverContent className='w-80'>
+                    <UserProfilePopover user={adminUser} />
+                </PopoverContent>
+            </Popover>
+        </div>
+        
+        <div className='my-8 text-center'>
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                    <span className="px-3 text-lg font-medium bg-background text-muted-foreground">Community Rockstars</span>
+                </div>
+            </div>
+        </div>
+
+
         {users && users.length > 0 ? (
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {users.map((user, index) => (
-                    <Popover key={user.id}>
-                        <PopoverTrigger asChild>
-                            <div 
-                                className="flex flex-col items-center p-4 text-center transition-all duration-200 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
-                                style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
-                            >
-                                <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
-                                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
-                                    <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
-                                </Avatar>
-                                <div className='flex flex-col items-center gap-2'>
-                                <p className="font-semibold truncate">{user.displayName}</p>
-                                {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                {users.map((user, index) => {
+                    if (user.email === adminUser.email) return null;
+                    return (
+                        <Popover key={user.id}>
+                            <PopoverTrigger asChild>
+                                <div 
+                                    className="flex flex-col items-center p-4 text-center transition-all duration-200 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
+                                    style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
+                                >
+                                    <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
+                                        <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                                        <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className='flex flex-col items-center gap-2'>
+                                    <p className="font-semibold truncate">{user.displayName}</p>
+                                    {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                                    </div>
+                                    <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
                                 </div>
-                                <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
-                            </div>
-                        </PopoverTrigger>
-                        <PopoverContent className='w-80'>
-                            <UserProfilePopover user={user} />
-                        </PopoverContent>
-                    </Popover>
-                ))}
+                            </PopoverTrigger>
+                            <PopoverContent className='w-80'>
+                                <UserProfilePopover user={user} />
+                            </PopoverContent>
+                        </Popover>
+                    )
+                })}
             </div>
         ) : (
             <p className="py-12 text-center text-muted-foreground">
