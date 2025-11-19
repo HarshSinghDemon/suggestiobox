@@ -32,7 +32,7 @@ export function JukeboxControls() {
   };
   
   const MusicPlayerCore = (
-    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:scale-105">
+    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:scale-105 active:scale-95">
         <div className={cn("flex items-center justify-center w-8 h-8", isPlaying && "animate-pulse")}>
             <Music className="w-4 h-4 text-muted-foreground" />
         </div>
