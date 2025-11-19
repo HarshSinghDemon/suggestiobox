@@ -1,0 +1,156 @@
+'use client';
+
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
+type User = {
+    id: string;
+    displayName: string;
+    photoURL: string;
+    email: string;
+};
+
+function TableSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 p-4">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <Skeleton className="flex-1 h-8" />
+          <Skeleton className="w-24 h-8" />
+          <Skeleton className="w-10 h-8" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function AdminUsersTable() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null),
+    [firestore]
+  );
+
+  const { data: users, isLoading } = useCollection<User>(usersQuery);
+
+  const handleDelete = async (userId: string) => {
+    if (!firestore) return;
+    
+    try {
+        const docRef = doc(firestore, 'users', userId);
+        await deleteDoc(docRef);
+        toast({
+            title: 'Success',
+            description: 'User document deleted successfully from the database.',
+        });
+    } catch(e) {
+        console.error("Error deleting user document:", e);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not delete user document. See console for details.',
+        });
+    }
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    return names.map((n) => n[0]).join('').substring(0, 2);
+  };
+
+  if (isLoading) {
+    return <TableSkeleton />;
+  }
+
+  return (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users && users.length > 0 ? (
+            users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user.photoURL ?? undefined} />
+                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium truncate">{user.displayName || 'Unnamed User'}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="truncate">{user.email}</TableCell>
+                <TableCell className="text-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete the user's data (profile, etc.) from the database. It will NOT delete their authentication record, and they will still be able to log in. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(user.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete User Data
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={3} className="h-24 text-center">
+                No users found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
