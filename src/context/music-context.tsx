@@ -1,7 +1,7 @@
 'use client';
 
 import { songs } from '@/lib/songs';
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 
 type Song = {
   title: string;
@@ -12,10 +12,12 @@ type Song = {
 interface MusicContextType {
   isPlaying: boolean;
   currentSong: Song;
+  volume: number;
   togglePlayPause: () => void;
   playNext: () => void;
   playPrevious: () => void;
   setAudioElement: (element: HTMLAudioElement | null) => void;
+  setVolume: (volume: number) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -24,29 +26,42 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [volume, setVolumeState] = useState(0.3); // Default volume
 
   const currentSong = songs[currentSongIndex];
 
+  useEffect(() => {
+    if(audioElement) {
+        audioElement.volume = volume;
+    }
+  }, [volume, audioElement]);
+
+  const setVolume = (newVolume: number) => {
+    setVolumeState(Math.max(0, Math.min(1, newVolume)));
+  }
+
   const fade = useCallback((audio: HTMLAudioElement, direction: 'in' | 'out', callback?: () => void) => {
-    let volume = direction === 'in' ? 0 : 0.3;
-    audio.volume = volume;
-    if (direction === 'in' && audio.paused) {
-      audio.play().catch(() => {});
+    let currentVolume = audio.volume;
+    const targetVolume = direction === 'in' ? volume : 0;
+    const step = (targetVolume - currentVolume) / 10;
+
+    if(direction === 'in' && audio.paused) {
+        audio.play().catch(() => {});
     }
 
-    const interval = setInterval(() => {
-      volume += direction === 'in' ? 0.05 : -0.05;
-      if (volume >= 0 && volume <= 0.3) {
-        audio.volume = Math.max(0, Math.min(0.3, volume));
-      } else {
-        clearInterval(interval);
-        if (direction === 'out') {
-          audio.pause();
+    const fadeInterval = setInterval(() => {
+        currentVolume += step;
+        if ((step > 0 && currentVolume >= targetVolume) || (step < 0 && currentVolume <= targetVolume)) {
+            currentVolume = targetVolume;
+            clearInterval(fadeInterval);
+            if(direction === 'out') {
+                audio.pause();
+            }
+            if(callback) callback();
         }
-        if (callback) callback();
-      }
-    }, 50);
-  }, []);
+        audio.volume = currentVolume;
+    }, 20);
+  }, [volume]);
 
   const togglePlayPause = useCallback(() => {
     if (!audioElement) return;
@@ -74,10 +89,12 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     isPlaying,
     currentSong,
+    volume,
     togglePlayPause,
     playNext,
     playPrevious,
     setAudioElement,
+    setVolume,
   };
 
   return (

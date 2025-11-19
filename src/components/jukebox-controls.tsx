@@ -2,7 +2,7 @@
 
 import { useMusic } from '@/context/music-context';
 import { Button } from './ui/button';
-import { Play, Pause, SkipBack, SkipForward, Music } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Music, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/tooltip"
 import { useEffect, useState } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Slider } from './ui/slider';
 
 
 export function JukeboxControls() {
-  const { isPlaying, togglePlayPause, playNext, playPrevious, currentSong } = useMusic();
+  const { isPlaying, togglePlayPause, playNext, playPrevious, currentSong, volume, setVolume } = useMusic();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -25,8 +27,12 @@ export function JukeboxControls() {
     return <Skeleton className="w-10 h-10 rounded-full md:w-48" />;
   }
   
-  return (
-    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-in-out hover:scale-105">
+  const handleVolumeChange = (value: number[]) => {
+    setVolume(value[0]);
+  };
+  
+  const MusicPlayerCore = (
+    <div className="flex items-center gap-1 p-1 rounded-full bg-card/50 border border-border/20 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-in-out group-hover:scale-105">
         <div className={cn("flex items-center justify-center w-8 h-8", isPlaying && "animate-pulse")}>
             <Music className="w-4 h-4 text-muted-foreground" />
         </div>
@@ -79,5 +85,40 @@ export function JukeboxControls() {
             <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
         </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Player */}
+      <div className='hidden md:block'>
+        {MusicPlayerCore}
+      </div>
+
+      {/* Mobile Player with Popover */}
+      <div className='block md:hidden'>
+        <Popover>
+          <PopoverTrigger asChild>
+            {MusicPlayerCore}
+          </PopoverTrigger>
+          <PopoverContent className="w-64" side="bottom" align="end">
+            <div className='space-y-4'>
+              <div className='text-center'>
+                <p className="font-semibold truncate">{currentSong.title}</p>
+                <p className="text-sm truncate text-muted-foreground">{currentSong.artist}</p>
+              </div>
+              <div className='flex items-center gap-2'>
+                <Volume2 className='w-4 h-4 text-muted-foreground' />
+                <Slider 
+                  defaultValue={[volume * 100]} 
+                  max={100} 
+                  step={1} 
+                  onValueChange={(value) => handleVolumeChange([value[0] / 100])}
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </>
   );
 }
