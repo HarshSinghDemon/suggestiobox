@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -57,26 +57,32 @@ export function Header() {
             >
                 Browse
             </Link>
-            <Link
-                href="/community-chat"
-                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                Community Chat
-            </Link>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                  Community
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => router.push('/community-chat')}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Community Chat
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/community-members')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Community Members
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link
                 href="/pookie-contributors"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
                 prefetch={false}
             >
                 Pookie Contributors
-            </Link>
-            <Link
-                href="/community-members"
-                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                Community Members
             </Link>
             <Link
                 href="/suggestions/new"
@@ -128,8 +134,8 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-chat')}><MessageSquare className="w-4 h-4 mr-2" /><span>Community Chat</span></DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/pookie-contributors')}><Trophy className="w-4 h-4 mr-2" /><span>Pookie Contributors</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-members')}><Users className="w-4 h-4 mr-2" /><span>Community Members</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/pookie-contributors')}><Trophy className="w-4 h-4 mr-2" /><span>Pookie Contributors</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
                 <DropdownMenuSeparator />
