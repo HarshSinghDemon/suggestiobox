@@ -13,12 +13,14 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
       <WavyBackground className="w-full max-w-4xl mx-auto">
         <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
-          <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed">
-            The
-            <br />
-            Suggestion
-            <br />
-            Box
+          <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_4px_12px_hsl(var(--primary)/0.3)]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-violet-400 via-cyan-300 to-violet-400">
+                The
+                <br />
+                Suggestion
+                <br />
+                Box
+            </span>
           </h1>
           <div className="max-w-md space-y-4">
             <p className="text-lg text-foreground/80">
