@@ -109,33 +109,36 @@ async function handleSocialSignIn(auth: Auth, provider: GoogleAuthProvider | Git
     if (error.code === 'auth/account-exists-with-different-credential' && error.customData?.email) {
       const email = error.customData.email;
       const methods = await fetchSignInMethodsForEmail(auth, email);
+      const existingProviderId = methods[0];
 
-      // Extract the pending credential
       let pendingCredential;
       if (provider.providerId === 'google.com') {
         pendingCredential = GoogleAuthProvider.credentialFromError(error);
       } else if (provider.providerId === 'github.com') {
         pendingCredential = GithubAuthProvider.credentialFromError(error);
       }
-      
+
       if (!pendingCredential) {
-          throw new Error("Could not retrieve credential from social sign-in error.");
+        throw new Error("Could not retrieve credential from social sign-in error.");
       }
 
-      // For this flow, we will assume the user wants to link the accounts.
-      // We sign them in with their existing provider and then link the new one.
-      const existingProviderId = methods[0];
+      // If the user originally signed up with a password, we can't automatically link.
+      if (existingProviderId === 'password') {
+        throw new Error(`You already have an account with this email. Please sign in with your password to link your ${provider.providerId} account.`);
+      }
+
+      // Prompt user to sign in with their original social provider to link accounts.
       const existingProvider = new (existingProviderId === 'google.com' ? GoogleAuthProvider : GithubAuthProvider)();
       
-      // We must sign in with the *existing* provider first to get an authenticated user
-      const result = await signInWithPopup(auth, existingProvider);
-      
-      // Then, link the new credential to the now-signed-in user
-      await linkWithCredential(result.user, pendingCredential);
-      
-      const isNewUser = await handleNewUser(result.user); // This will likely return false, which is fine
-      return { user: result.user, isNewUser };
-      
+      try {
+        const result = await signInWithPopup(auth, existingProvider);
+        await linkWithCredential(result.user, pendingCredential);
+        const isNewUser = await handleNewUser(result.user);
+        return { user: result.user, isNewUser };
+      } catch (linkError) {
+        console.error("Error during account linking:", linkError);
+        throw new Error("Could not link accounts. Please try signing in with your original method.");
+      }
     }
     console.error(`Error signing in with ${provider.providerId}: `, error);
     throw error;
