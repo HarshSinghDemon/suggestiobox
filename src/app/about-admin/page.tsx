@@ -26,15 +26,11 @@ export default function AboutAdminPage() {
     <div className="container py-12 mx-auto">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
-          <div className="relative flex justify-center mb-4">
-              <div className="relative w-28 h-28 p-1 rounded-full bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600 animate-spin-slow">
-                <div className="w-full h-full p-1 bg-background rounded-full">
-                    <Avatar className="w-full h-full">
-                        <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
-                        <AvatarFallback>HS</AvatarFallback>
-                    </Avatar>
-                </div>
-              </div>
+          <div className="flex justify-center mb-4">
+              <Avatar className="w-28 h-28">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
+                  <AvatarFallback>HS</AvatarFallback>
+              </Avatar>
           </div>
           <CardTitle className="text-3xl">Harsh Singh</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
