@@ -82,85 +82,85 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex items-center h-16">
-        <div className="mr-4 flex items-center">
+      <div className="container flex items-center justify-between h-16">
+        <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2" prefetch={true}>
             <Logo />
           </Link>
         </div>
         
-        {/* Desktop Navigation */}
-        <nav className="items-center hidden gap-6 text-sm md:flex">
-            <Link
-                href="/browse"
-                className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                Browse
-            </Link>
+        <div className="flex items-center gap-2">
+            {/* Desktop Navigation */}
+            <nav className="items-center hidden gap-6 text-sm md:flex">
+                <Link
+                    href="/browse"
+                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                    prefetch={false}
+                >
+                    Browse
+                </Link>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
-                  Community
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => router.push('/community-chat')}>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Community Chat
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/community-members')}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Community Members
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/community-game')}>
-                  <Gamepad2 className="w-4 h-4 mr-2" />
-                  Community Games
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/request-music')}>
-                  <Music className="w-4 h-4 mr-2" />
-                  Request Music
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                      Community
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => router.push('/community-chat')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Community Chat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/community-members')}>
+                      <Users className="w-4 h-4 mr-2" />
+                      Community Members
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/community-game')}>
+                      <Gamepad2 className="w-4 h-4 mr-2" />
+                      Community Games
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/request-music')}>
+                      <Music className="w-4 h-4 mr-2" />
+                      Request Music
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-            <Link
-                href="/pookie-contributors"
-                className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                Pookie Contributors
-            </Link>
-            <Link
-                href="/suggestions/new"
-                className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                prefetch={false}
-            >
-                Upload
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
-                  About
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => router.push('/about-site')}>
-                  <Info className="w-4 h-4 mr-2" />
-                  About This Site
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/about-admin')}>
-                  <Users className="w-4 h-4 mr-2" />
-                  About The Admin
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-        </nav>
+                <Link
+                    href="/pookie-contributors"
+                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                    prefetch={false}
+                >
+                    Pookie Contributors
+                </Link>
+                <Link
+                    href="/suggestions/new"
+                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                    prefetch={false}
+                >
+                    Upload
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                      About
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => router.push('/about-site')}>
+                      <Info className="w-4 h-4 mr-2" />
+                      About This Site
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/about-admin')}>
+                      <Users className="w-4 h-4 mr-2" />
+                      About The Admin
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </nav>
 
-        <div className="flex items-center justify-end flex-1 gap-2 ml-auto">
             <JukeboxControls />
               {user ? (
                 <>
