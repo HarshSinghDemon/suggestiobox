@@ -214,18 +214,18 @@ export function MinesweeperGame() {
         "text-orange-500", "text-yellow-500", "text-pink-500", "text-indigo-500"
     ];
     
-    const cellSize = `w-7 h-7 sm:w-8 sm:h-8`;
+    const cellSize = "w-6 h-6 sm:w-8 sm:h-8";
 
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
-                <div className="flex flex-wrap justify-between w-full items-center gap-4">
+                <div className="flex flex-wrap justify-between w-full items-center gap-2 sm:gap-4">
                     <div className='flex items-center gap-2'>
                         <Bomb className="w-5 h-5"/>
                         <span className="font-mono text-lg">{LEVELS[level].mines - flagsPlaced}</span>
                     </div>
                     <div className='flex items-center gap-2'>
-                        <span className="font-mono text-lg">{String(time).padStart(3, '0')}</span>
+                        <span className="font-mono text-lg">{String(time).padStart(3, '0')}s</span>
                     </div>
                     <Select value={level} onValueChange={(val: Level) => resetGame(val)}>
                         <SelectTrigger className="w-[120px]">
@@ -258,7 +258,7 @@ export function MinesweeperGame() {
                 </div>
 
                 <div 
-                    className={cn("relative grid gap-0.5 bg-muted-foreground/50 p-1 rounded-md")} 
+                    className={cn("relative grid gap-px bg-muted-foreground/50 p-1 rounded-md")} 
                     style={{gridTemplateColumns: `repeat(${LEVELS[level].size}, minmax(0, 1fr))`}}
                 >
                     {board ? board.map((row, r) => row.map((cell, c) => (
@@ -276,19 +276,19 @@ export function MinesweeperGame() {
                             disabled={isGameOver && !isWinner}
                         >
                             {cell.isRevealed ? (
-                                cell.isMine ? <Bomb className="w-5 h-5 text-destructive" /> : (cell.adjacentMines > 0 && <span className={cn("text-base sm:text-lg", numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
-                            ) : cell.isFlagged ? <Flag className="w-5 h-5" /> : ''}
+                                cell.isMine ? <Bomb className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" /> : (cell.adjacentMines > 0 && <span className={cn("text-sm sm:text-lg", numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
+                            ) : cell.isFlagged ? <Flag className="w-4 h-4 sm:w-5 sm:h-5" /> : ''}
                         </button>
                     ))) : (
                         <div 
-                            className="flex items-center justify-center text-center text-muted-foreground p-8"
+                            className="flex items-center justify-center text-center text-muted-foreground p-4 sm:p-8"
                             style={{gridColumn: `span ${LEVELS[level].size}`, height: `${LEVELS[level].size * 32}px`}}
                         >
                             Click any cell to start
                         </div>
                     )}
                     {(isGameOver) && (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
                             <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
                             <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
                             <Button onClick={() => resetGame(level)} className="mt-4">Play Again</Button>

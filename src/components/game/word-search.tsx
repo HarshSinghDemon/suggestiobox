@@ -74,7 +74,7 @@ const generatePuzzle = (words: string[]): { grid: string[][], solution: Record<s
 
 export function WordSearchGame() {
     const [theme, setTheme] = useState<Theme>('Web Dev');
-    const [puzzleData, setPuzzleData] = useState(generatePuzzle(themes[theme]));
+    const [puzzleData, setPuzzleData] = useState<{ grid: string[][]; solution: Record<string, any>; } | null>(null);
     const [foundWords, setFoundWords] = useState<string[]>([]);
     const [selection, setSelection] = useState<[number, number] | null>(null);
     const [currentPath, setCurrentPath] = useState<[number, number][]>([]);
@@ -83,6 +83,12 @@ export function WordSearchGame() {
     const [time, setTime] = useState(0);
     const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
     const isMouseDown = useRef(false);
+    const [isClient, setIsClient] = useState(false);
+
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const { user } = useUser();
     const firestore = useFirestore();
@@ -120,8 +126,10 @@ export function WordSearchGame() {
     }, []);
 
     useEffect(() => {
-        resetGame(theme);
-    }, [theme, resetGame]);
+        if (isClient) {
+            resetGame(theme);
+        }
+    }, [theme, resetGame, isClient]);
 
      useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -143,10 +151,7 @@ export function WordSearchGame() {
 
     const handleMouseUp = () => {
         isMouseDown.current = false;
-        if (!selection || !currentPath.length) return;
-
-        const start = selection;
-        const end = currentPath[currentPath.length - 1];
+        if (!selection || !currentPath.length || !puzzleData) return;
 
         const selectedWord = currentPath.map(([r, c]) => puzzleData.grid[r][c]).join('');
         const reversedSelectedWord = selectedWord.split('').reverse().join('');
@@ -192,24 +197,39 @@ export function WordSearchGame() {
 
     const isCellInPath = (r: number, c: number) => currentPath.some(([pr, pc]) => pr === r && pc === c);
     
+    if (!isClient || !puzzleData) return null;
+
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div
-                    className="grid p-1 bg-muted-foreground/50 rounded-md select-none"
+                    className="grid p-1 bg-muted-foreground/50 rounded-md select-none touch-none"
                     style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
+                    onTouchEnd={handleMouseUp}
                 >
                     {puzzleData.grid.map((row, r) => row.map((cell, c) => (
                         <div
                             key={`${r}-${c}`}
                             className={cn(
-                                "flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 text-sm sm:text-base font-bold bg-card transition-colors",
+                                "flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 text-xs sm:text-base font-bold bg-card transition-colors",
                                 isCellInPath(r, c) && "bg-primary/50 text-primary-foreground",
                             )}
                             onMouseDown={() => handleMouseDown(r, c)}
                             onMouseEnter={() => handleMouseEnter(r, c)}
+                            onTouchStart={() => handleMouseDown(r,c)}
+                            onTouchMove={(e) => {
+                                const touch = e.touches[0];
+                                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                                if (element && element.getAttribute('data-r') && element.getAttribute('data-c')) {
+                                    const newR = parseInt(element.getAttribute('data-r')!, 10);
+                                    const newC = parseInt(element.getAttribute('data-c')!, 10);
+                                    handleMouseEnter(newR, newC);
+                                }
+                            }}
+                            data-r={r}
+                            data-c={c}
                         >
                             {cell}
                         </div>

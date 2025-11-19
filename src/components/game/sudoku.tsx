@@ -13,15 +13,6 @@ import sudoku from 'sudoku';
 
 type Level = 'easy' | 'medium' | 'hard' | 'very-hard' | 'insane' | 'inhuman';
 
-const levelMapping = {
-    'easy': 0.2,
-    'medium': 0.4,
-    'hard': 0.6,
-    'very-hard': 0.8,
-    'insane': 0.9,
-    'inhuman': 1,
-}
-
 export function SudokuGame() {
     const [level, setLevel] = useState<Level>('easy');
     const [puzzle, setPuzzle] = useState<number[][] | null>(null);
@@ -33,6 +24,11 @@ export function SudokuGame() {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [time, setTime] = useState(0);
     const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const { user } = useUser();
     const firestore = useFirestore();
@@ -84,8 +80,10 @@ export function SudokuGame() {
     }, []);
 
     useEffect(() => {
-        createNewPuzzle(level);
-    }, [level, createNewPuzzle]);
+        if (isClient) {
+            createNewPuzzle(level);
+        }
+    }, [level, createNewPuzzle, isClient]);
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -128,6 +126,7 @@ export function SudokuGame() {
         }
     };
 
+    if (!isClient) return null;
 
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -144,7 +143,7 @@ export function SudokuGame() {
                                 key={`${r}-${c}`}
                                 onClick={() => handleCellClick(r, c)}
                                 className={cn(
-                                    "flex items-center justify-center w-full aspect-square text-lg sm:text-2xl font-bold cursor-pointer transition-colors",
+                                    "flex items-center justify-center w-full aspect-square text-base sm:text-2xl font-bold cursor-pointer transition-colors",
                                     "bg-card hover:bg-card-foreground/10",
                                     (c % 3 === 2 && c !== 8) && "border-r-2 border-r-muted-foreground/50",
                                     (r % 3 === 2 && r !== 8) && "border-b-2 border-b-muted-foreground/50",
@@ -159,13 +158,13 @@ export function SudokuGame() {
                         )
                     }))}
                 </div>
-                 <div className="flex flex-wrap items-center justify-center gap-2">
+                 <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
                     {Array.from({ length: 9 }, (_, i) => i + 1).map(num => (
-                        <Button key={num} variant="outline" onClick={() => handleNumberInput(num)} disabled={isGameOver}>
+                        <Button key={num} variant="outline" size="sm" className='w-9 h-9 sm:w-10 sm:h-10' onClick={() => handleNumberInput(num)} disabled={isGameOver}>
                             {num}
                         </Button>
                     ))}
-                    <Button variant="destructive" onClick={handleErase} disabled={isGameOver}>Erase</Button>
+                    <Button variant="destructive" size="sm" className='w-9 h-9 sm:w-10 sm:h-10' onClick={handleErase} disabled={isGameOver}>Erase</Button>
                 </div>
             </div>
              <div className="space-y-4 md:col-span-1">

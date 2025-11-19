@@ -34,8 +34,8 @@ const SquareComponent = ({ value, onClick, isWinning }: { value: Square; onClick
         )}
       onClick={onClick}
     >
-      {value === 'X' && <X className={cn("w-12 h-12", isWinning ? "text-primary-foreground" : "text-blue-500")} />}
-      {value === 'O' && <Circle className={cn("w-12 h-12", isWinning ? "text-primary-foreground" : "text-red-500")} />}
+      {value === 'X' && <X className={cn("w-10 h-10 sm:w-12 sm:h-12", isWinning ? "text-primary-foreground" : "text-blue-500")} />}
+      {value === 'O' && <Circle className={cn("w-10 h-10 sm:w-12 sm:h-12", isWinning ? "text-primary-foreground" : "text-red-500")} />}
     </button>
   );
 };
@@ -136,5 +136,3 @@ export function TicTacToeGame() {
     </div>
   );
 }
-
-    

@@ -53,26 +53,27 @@ export function BrickBreakerGame() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
-    canvas.width = 480;
-    canvas.height = 320;
+    let container = canvas.parentElement;
+    canvas.width = container?.clientWidth || 480;
+    canvas.height = (container?.clientWidth || 480) * (2/3);
 
-    let ballRadius = 10;
+    let ballRadius = 8;
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     let dx = 2;
     let dy = -2;
 
     let paddleHeight = 10;
-    let paddleWidth = 75;
+    let paddleWidth = canvas.width / 6.4;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
     let brickRowCount = 5;
     let brickColumnCount = 7;
-    let brickWidth = 55;
-    let brickHeight = 15;
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 30;
+    let brickWidth = (canvas.width - (brickOffsetLeft * 2) - (brickPadding * (brickColumnCount - 1))) / brickColumnCount;
+    let brickHeight = 15;
     
     let bricks: { x: number, y: number, status: number }[][] = [];
     for(let c=0; c<brickColumnCount; c++) {
@@ -97,7 +98,8 @@ export function BrickBreakerGame() {
     }
 
     const mouseMoveHandler = (e: MouseEvent) => {
-        const relativeX = e.clientX - canvas.offsetLeft;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.clientX - rect.left;
         if(relativeX > 0 && relativeX < canvas.width) {
             paddleX = relativeX - paddleWidth / 2;
         }
@@ -105,7 +107,8 @@ export function BrickBreakerGame() {
     
     const touchMoveHandler = (e: TouchEvent) => {
         e.preventDefault();
-        const relativeX = e.touches[0].clientX - canvas.offsetLeft;
+        const rect = canvas.getBoundingClientRect();
+        const relativeX = e.touches[0].clientX - rect.left;
         if(relativeX > 0 && relativeX < canvas.width) {
             paddleX = relativeX - paddleWidth/2;
         }
@@ -128,7 +131,7 @@ export function BrickBreakerGame() {
                         setScore(localScore);
                         if(localScore == brickRowCount*brickColumnCount*10) {
                             setGameState('won');
-                            submitScore(localScore);
+                            submitScore(localScore + 100); // Bonus for winning
                         }
                     }
                 }
@@ -217,9 +220,9 @@ export function BrickBreakerGame() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="relative md:col-span-2">
-            <canvas ref={canvasRef} className="w-full rounded-md bg-card-foreground/10 aspect-[3/2]" />
+            <canvas ref={canvasRef} className="w-full rounded-md bg-card-foreground/10" />
              {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
                     <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
                     <Button onClick={startGame} className="mt-4">
                         {gameState === 'start' ? 'Start Game' : 'Play Again'}

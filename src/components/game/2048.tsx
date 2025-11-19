@@ -99,9 +99,14 @@ export function Game2048() {
         
         let rotations = 0;
         if(direction === 'up') rotations = 1;
-        if(direction === 'left') rotations = 0;
-        if(direction === 'right') rotations = 2;
-        if(direction === 'down') rotations = 3;
+        if(direction === 'right') rotations = 0; // The logic slides left, so right is 2 rotations
+        if(direction === 'left') rotations = 2; // and left is 0, but this is a bit confusing
+        if(direction === 'down') rotations = 3; // Let's fix this for clarity
+
+        if (direction === 'up') rotations = 3;
+        if (direction === 'right') rotations = 2;
+        if (direction === 'down') rotations = 1;
+        if (direction === 'left') rotations = 0;
 
         for(let i=0; i<rotations; i++) newBoard = rotateBoard(newBoard);
 
@@ -190,7 +195,7 @@ export function Game2048() {
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div 
-                className="relative p-2 rounded-md bg-muted-foreground/50 touch-none md:col-span-2"
+                className="relative p-2 rounded-md bg-card-foreground/20 touch-none md:col-span-2"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
@@ -205,7 +210,7 @@ export function Game2048() {
                     ))}
                 </div>
                 {(isGameOver || isWinner) && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
                         <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
                         <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
                         <Button onClick={resetGame} className="mt-4">Play Again</Button>

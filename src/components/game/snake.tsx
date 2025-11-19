@@ -70,13 +70,17 @@ export function SnakeGame() {
     };
 
     const handleDirectionChange = useCallback((newDirection: Direction) => {
-        const oppositeDirections: Record<Direction, Direction> = {
-            'UP': 'DOWN', 'DOWN': 'UP', 'LEFT': 'RIGHT', 'RIGHT': 'LEFT'
-        };
-        // This logic is tricky with fast inputs, so we check against the direction in state
-        setDirection(currentDirection => 
-            currentDirection === oppositeDirections[newDirection] ? currentDirection : newDirection
-        );
+        setDirection((prevDirection) => {
+            if (
+                (newDirection === 'UP' && prevDirection === 'DOWN') ||
+                (newDirection === 'DOWN' && prevDirection === 'UP') ||
+                (newDirection === 'LEFT' && prevDirection === 'RIGHT') ||
+                (newDirection === 'RIGHT' && prevDirection === 'LEFT')
+            ) {
+                return prevDirection;
+            }
+            return newDirection;
+        });
     }, []);
 
     useEffect(() => {
@@ -169,7 +173,7 @@ export function SnakeGame() {
                         ref={canvasRef}
                         width={CANVAS_SIZE}
                         height={CANVAS_SIZE}
-                        className="rounded-md border"
+                        className="rounded-md border w-full max-w-[400px]"
                     />
                     {isGameOver && (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
@@ -182,9 +186,9 @@ export function SnakeGame() {
                     )}
                 </div>
                  <div className="grid grid-cols-3 gap-2 mt-4 md:hidden">
-                    <div></div>
+                    <div />
                     <Button size="icon" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
-                    <div></div>
+                    <div />
                     <Button size="icon" onClick={() => handleDirectionChange('LEFT')}><ArrowLeft /></Button>
                     <Button size="icon" onClick={() => handleDirectionChange('DOWN')}><ArrowDown /></Button>
                     <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>

@@ -50,11 +50,13 @@ export function FlappyBirdGame() {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
-        canvas.width = 320;
-        canvas.height = 480;
 
-        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.1, lift: -3, velocity: 0 };
+        let container = canvas.parentElement;
+        canvas.width = container?.clientWidth || 320;
+        canvas.height = canvas.width * 1.5;
+
+
+        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.1, lift: -4, velocity: 0 };
         let pipes: { x: number, y: number, width: number, height: number, passed: boolean }[] = [];
         let pipeWidth = 52;
         let pipeGap = 150;
@@ -90,6 +92,7 @@ export function FlappyBirdGame() {
         };
 
         canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', handleClick);
         window.addEventListener('keydown', handleKeyDown);
 
         const draw = () => {
@@ -99,7 +102,7 @@ export function FlappyBirdGame() {
                 ctx.fillStyle = 'hsl(var(--foreground))';
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('Click or Space to Start', canvas.width / 2, canvas.height / 2);
+                ctx.fillText('Tap or Space to Start', canvas.width / 2, canvas.height / 2);
                 animationFrameId = requestAnimationFrame(draw);
                 return;
             }
@@ -111,14 +114,14 @@ export function FlappyBirdGame() {
             ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
 
             // Pipes
-            if (frameCount % 250 === 0) { // Increased pipe spacing
+            if (frameCount % 150 === 0) { // Pipe spacing
                 const pipeY = Math.random() * (canvas.height - pipeGap - 120) + 60;
                 pipes.push({ x: canvas.width, y: 0, width: pipeWidth, height: pipeY, passed: false });
                 pipes.push({ x: canvas.width, y: pipeY + pipeGap, width: pipeWidth, height: canvas.height - pipeY - pipeGap, passed: true });
             }
 
             pipes.forEach(pipe => {
-                pipe.x -= 0.8; // Reduced pipe speed
+                pipe.x -= 1.2; // Pipe speed
                 ctx.fillStyle = '#4ade80'; // green-400
                 ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
                 
@@ -163,6 +166,7 @@ export function FlappyBirdGame() {
         return () => {
             cancelAnimationFrame(animationFrameId);
             canvas.removeEventListener('click', handleClick);
+            canvas.removeEventListener('touchstart', handleClick);
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [gameState, submitScore]);
@@ -175,7 +179,7 @@ export function FlappyBirdGame() {
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center justify-center md:col-span-2">
-                <canvas ref={canvasRef} className="bg-sky-300 rounded-md" />
+                <canvas ref={canvasRef} className="bg-sky-300 rounded-md w-full max-w-[400px]" />
             </div>
             <div className="space-y-4 md:col-span-1">
                  <div className="flex items-center justify-between w-full p-4 rounded-md bg-muted">

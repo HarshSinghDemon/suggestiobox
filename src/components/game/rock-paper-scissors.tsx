@@ -15,9 +15,9 @@ type Result = 'win' | 'lose' | 'draw';
 const choices: Choice[] = ['rock', 'paper', 'scissors'];
 
 const choiceIcons: Record<Choice, JSX.Element> = {
-  rock: <Gem className="w-8 h-8" />,
-  paper: <Hand className="w-8 h-8" />,
-  scissors: <Scissors className="w-8 h-8" />,
+  rock: <Gem className="w-6 h-6 sm:w-8 sm:h-8" />,
+  paper: <Hand className="w-6 h-6 sm:w-8 sm:h-8" />,
+  scissors: <Scissors className="w-6 h-6 sm:w-8 sm:h-8" />,
 };
 
 const rules: Record<Choice, Choice> = {
@@ -105,7 +105,7 @@ export function RockPaperScissorsGame() {
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="flex flex-col items-center order-2 col-span-1 md:order-1 md:col-span-2 gap-8">
 
-            <div className="flex items-center justify-center w-full gap-8 min-h-[80px]">
+            <div className="flex items-center justify-around w-full gap-4 min-h-[80px]">
                 <div className="flex flex-col items-center gap-2">
                     <span className='font-medium'>You</span>
                     <div className={cn("w-20 h-20 p-4 border-2 rounded-full flex items-center justify-center", result === 'win' && 'border-green-500 shadow-lg shadow-green-500/20', result === 'lose' && 'border-destructive')}>
@@ -135,7 +135,7 @@ export function RockPaperScissorsGame() {
             {isGameOver && (
                 <div className="text-center">
                     <h2 className="text-3xl font-bold uppercase text-primary">You Won The Match!</h2>
-                    <p>First to 5 points wins. Your score has been submitted.</p>
+                    <p className='text-sm text-muted-foreground'>First to 5 points wins. Your score has been submitted.</p>
                     <Button variant="default" size="sm" onClick={nextRound} className="mt-2">
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Play Again
@@ -144,14 +144,14 @@ export function RockPaperScissorsGame() {
             )}
 
             {!result && !isGameOver && (
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                 {choices.map(choice => (
                     <Button
                     key={choice}
                     variant="outline"
                     size="lg"
                     onClick={() => handlePlayerChoice(choice)}
-                    className="flex flex-col w-24 h-24 gap-2"
+                    className="flex flex-col w-28 h-28 sm:w-24 sm:h-24 gap-2"
                     >
                     {choiceIcons[choice]}
                     <span className="capitalize">{choice}</span>
