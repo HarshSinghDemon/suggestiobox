@@ -6,14 +6,13 @@ import { ChevronRight, Gamepad2, Music } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, useState } from 'react';
-import { YouTubePlayer, type YouTubePlayerRef } from '@/components/youtube-player';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
 });
 
 export default function Home() {
-  const playerRef = useRef<YouTubePlayerRef>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -35,30 +34,26 @@ export default function Home() {
   };
   
   const toggleMusic = () => {
-    if (playerRef.current) {
+    if (audioRef.current) {
         if (isPlaying) {
-            playerRef.current.pauseVideo();
+            audioRef.current.pause();
         } else {
-            playerRef.current.playVideo();
+            audioRef.current.play();
         }
+        setIsPlaying(!isPlaying);
     }
   }
 
-  const handlePlayerStateChange = (event: { data: number }) => {
-    if (event.data === window.YT?.PlayerState?.PLAYING) {
-        setIsPlaying(true);
-    } else {
-        setIsPlaying(false);
-    }
-  };
-
   return (
     <>
-      <YouTubePlayer 
-        ref={playerRef}
-        videoId="rqJSJQww8z4"
-        onStateChange={handlePlayerStateChange}
-      />
+      <audio 
+        ref={audioRef}
+        src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/Arcade%20game%20music%20loop%20%20free%20sound%20effects.mp3" 
+        loop
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        preload="auto"
+      ></audio>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
         <WavyBackground 
           className="w-full max-w-4xl mx-auto"
