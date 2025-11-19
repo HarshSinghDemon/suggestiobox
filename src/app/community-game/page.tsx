@@ -1,37 +1,37 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Hand, X, Brain, HelpCircle, Hash } from 'lucide-react';
+import { Gamepad2, Puzzle, Rocket, Bot, Palette, Languages } from 'lucide-react';
 import Link from 'next/link';
 
 const games = [
     {
-        name: 'Rock, Paper, Scissors',
-        description: 'The classic game of choices.',
-        href: '/community-games/rock-paper-scissors',
-        icon: Hand,
+        name: 'Word Puzzle',
+        description: 'Guess the secret 5-letter word.',
+        href: '/community-games/word-puzzle',
+        icon: Puzzle,
     },
     {
-        name: 'Tic-Tac-Toe',
-        description: 'Try to get three in a row.',
-        href: '/community-games/tic-tac-toe',
-        icon: X,
+        name: 'Alien Invaders',
+        description: 'Defend the galaxy from invaders.',
+        href: '/community-games/alien-invaders',
+        icon: Rocket,
     },
     {
-        name: 'Memory Match',
-        description: 'Test your memory with this card game.',
-        href: '/community-games/memory-match',
-        icon: Brain,
+        name: 'Brick Breaker',
+        description: 'Clear all the bricks to win.',
+        href: '/community-games/brick-breaker',
+        icon: Palette,
     },
     {
-        name: 'Number Guesser',
-        description: 'Guess the secret number.',
-        href: '/community-games/number-guesser',
-        icon: Hash,
+        name: 'Connect Four',
+        description: 'Beat the AI to four in a row.',
+        href: '/community-games/connect-four',
+        icon: Bot,
     },
     {
-        name: 'Dev Trivia',
-        description: 'How well do you know tech?',
-        href: '/community-games/dev-trivia',
-        icon: HelpCircle,
+        name: 'Hangman',
+        description: 'Guess the word before it\'s too late.',
+        href: '/community-games/hangman',
+        icon: Languages,
     },
 ];
 
