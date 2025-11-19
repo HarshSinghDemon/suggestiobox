@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Gamepad2, Music } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState }from 'react';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
@@ -14,8 +14,51 @@ const WavyBackground = dynamic(() => import('@/components/wavy-background').then
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const fadeAudio = (targetVolume: number, duration: number = 1000) => {
+    if (!audioRef.current) return;
+    
+    if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+    }
+
+    const audio = audioRef.current;
+    if (targetVolume > 0 && audio.paused) {
+        audio.volume = 0;
+        audio.play().catch(() => {
+            // Autoplay was prevented, user will have to click
+        });
+    }
+
+    const startVolume = audio.volume;
+    const steps = 50;
+    const stepDuration = duration / steps;
+    const volumeStep = (targetVolume - startVolume) / steps;
+
+    fadeIntervalRef.current = setInterval(() => {
+        const newVolume = audio.volume + volumeStep;
+        if ((volumeStep > 0 && newVolume >= targetVolume) || (volumeStep < 0 && newVolume <= targetVolume)) {
+            audio.volume = targetVolume;
+            if (targetVolume === 0) {
+                audio.pause();
+                setIsPlaying(false);
+            } else {
+                setIsPlaying(true);
+            }
+            if (fadeIntervalRef.current) {
+              clearInterval(fadeIntervalRef.current);
+            }
+        } else {
+            audio.volume = newVolume;
+        }
+    }, stepDuration);
+  };
+  
   useEffect(() => {
+    // Attempt to autoplay with fade-in on mount
+    fadeAudio(0.2);
+
     const isWindows = navigator.userAgent.includes('Win');
     if (isWindows) {
       document.body.style.overflow = 'hidden';
@@ -25,7 +68,11 @@ export default function Home() {
       if (isWindows) {
         document.body.style.overflow = 'auto';
       }
+      if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+      }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleGameClick = () => {
@@ -34,13 +81,10 @@ export default function Home() {
   };
   
   const toggleMusic = () => {
-    if (audioRef.current) {
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play();
-        }
-        setIsPlaying(!isPlaying);
+    if (isPlaying) {
+        fadeAudio(0);
+    } else {
+        fadeAudio(0.2);
     }
   }
 
@@ -50,9 +94,9 @@ export default function Home() {
         ref={audioRef}
         src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/Arcade%20game%20music%20loop%20%20free%20sound%20effects.mp3" 
         loop
+        preload="auto"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        preload="auto"
       ></audio>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
         <WavyBackground 
