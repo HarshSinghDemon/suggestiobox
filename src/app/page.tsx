@@ -66,7 +66,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="pt-8">
+            <div className="pt-4">
               <p className="text-sm text-foreground/60 font-arcade">
                   Made with <span className='inline-block text-red-500 animate-heartbeat'>❤️</span> by <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse">Harsh</span>(5B)
               </p>
