@@ -6,6 +6,7 @@ import { GameScore } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Trophy } from 'lucide-react';
+import { useMemo } from 'react';
 
 type LeaderboardProps = {
   gameId: string;
@@ -38,12 +39,29 @@ export function Leaderboard({ gameId }: LeaderboardProps) {
   const scoresQuery = useMemoFirebase(
     () =>
       firestore
-        ? query(collection(firestore, 'games', gameId, 'scores'), orderBy('score', 'desc'), limit(10))
+        ? query(collection(firestore, 'games', gameId, 'scores'), orderBy('score', 'desc'), limit(100))
         : null,
     [firestore, gameId]
   );
 
   const { data: scores, isLoading } = useCollection<GameScore>(scoresQuery);
+
+  const topScores = useMemo(() => {
+    if (!scores) return [];
+    
+    const uniquePlayerScores = new Map<string, GameScore>();
+
+    for (const score of scores) {
+      if (!uniquePlayerScores.has(score.userId)) {
+        uniquePlayerScores.set(score.userId, score);
+      }
+    }
+
+    return Array.from(uniquePlayerScores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+      
+  }, [scores]);
 
   return (
     <div className="p-4 border rounded-lg bg-card">
@@ -53,9 +71,9 @@ export function Leaderboard({ gameId }: LeaderboardProps) {
       </h3>
       {isLoading ? (
         <LeaderboardSkeleton />
-      ) : scores && scores.length > 0 ? (
+      ) : topScores && topScores.length > 0 ? (
         <ul className="space-y-4">
-          {scores.map((score, index) => (
+          {topScores.map((score, index) => (
             <li key={score.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="font-bold text-sm w-6 text-center">{index + 1}</span>
@@ -75,5 +93,3 @@ export function Leaderboard({ gameId }: LeaderboardProps) {
     </div>
   );
 }
-
-    
