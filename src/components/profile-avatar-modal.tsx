@@ -26,6 +26,7 @@ interface ProfileAvatarModalProps {
 }
 
 const AVATAR_STYLES = {
+    'notionists': 'Oil Pastel',
     'bottts-neutral': 'Robots',
     'fun-emoji': 'Emoji',
     'adventurer': 'Adventurer',
@@ -46,7 +47,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<AvatarStyleKey>('bottts-neutral');
+  const [selectedStyle, setSelectedStyle] = useState<AvatarStyleKey>('notionists');
 
   const currentAvatarUrl = useMemo(() => {
     return newAvatarUrl || user?.photoURL || '';
