@@ -18,10 +18,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import React from 'react';
 
 type ChatMessageProps = {
   message: Message;
 };
+
+const MentionedUser = ({ text }: { text: string }) => (
+    <span className="px-1 py-0.5 font-semibold rounded-sm bg-primary/20 text-primary">
+        {text}
+    </span>
+);
+
+const renderMessageWithMentions = (text: string) => {
+    const mentionRegex = /@(\w+(\s\w+)*)/g;
+    const parts = text.split(mentionRegex);
+
+    return parts.map((part, index) => {
+        if (index % 3 === 1) { // This will be the captured username
+            return <MentionedUser key={index} text={`@${part}`} />;
+        }
+        return part;
+    });
+};
+
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const { user } = useUser();
@@ -54,7 +74,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <p className="font-semibold">{message.userName || 'Anonymous'}</p>
           <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
-        <p className="text-foreground/90">{message.text}</p>
+        <p className="text-foreground/90">{renderMessageWithMentions(message.text)}</p>
       </div>
       {canDelete && (
         <AlertDialog>

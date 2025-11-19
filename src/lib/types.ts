@@ -45,3 +45,15 @@ export type Message = {
   userName: string | null;
   userImage: string | null;
 };
+
+export type Notification = {
+  id: string;
+  recipientId: string; // The user who should receive the notification
+  senderId: string;
+  senderName: string;
+  type: 'mention';
+  content: string; // e.g., 'mentioned you in a message'
+  relatedId: string; // e.g., the messageId
+  isRead: boolean;
+  createdAt: Timestamp;
+};
