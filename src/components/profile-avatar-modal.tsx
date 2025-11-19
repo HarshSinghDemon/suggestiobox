@@ -18,13 +18,20 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const AVATAR_STYLE = 'bottts-neutral';
+const AVATAR_STYLES = {
+    'bottts': 'Robots',
+    'bottts-neutral': 'Robots (Neutral)',
+};
+
+type AvatarStyleKey = keyof typeof AVATAR_STYLES;
+
 
 export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalProps) {
   const { user } = useUser();
@@ -34,18 +41,19 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<AvatarStyleKey>('bottts-neutral');
 
   const currentAvatarUrl = useMemo(() => {
     return newAvatarUrl || user?.photoURL || '';
   }, [newAvatarUrl, user?.photoURL]);
 
-  const generateAvatarUrl = () => {
+  const generateAvatarUrl = (style: AvatarStyleKey) => {
     const seed = Math.random().toString(36).substring(7);
-    return `https://api.dicebear.com/7.x/${AVATAR_STYLE}/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
+    return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&radius=50&backgroundColor=7950f2,f1efff,51d5ff&backgroundType=gradientLinear`;
   }
 
   const handleRandomize = () => {
-    setNewAvatarUrl(generateAvatarUrl());
+    setNewAvatarUrl(generateAvatarUrl(selectedStyle));
   };
   
   const handleSave = async () => {
@@ -119,9 +127,18 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
           </div>
           
           <div className="flex items-center w-full gap-2">
-            <Button variant="outline" onClick={handleRandomize} className='w-full'>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Randomize Robot
+            <Select value={selectedStyle} onValueChange={(value: AvatarStyleKey) => setSelectedStyle(value)}>
+                <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select style" />
+                </SelectTrigger>
+                <SelectContent>
+                    {Object.entries(AVATAR_STYLES).map(([key, name]) => (
+                        <SelectItem key={key} value={key}>{name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={handleRandomize}>
+                <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
 
