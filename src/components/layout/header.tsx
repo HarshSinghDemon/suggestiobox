@@ -43,8 +43,26 @@ function MusicToggleButton() {
     const { isPlaying, toggleMusic } = useMusic();
   
     return (
-      <Button onClick={toggleMusic} variant="ghost" size="icon" className="w-10 h-10">
-        {isPlaying ? <Music className="w-5 h-5" /> : <Music2 className="w-5 h-5 text-muted-foreground" />}
+      <Button 
+        onClick={toggleMusic} 
+        variant="ghost" 
+        size="icon" 
+        className="w-10 h-10 transition-all duration-500 ease-in-out transform mr-2 focus:outline-none"
+      >
+        <div className="relative w-6 h-6">
+          <Music
+            className={cn(
+              "absolute inset-0 w-6 h-6 text-purple-400 transition-all duration-500 ease-in-out",
+              isPlaying ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-90"
+            )}
+          />
+          <Music2
+            className={cn(
+              "absolute inset-0 w-6 h-6 text-yellow-400 transition-all duration-500 ease-in-out",
+              !isPlaying ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 rotate-90"
+            )}
+          />
+        </div>
         <span className="sr-only">{isPlaying ? 'Pause music' : 'Play music'}</span>
       </Button>
     );
