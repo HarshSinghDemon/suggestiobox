@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music, Music2 } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -19,9 +19,7 @@ import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
-import { useState, useEffect } from 'react';
-import { useMusic } from '@/context/MusicContext';
-import { Skeleton } from '../ui/skeleton';
+import { useState } from 'react';
 
 const ADMIN_EMAIL = 'harshroop100@gmail.com';
 
@@ -39,46 +37,6 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
         </button>
     )
 }
-
-function MusicToggleButton() {
-    const { isPlaying, toggleMusic } = useMusic();
-    const [isMounted, setIsMounted] = useState(false);
-  
-    useEffect(() => {
-      setIsMounted(true);
-    }, []);
-  
-    return (
-      <Button 
-        onClick={toggleMusic} 
-        variant="ghost" 
-        size="icon" 
-        className="w-10 h-10 transition-all duration-500 ease-in-out transform mr-2 focus:outline-none"
-      >
-        <div className="relative w-6 h-6">
-          {!isMounted ? (
-            <Skeleton className="w-6 h-6 rounded-full" />
-          ) : (
-            <>
-              <Music
-                className={cn(
-                  "absolute inset-0 w-6 h-6 text-purple-400 transition-all duration-500 ease-in-out",
-                  isPlaying ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-90"
-                )}
-              />
-              <Music2
-                className={cn(
-                  "absolute inset-0 w-6 h-6 text-yellow-400 transition-all duration-500 ease-in-out",
-                  !isPlaying ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 rotate-90"
-                )}
-              />
-            </>
-          )}
-        </div>
-        <span className="sr-only">{isPlaying ? 'Pause music' : 'Play music'}</span>
-      </Button>
-    );
-  }
 
 export function Header() {
   const { user } = useAuth();
@@ -168,8 +126,6 @@ export function Header() {
         </nav>
 
         <div className="flex items-center justify-end flex-1 ml-auto">
-            <MusicToggleButton />
-
           {user ? (
             <div className="relative group">
               <div className={cn(
