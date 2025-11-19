@@ -19,9 +19,13 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (!isUserLoading && user?.emailVerified) {
+      toast({
+        title: 'Success!',
+        description: 'Your email has been verified. You are now logged in.',
+      });
       router.push('/');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, toast]);
   
   const handleResendVerification = async () => {
     if (user) {
