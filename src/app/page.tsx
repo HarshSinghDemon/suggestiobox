@@ -25,29 +25,36 @@ export default function Home() {
     if (isWindows) {
       document.body.style.overflow = 'hidden';
     }
-    
-    const playAudio = () => {
+
+    const tryPlayAudio = () => {
       if (audioRef.current && !hasInteracted.current) {
-        hasInteracted.current = true;
-        audioRef.current.volume = 0.2; // Set a reasonable volume
-        audioRef.current.play().catch(error => {
-          // Autoplay was prevented. User will have to interact again.
-          console.warn("Background audio autoplay was prevented:", error);
-          hasInteracted.current = false; // Allow another attempt
+        hasInteracted.current = true; // Mark that we've tried
+        audioRef.current.volume = 0.2;
+        audioRef.current.play().catch(() => {
+          // Autoplay was prevented. Re-enable interaction listener.
+          hasInteracted.current = false;
+          document.body.addEventListener('click', playOnClick, { once: true });
         });
-        // Remove the event listener after the first interaction
-        document.body.removeEventListener('click', playAudio);
       }
     };
+    
+    const playOnClick = () => {
+        if (audioRef.current && !hasInteracted.current) {
+            hasInteracted.current = true;
+            audioRef.current.volume = 0.2;
+            audioRef.current.play();
+        }
+    }
 
-    document.body.addEventListener('click', playAudio, { once: true });
-
+    // Attempt to play automatically first
+    tryPlayAudio();
 
     return () => {
       if (isWindows) {
         document.body.style.overflow = 'auto';
       }
-       document.body.removeEventListener('click', playAudio);
+      // Clean up the event listener if it was added
+      document.body.removeEventListener('click', playOnClick);
     };
   }, []);
 
