@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tabs';
 import { ItemCard } from './item-card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import type { Suggestion, Assignment } from '@/lib/types';
+import type { Suggestion, Assignment, FirebaseUser } from '@/lib/types';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -53,9 +53,21 @@ export function BrowseSection({
     if (!firestore) return null;
     return query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc'));
   }, [firestore]);
+  
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'users') : null),
+    [firestore]
+  );
 
   const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
   const { data: assignments, isLoading: assignmentsLoading } = useCollection<Assignment>(assignmentsQuery);
+  const { data: users, isLoading: usersLoading } = useCollection<FirebaseUser>(usersQuery);
+
+  const usersMap = useMemo(() => {
+    if (!users) return new Map<string, FirebaseUser>();
+    return new Map(users.map(u => [u.id, u]));
+  }, [users]);
+
 
   const filteredSuggestions = useMemo(() => {
     if (!suggestions) return [];
@@ -93,12 +105,12 @@ export function BrowseSection({
         <SemesterFilter />
       </div>
       <TabsContent value="suggestions">
-        {suggestionsLoading ? (
+        {suggestionsLoading || usersLoading ? (
             <ItemGridSkeleton />
         ) : filteredSuggestions && filteredSuggestions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredSuggestions.map((item) => (
-              <ItemCard key={item.id} item={item} type="suggestion" variant={getRandomVariant()} />
+              <ItemCard key={item.id} item={item} type="suggestion" variant={getRandomVariant()} author={usersMap.get(item.userId)} />
             ))}
           </div>
         ) : (
@@ -108,12 +120,12 @@ export function BrowseSection({
         )}
       </TabsContent>
       <TabsContent value="assignments">
-      {assignmentsLoading ? (
+      {assignmentsLoading || usersLoading ? (
           <ItemGridSkeleton />
       ) : filteredAssignments && filteredAssignments.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredAssignments.map((item) => (
-              <ItemCard key={item.id} item={item} type="assignment" variant={getRandomVariant()} />
+              <ItemCard key={item.id} item={item} type="assignment" variant={getRandomVariant()} author={usersMap.get(item.userId)} />
             ))}
           </div>
         ) : (

@@ -31,14 +31,12 @@ import { Timestamp } from 'firebase/firestore';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useState } from 'react';
+import type { FirebaseUser } from '@/lib/types';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { UserProfilePopover } from '../chat/user-profile-popover';
 
-type User = {
-    id: string;
-    displayName: string;
-    photoURL: string;
-    email: string;
+type User = FirebaseUser & {
     createdAt?: Timestamp;
-    year?: '1st' | '2nd' | '3rd';
 };
 
 const YEARS: ('1st' | '2nd' | '3rd')[] = ['1st', '2nd', '3rd'];
@@ -147,13 +145,20 @@ export function AdminUsersTable() {
             users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={user.photoURL ?? undefined} />
-                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium truncate">{user.displayName || 'Unnamed User'}</span>
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            <Avatar className="w-8 h-8">
+                            <AvatarImage src={user.photoURL ?? undefined} />
+                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium truncate">{user.displayName || 'Unnamed User'}</span>
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-80'>
+                        <UserProfilePopover user={user} />
+                    </PopoverContent>
+                  </Popover>
                 </TableCell>
                 <TableCell className="truncate">{user.email}</TableCell>
                  <TableCell className="hidden sm:table-cell w-[150px]">

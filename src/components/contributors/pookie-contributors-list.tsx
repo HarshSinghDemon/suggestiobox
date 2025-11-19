@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import type { Suggestion, Assignment } from '@/lib/types';
+import type { Suggestion, Assignment, FirebaseUser } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { useMemo } from 'react';
 import {
@@ -15,12 +15,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { Award, Medal, Trophy } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { UserProfilePopover } from '../chat/user-profile-popover';
 
 type Contributor = {
   userId: string;
-  userName: string;
-  userImage: string;
   contributions: number;
+  user: FirebaseUser;
 };
 
 function ContributorListSkeleton() {
@@ -59,13 +60,16 @@ export function PookieContributorsList() {
 
   const suggestionsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'suggestions') : null, [firestore]);
   const assignmentsQuery = useMemoFirebase(() => firestore ? collection(firestore, 'assignments') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
 
   const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
   const { data: assignments, isLoading: assignmentsLoading } = useCollection<Assignment>(assignmentsQuery);
+  const { data: users, isLoading: usersLoading } = useCollection<FirebaseUser>(usersQuery);
 
   const topContributors = useMemo(() => {
-    if (!suggestions || !assignments) return [];
+    if (!suggestions || !assignments || !users) return [];
 
+    const usersMap = new Map<string, FirebaseUser>(users.map(u => [u.id, u]));
     const contributorMap = new Map<string, Contributor>();
 
     const allContributions = [...suggestions, ...assignments];
@@ -73,14 +77,16 @@ export function PookieContributorsList() {
     allContributions.forEach(item => {
       if (!item.userId || item.userId === 'anonymous') return;
 
+      const user = usersMap.get(item.userId);
+      if (!user) return; // User might have been deleted
+
       const existing = contributorMap.get(item.userId);
       if (existing) {
         existing.contributions += 1;
       } else {
         contributorMap.set(item.userId, {
           userId: item.userId,
-          userName: item.userName || 'Anonymous',
-          userImage: item.userImage || '',
+          user: user,
           contributions: 1,
         });
       }
@@ -90,9 +96,9 @@ export function PookieContributorsList() {
       .sort((a, b) => b.contributions - a.contributions)
       .slice(0, 20); // Get top 20 contributors
 
-  }, [suggestions, assignments]);
+  }, [suggestions, assignments, users]);
 
-  const isLoading = suggestionsLoading || assignmentsLoading;
+  const isLoading = suggestionsLoading || assignmentsLoading || usersLoading;
 
   if (isLoading) {
     return <ContributorListSkeleton />;
@@ -116,15 +122,22 @@ export function PookieContributorsList() {
                                 <RankIcon rank={index + 1} />
                             </TableCell>
                             <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={pookie.userImage} alt={pookie.userName} />
-                                        <AvatarFallback>{getInitials(pookie.userName)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-medium">{pookie.userName}</p>
-                                    </div>
-                                </div>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <div className="flex items-center gap-3 cursor-pointer">
+                                            <Avatar>
+                                                <AvatarImage src={pookie.user.photoURL ?? undefined} alt={pookie.user.displayName ?? ''} />
+                                                <AvatarFallback>{getInitials(pookie.user.displayName)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-medium">{pookie.user.displayName}</p>
+                                            </div>
+                                        </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent className='w-80'>
+                                        <UserProfilePopover user={pookie.user} />
+                                    </PopoverContent>
+                                </Popover>
                             </TableCell>
                             <TableCell className="text-right text-lg font-semibold">{pookie.contributions}</TableCell>
                         </TableRow>

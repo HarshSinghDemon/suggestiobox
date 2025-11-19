@@ -3,7 +3,6 @@
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -16,14 +15,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-
-type User = {
-    id: string;
-    displayName: string;
-    photoURL: string;
-    email: string;
-    year?: '1st' | '2nd' | '3rd';
-};
+import type { FirebaseUser } from '@/lib/types';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { UserProfilePopover } from '../chat/user-profile-popover';
 
 function MemberListSkeleton() {
   return (
@@ -53,7 +47,7 @@ export function CommunityMembersList() {
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
 
-  const { data: users, isLoading } = useCollection<User>(usersQuery);
+  const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
   const totalMembers = users?.length ?? 0;
 
@@ -77,21 +71,27 @@ export function CommunityMembersList() {
         {users && users.length > 0 ? (
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {users.map((user, index) => (
-                    <div 
-                        key={user.id} 
-                        className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50"
-                        style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
-                    >
-                        <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
-                            <AvatarImage src={user.photoURL} alt={user.displayName} />
-                            <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <div className='flex flex-col items-center gap-2'>
-                          <p className="font-semibold truncate">{user.displayName}</p>
-                          {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
-                        </div>
-                        <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
-                    </div>
+                    <Popover key={user.id}>
+                        <PopoverTrigger asChild>
+                            <div 
+                                className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
+                                style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
+                            >
+                                <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
+                                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                                    <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+                                </Avatar>
+                                <div className='flex flex-col items-center gap-2'>
+                                <p className="font-semibold truncate">{user.displayName}</p>
+                                {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                                </div>
+                                <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-80'>
+                            <UserProfilePopover user={user} />
+                        </PopoverContent>
+                    </Popover>
                 ))}
             </div>
         ) : (
