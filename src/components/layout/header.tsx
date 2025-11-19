@@ -65,11 +65,11 @@ export function Header() {
   
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const UserAvatarButton = ({ isMobile = false }: { isMobile?: boolean }) => (
+  const UserAvatarButton = () => (
      <Button 
         variant="ghost" 
         className="relative w-10 h-10 rounded-full"
-        onClick={() => !isMobile && setIsAvatarModalOpen(true)}
+        onClick={() => setIsAvatarModalOpen(true)}
         aria-label="Open profile modal"
     >
         <Avatar className="w-8 h-8">
@@ -159,7 +159,6 @@ export function Header() {
         <div className="flex items-center justify-end gap-2 ml-auto">
             <JukeboxControls />
               {user ? (
-                <>
                 <div className="relative group hidden md:block">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -190,10 +189,6 @@ export function Header() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                 <div className="block md:hidden">
-                    <UserAvatarButton isMobile={true} />
-                </div>
-                </>
               ) : (
                 <Button asChild className="hidden md:flex ml-2">
                   <Link href="/login">
@@ -223,7 +218,13 @@ export function Header() {
                         </div>
 
                         {user && (
-                            <div className="p-4 border-b">
+                            <button
+                                className="w-full p-4 text-left border-b hover:bg-accent"
+                                onClick={() => {
+                                setIsAvatarModalOpen(true);
+                                setIsSheetOpen(false);
+                                }}
+                            >
                                 <div className="flex items-center gap-3">
                                     <Avatar className="w-10 h-10">
                                         <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
@@ -234,7 +235,7 @@ export function Header() {
                                         <p className="text-sm text-muted-foreground">{user.email}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </button>
                         )}
 
                         <nav className="flex flex-col p-4 space-y-2">
