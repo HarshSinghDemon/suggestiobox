@@ -219,7 +219,7 @@ export function Header() {
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-xs p-0 bg-background/90 backdrop-blur-lg">
+                <SheetContent side="right" className="w-full max-w-xs p-0 bg-background/80 backdrop-blur-lg">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between p-4 border-b">
                            <Logo />
