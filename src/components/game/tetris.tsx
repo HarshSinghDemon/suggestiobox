@@ -270,7 +270,7 @@ export function TetrisGame() {
 
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-4">
+            <div className="flex flex-col items-center md:col-span-2 gap-4">
                 <div className="relative">
                     <canvas 
                         ref={canvasRef} 

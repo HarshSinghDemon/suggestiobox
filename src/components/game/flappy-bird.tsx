@@ -63,7 +63,7 @@ export function FlappyBirdGame() {
         let animationFrameId: number;
         
         const resetGame = () => {
-            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.1, lift: -3, velocity: 0 };
+            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.08, lift: -3.5, velocity: 0 };
             pipes = [];
             frameCount = 0;
             localScore = 0;
@@ -96,7 +96,7 @@ export function FlappyBirdGame() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (gameState === 'start') {
-                ctx.fillStyle = 'black';
+                ctx.fillStyle = 'hsl(var(--foreground))';
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText('Click or Space to Start', canvas.width / 2, canvas.height / 2);
@@ -111,14 +111,14 @@ export function FlappyBirdGame() {
             ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
 
             // Pipes
-            if (frameCount % 200 === 0) {
+            if (frameCount % 250 === 0) { // Increased pipe spacing
                 const pipeY = Math.random() * (canvas.height - pipeGap - 120) + 60;
                 pipes.push({ x: canvas.width, y: 0, width: pipeWidth, height: pipeY, passed: false });
                 pipes.push({ x: canvas.width, y: pipeY + pipeGap, width: pipeWidth, height: canvas.height - pipeY - pipeGap, passed: true });
             }
 
             pipes.forEach(pipe => {
-                pipe.x -= 1;
+                pipe.x -= 0.8; // Reduced pipe speed
                 ctx.fillStyle = '#4ade80'; // green-400
                 ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
                 
@@ -149,7 +149,7 @@ export function FlappyBirdGame() {
             if (gameState === 'playing') {
                 animationFrameId = requestAnimationFrame(draw);
             } else if (gameState === 'gameOver') {
-                 ctx.fillStyle = 'black';
+                 ctx.fillStyle = 'hsl(var(--foreground))';
                  ctx.font = '30px Arial';
                  ctx.textAlign = 'center';
                  ctx.fillText('Game Over', canvas.width/2, canvas.height/2 - 20);
@@ -174,12 +174,12 @@ export function FlappyBirdGame() {
 
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="flex flex-col items-center justify-center col-span-1 md:col-span-2">
-                <canvas ref={canvasRef} className="rounded-md bg-sky-300" />
+            <div className="flex flex-col items-center justify-center md:col-span-2">
+                <canvas ref={canvasRef} className="bg-sky-300 rounded-md" />
             </div>
-            <div className="col-span-1 space-y-4">
+            <div className="space-y-4 md:col-span-1">
                  <div className="flex items-center justify-between w-full p-4 rounded-md bg-muted">
-                    <p className="font-semibold text-lg">Score: {score}</p>
+                    <p className="text-lg font-semibold">Score: {score}</p>
                     {gameState === 'gameOver' && (
                         <Button onClick={handleRestart} size="sm">
                             <RotateCcw className="w-4 h-4 mr-2" />

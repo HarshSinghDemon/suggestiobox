@@ -163,7 +163,7 @@ export function SnakeGame() {
     
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-4">
+            <div className="flex flex-col items-center md:col-span-2 gap-4">
                 <div className="relative">
                     <canvas
                         ref={canvasRef}
@@ -190,7 +190,7 @@ export function SnakeGame() {
                     <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
                 </div>
             </div>
-            <div className="col-span-1 space-y-4">
+            <div className="space-y-4 md:col-span-1">
                  <div className="flex items-center justify-between w-full p-4 rounded-md bg-muted">
                     <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
                     <Button onClick={resetGame} size="sm" variant="outline">

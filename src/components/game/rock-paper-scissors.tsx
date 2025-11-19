@@ -63,7 +63,7 @@ export function RockPaperScissorsGame() {
 }, [user, firestore, toast]);
 
   const handlePlayerChoice = (choice: Choice) => {
-    if (isGameOver) return;
+    if (isGameOver || result) return;
 
     const computerChoice = choices[Math.floor(Math.random() * choices.length)];
     setPlayerChoice(choice);
@@ -85,7 +85,7 @@ export function RockPaperScissorsGame() {
     }
   };
 
-  const resetGame = () => {
+  const nextRound = () => {
     setPlayerChoice(null);
     setComputerChoice(null);
     setResult(null);
@@ -108,14 +108,14 @@ export function RockPaperScissorsGame() {
             <div className="flex items-center justify-center w-full gap-8 min-h-[80px]">
                 <div className="flex flex-col items-center gap-2">
                     <span className='font-medium'>You</span>
-                    <div className={cn("w-20 h-20 p-4 border-2 rounded-full flex items-center justify-center", result === 'win' && 'border-green-500', result === 'lose' && 'border-destructive')}>
+                    <div className={cn("w-20 h-20 p-4 border-2 rounded-full flex items-center justify-center", result === 'win' && 'border-green-500 shadow-lg shadow-green-500/20', result === 'lose' && 'border-destructive')}>
                         {playerChoice ? choiceIcons[playerChoice] : '?'}
                     </div>
                 </div>
                 <div className="text-2xl font-bold">vs</div>
                 <div className="flex flex-col items-center gap-2">
                     <span className='font-medium'>CPU</span>
-                    <div className="w-20 h-20 p-4 border-2 rounded-full flex items-center justify-center">
+                    <div className={cn("w-20 h-20 p-4 border-2 rounded-full flex items-center justify-center", result === 'lose' && 'border-green-500', result === 'win' && 'border-destructive')}>
                         {computerChoice ? choiceIcons[computerChoice] : '?'}
                     </div>
                 </div>
@@ -126,7 +126,7 @@ export function RockPaperScissorsGame() {
                 <h2 className={cn("text-2xl font-bold uppercase", getResultColor(result))}>
                     {result}
                 </h2>
-                <Button variant="outline" size="sm" onClick={resetGame} className="mt-2">
+                <Button variant="outline" size="sm" onClick={nextRound} className="mt-2">
                     Next Round
                 </Button>
                 </div>
@@ -136,7 +136,7 @@ export function RockPaperScissorsGame() {
                 <div className="text-center">
                     <h2 className="text-3xl font-bold uppercase text-primary">You Won The Match!</h2>
                     <p>First to 5 points wins. Your score has been submitted.</p>
-                    <Button variant="default" size="sm" onClick={resetGame} className="mt-2">
+                    <Button variant="default" size="sm" onClick={nextRound} className="mt-2">
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Play Again
                     </Button>
@@ -163,6 +163,7 @@ export function RockPaperScissorsGame() {
         </div>
         <div className="order-1 col-span-1 space-y-4 md:order-2">
             <div className="p-4 rounded-md bg-muted">
+                <h3 className="mb-2 text-lg font-semibold text-center">Scoreboard</h3>
                 <div className="flex justify-around w-full">
                     <div className="text-center">
                     <div className="text-lg font-semibold">Player</div>

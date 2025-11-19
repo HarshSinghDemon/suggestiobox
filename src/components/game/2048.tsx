@@ -190,7 +190,7 @@ export function Game2048() {
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div 
-                className="relative p-2 rounded-md bg-muted-foreground/50 touch-none order-2 md:order-1 md:col-span-2"
+                className="relative p-2 rounded-md bg-muted-foreground/50 touch-none md:col-span-2"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
@@ -212,7 +212,7 @@ export function Game2048() {
                     </div>
                 )}
             </div>
-            <div className="order-1 md:order-2 col-span-1 space-y-4">
+            <div className="space-y-4 md:col-span-1">
                 <div className="flex justify-between w-full p-4 rounded-md bg-muted">
                     <div className="text-center">
                         <div className="text-sm font-semibold">SCORE</div>
