@@ -1,13 +1,16 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { X, Circle, RotateCcw, User, Bot } from 'lucide-react';
+import { X, Circle, RotateCcw, User, Bot, BrainCircuit } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
 type Player = 'X' | 'O';
 type Square = Player | null;
 type GameMode = 'friend' | 'ai';
+type Difficulty = 'easy' | 'veteran';
 
 const calculateWinner = (squares: Square[]): {winner: Player | null, line: number[] | null} => {
   const lines = [
@@ -45,21 +48,74 @@ export function TicTacToeGame() {
   const [board, setBoard] = useState<Square[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
 
   const { winner, line: winningLine } = calculateWinner(board);
   const isDraw = !winner && isBoardFull(board);
 
-  const aiMove = (currentBoard: Square[]) => {
-    const emptySquares = currentBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null);
-    if (emptySquares.length > 0) {
-        const randomIndex = Math.floor(Math.random() * emptySquares.length);
-        const move = emptySquares[randomIndex];
-        if (move !== null) {
-            const newBoard = currentBoard.slice();
-            newBoard[move] = 'O';
-            setBoard(newBoard);
-            setIsXNext(true);
+  const minimax = (newBoard: Square[], player: Player): { score: number, index?: number } => {
+    const emptySquares = newBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null) as number[];
+    const { winner: currentWinner } = calculateWinner(newBoard);
+
+    if (currentWinner === 'X') return { score: -10 };
+    if (currentWinner === 'O') return { score: 10 };
+    if (emptySquares.length === 0) return { score: 0 };
+
+    const moves: { index: number, score: number }[] = [];
+    for (let i = 0; i < emptySquares.length; i++) {
+        const move: { index: number, score: number } = { index: emptySquares[i], score: 0 };
+        newBoard[emptySquares[i]] = player;
+
+        if (player === 'O') {
+            const result = minimax(newBoard, 'X');
+            move.score = result.score;
+        } else {
+            const result = minimax(newBoard, 'O');
+            move.score = result.score;
         }
+        newBoard[emptySquares[i]] = null;
+        moves.push(move);
+    }
+    
+    let bestMove: number | undefined;
+    if (player === 'O') {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+            if (moves[i].score > bestScore) {
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }
+    } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+            if (moves[i].score < bestScore) {
+                bestScore = moves[i].score;
+                bestMove = i;
+            }
+        }
+    }
+    return moves[bestMove!];
+  }
+
+
+  const aiMove = (currentBoard: Square[]) => {
+    const newBoard = currentBoard.slice();
+    let move: number | undefined;
+
+    if (difficulty === 'veteran') {
+        move = minimax(newBoard, 'O').index;
+    } else { // easy
+        const emptySquares = newBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null) as number[];
+        if (emptySquares.length > 0) {
+            move = emptySquares[Math.floor(Math.random() * emptySquares.length)];
+        }
+    }
+    
+    if (move !== undefined) {
+      newBoard[move] = 'O';
+      setBoard(newBoard);
+      setIsXNext(true);
     }
   };
 
@@ -68,7 +124,7 @@ export function TicTacToeGame() {
       const timer = setTimeout(() => aiMove(board), 500);
       return () => clearTimeout(timer);
     }
-  }, [isXNext, board, winner, isDraw, gameMode]);
+  }, [isXNext, board, winner, isDraw, gameMode, difficulty]);
 
 
   const handleClick = (i: number) => {
@@ -101,6 +157,18 @@ export function TicTacToeGame() {
           </div>
       );
   }
+  
+  if (gameMode === 'ai' && difficulty === null) {
+      return (
+           <div className="flex flex-col items-center justify-center gap-4 p-8">
+              <h3 className="text-xl font-semibold">Choose Difficulty</h3>
+              <div className="flex gap-4">
+                  <Button onClick={() => setDifficulty('easy')} size="lg">Easy</Button>
+                  <Button onClick={() => setDifficulty('veteran')} size="lg" variant="destructive"><BrainCircuit className="mr-2"/>Veteran</Button>
+              </div>
+          </div>
+      )
+  }
 
   let status;
   if (winner) {
@@ -132,6 +200,19 @@ export function TicTacToeGame() {
           <RotateCcw className="w-4 h-4 mr-2"/>
           Play Again
         </Button>
+      )}
+      {gameMode === 'ai' && (
+        <div className='w-48 mt-4'>
+            <Select value={difficulty} onValueChange={(d: Difficulty) => { setDifficulty(d); restartGame(); }}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="veteran">Veteran (Unbeatable)</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       )}
        <Button onClick={changeMode} variant="link" size="sm" className="mt-2">
         Change Mode
