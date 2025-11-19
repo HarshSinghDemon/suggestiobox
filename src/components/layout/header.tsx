@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
 import { JukeboxControls } from '../jukebox-controls';
-import { Separator } from '../ui/separator';
+import { ProfileAvatarModal } from '../profile-avatar-modal';
 
 const ADMIN_EMAIL = 'harshroop100@gmail.com';
 
@@ -46,6 +47,7 @@ export function Header() {
   const firebaseAuth = useFirebaseAuth();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut(firebaseAuth);
@@ -63,11 +65,16 @@ export function Header() {
   
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const UserAvatarButton = () => (
-    <Button variant="ghost" className="relative w-10 h-10 rounded-full">
+  const UserAvatarButton = ({ isMobile = false }: { isMobile?: boolean }) => (
+     <Button 
+        variant="ghost" 
+        className="relative w-10 h-10 rounded-full"
+        onClick={() => !isMobile && setIsAvatarModalOpen(true)}
+        aria-label="Open profile modal"
+    >
         <Avatar className="w-8 h-8">
-            <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+            <AvatarImage src={user?.photoURL ?? ''} alt={user?.displayName ?? 'User'} />
+            <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
         </Avatar>
     </Button>
   );
@@ -76,7 +83,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex items-center h-16">
-        <div className="mr-4 md:mr-6">
+        <div className="flex items-center flex-1 mr-4 md:mr-6 md:flex-none">
           <Link href="/" className="flex items-center space-x-2" prefetch={true}>
             <Logo />
           </Link>
@@ -138,12 +145,11 @@ export function Header() {
             </Link>
         </nav>
 
-        <div className="flex items-center justify-end flex-1 ml-auto">
-            <div className="flex items-center gap-1 md:gap-2">
-              <JukeboxControls />
+        <div className="flex items-center justify-end gap-2 ml-auto">
+            <JukeboxControls />
               {user ? (
-                <div className="relative group">
-                   <div className="hidden md:block">
+                <>
+                <div className="relative group hidden md:block">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <UserAvatarButton />
@@ -160,6 +166,7 @@ export function Header() {
                           </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setIsAvatarModalOpen(true)}><Users className="w-4 h-4 mr-2" /><span>Change Avatar</span></DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
@@ -171,16 +178,11 @@ export function Header() {
                         <DropdownMenuItem onClick={handleSignOut}><LogOut className="w-4 h-4 mr-2" /><span>Log out</span></DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                   </div>
-                   <div className="block md:hidden">
-                        <Button variant="ghost" className="relative w-10 h-10 rounded-full">
-                            <Avatar className="w-8 h-8">
-                                <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-                                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                            </Avatar>
-                        </Button>
-                   </div>
                 </div>
+                 <div className="block md:hidden">
+                    <UserAvatarButton isMobile={true} />
+                </div>
+                </>
               ) : (
                 <Button asChild className="hidden md:flex ml-2">
                   <Link href="/login">
@@ -188,10 +190,9 @@ export function Header() {
                   </Link>
                 </Button>
               )}
-            </div>
-
+            <ProfileAvatarModal isOpen={isAvatarModalOpen} onOpenChange={setIsAvatarModalOpen} />
           {/* Mobile Navigation Trigger */}
-          <div className="ml-2 md:hidden">
+          <div className="md:hidden">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -199,7 +200,7 @@ export function Header() {
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-full max-w-xs p-0 bg-background/95 backdrop-blur-lg">
+                <SheetContent side="right" className="w-full max-w-xs p-0 bg-background/90 backdrop-blur-lg">
                     <div className="flex flex-col h-full">
                         <div className="flex items-center justify-between p-4 border-b">
                            <Logo />
