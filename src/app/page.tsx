@@ -43,7 +43,7 @@ export default function Home() {
                   </Link>
               </Button>
             </div>
-            <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg">
+            <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg animate-pulse hover:animate-none shadow-lg shadow-primary/30">
                 <Link href="/community-game" prefetch={true}>
                     Play Games
                     <Gamepad2 className="w-6 h-6 ml-2" />
