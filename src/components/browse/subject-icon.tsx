@@ -12,7 +12,9 @@ export function SubjectIcon({ subject, ...props }: SubjectIconProps) {
             return <Network {...props} />;
         case 'Data Analytics':
             return <Database {...props} />;
-        case 'DBMS':
+        case 'DBMS (3rd Sem)':
+            return <Database {...props} />;
+        case 'DBMS (5th Sem)':
             return <Database {...props} />;
         case 'Cloud Computing':
             return <Cloud {...props} />;

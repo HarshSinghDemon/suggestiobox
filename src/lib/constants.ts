@@ -2,7 +2,8 @@
 export const SUBJECTS = [
   "Computer Networks",
   "Data Analytics",
-  "DBMS",
+  "DBMS (3rd Sem)",
+  "DBMS (5th Sem)",
   "Cloud Computing",
   "Artificial Intelligence",
   "Compiler Design",
@@ -21,7 +22,8 @@ export const SUBJECTS = [
 export const ASSIGNMENT_SUBJECTS = [
     "Computer Networks",
     "Data Analytics",
-    "DBMS",
+    "DBMS (3rd Sem)",
+    "DBMS (5th Sem)",
     "Cloud Computing",
     "Artificial Intelligence",
     "Compiler Design",
@@ -55,7 +57,7 @@ export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
         "Data Structures & Algorithms",
         "Object Oriented Programming",
         "Digital Electronics",
-        "DBMS",
+        "DBMS (3rd Sem)",
         "Formal Language & Automata Theory",
         "Engineering Maths-III",
     ],
@@ -65,6 +67,7 @@ export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
         "Cloud Computing",
         "Artificial Intelligence",
         "Compiler Design",
+        "DBMS (5th Sem)",
     ]
 };
 
@@ -80,7 +83,7 @@ export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]>
         "Data Structures & Algorithms",
         "Object Oriented Programming",
         "Digital Electronics",
-        "DBMS",
+        "DBMS (3rd Sem)",
         "Formal Language & Automata Theory",
         "Engineering Maths-III",
     ],
@@ -90,5 +93,6 @@ export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]>
         "Cloud Computing",
         "Artificial Intelligence",
         "Compiler Design",
+        "DBMS (5th Sem)",
     ]
 };
