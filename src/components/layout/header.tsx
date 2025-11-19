@@ -159,6 +159,18 @@ export function Header() {
         <div className="flex items-center justify-end gap-2 ml-auto">
             <JukeboxControls />
               {user ? (
+                <>
+                {isAdmin && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="hidden md:flex"
+                        onClick={() => router.push('/admin')}
+                    >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin
+                    </Button>
+                )}
                 <div className="relative group hidden md:block">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -189,6 +201,7 @@ export function Header() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
+                </>
               ) : (
                 <Button asChild className="hidden md:flex ml-2">
                   <Link href="/login">
