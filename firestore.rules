@@ -10,9 +10,16 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Use exists() for safety. The user document might not exist.
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    function isCreator() {
+      return request.auth != null && request.auth.token.email == 'harshroop100@gmail.com';
+    }
+
     function isUser() {
        return request.auth != null;
     }
@@ -32,25 +39,25 @@ service cloud.firestore {
                      || (isAdmin() && request.resource.data.keys().hasOnly(['role']));
 
       // Only an admin can delete a user document.
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isCreator();
     }
     
     match /suggestions/{suggestionId} {
         allow read: if isUser();
         allow create: if isUser();
-        allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+        allow update, delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
     }
     
      match /assignments/{assignmentId} {
         allow read: if isUser();
         allow create: if isUser();
-        allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+        allow update, delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
     }
 
     match /messages/{messageId} {
         allow read: if isUser();
         allow create: if isUser();
-        allow delete: if isOwner(resource.data.userId) || isAdmin();
+        allow delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
     }
 
     match /games/{gameId}/scores/{scoreId} {
@@ -60,10 +67,10 @@ service cloud.firestore {
     }
 
     match /musicRequests/{requestId} {
-      allow read: if isAdmin();
-      allow list: if isAdmin();
+      allow read: if isAdmin() || isCreator();
+      allow list: if isAdmin() || isCreator();
       allow create: if isUser();
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isCreator();
     }
   }
 }
