@@ -23,6 +23,7 @@ import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { moderateText } from '@/ai/flows/moderate-text';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -59,11 +60,19 @@ export function SignUpForm() {
     setError(null);
     setIsSigningUp(true);
 
-    const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
-    
     try {
+        const moderationResult = await moderateText({ text: values.name });
+        if (moderationResult.isHarmful) {
+            setError(moderationResult.reason || 'Your display name is not appropriate. Please choose another one.');
+            setIsSigningUp(false);
+            return;
+        }
+
+        const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
+        
         await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL, values.year);
         router.push('/verify-email');
+
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
             setError('This email is already in use. Please log in.');

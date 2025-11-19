@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserTagPopover } from './user-tag-popover';
+import { moderateText } from '@/ai/flows/moderate-text';
 
 type User = {
   id: string;
@@ -95,6 +97,17 @@ export function MessageInput() {
     setIsSending(true);
     
     try {
+      const moderationResult = await moderateText({ text: message.trim() });
+      if (moderationResult.isHarmful) {
+          toast({
+              variant: 'destructive',
+              title: 'Message Blocked',
+              description: moderationResult.reason || 'This message violates our community guidelines.',
+          });
+          setIsSending(false);
+          return;
+      }
+      
       const messagesCol = collection(firestore, 'messages');
       const messageData = {
         text: message.trim(),
