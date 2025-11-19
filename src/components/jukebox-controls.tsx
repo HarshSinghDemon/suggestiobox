@@ -22,7 +22,7 @@ export function JukeboxControls() {
   }, []);
 
   if (!isClient) {
-    return <Skeleton className="h-10 w-48 rounded-full" />;
+    return <Skeleton className="w-10 h-10 rounded-full md:w-48" />;
   }
   
   return (
@@ -74,7 +74,7 @@ export function JukeboxControls() {
             </TooltipContent>
         </Tooltip>
         
-        <div className="flex-1 overflow-hidden text-left w-28 pr-2">
+        <div className="flex-1 hidden pr-2 overflow-hidden text-left w-28 md:block">
             <p className="text-xs font-semibold truncate">{currentSong.title}</p>
             <p className="text-xs truncate text-muted-foreground">{currentSong.artist}</p>
         </div>
