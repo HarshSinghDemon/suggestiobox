@@ -35,32 +35,36 @@ const COLORS = [
 
 const createEmptyBoard = (): number[][] => Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 
+function getRandomPiece() {
+    const randIndex = Math.floor(Math.random() * SHAPES.length);
+    return {
+        shape: SHAPES[randIndex],
+        colorIndex: randIndex + 1,
+        pos: { x: Math.floor(COLS / 2) - 1, y: 0 },
+    };
+}
+
 export function TetrisGame() {
     const [board, setBoard] = useState(createEmptyBoard());
-    const [currentPiece, setCurrentPiece] = useState(getRandomPiece());
-    const [nextPiece, setNextPiece] = useState(getRandomPiece());
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
     const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+    const [nextPiece, setNextPiece] = useState(getRandomPiece());
+
+    const playerRef = useRef({
+        pos: { x: Math.floor(COLS / 2) - 1, y: 0 },
+        shape: SHAPES[0],
+        colorIndex: 1
+    });
     
-    const gameLoopRef = useRef<number>();
-    const lastTime = useRef(0);
-    const dropCounter = useRef(0);
-    
+    const dropTimeRef = useRef<number>(1000);
+    const lastTimeRef = useRef(0);
+    const dropCounterRef = useRef(0);
+
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
-
-    function getRandomPiece() {
-        const randIndex = Math.floor(Math.random() * SHAPES.length);
-        return {
-            shape: SHAPES[randIndex],
-            colorIndex: randIndex + 1,
-            pos: { x: Math.floor(COLS / 2) - 1, y: 0 },
-        };
-    }
     
     const submitScore = useCallback(async () => {
         if (!user || !firestore || hasSubmittedScore || score === 0) return;
@@ -90,91 +94,109 @@ export function TetrisGame() {
 
 
     const resetGame = useCallback(() => {
+        const newPiece = getRandomPiece();
+        playerRef.current = newPiece;
         setBoard(createEmptyBoard());
-        setCurrentPiece(getRandomPiece());
         setNextPiece(getRandomPiece());
         setScore(0);
         setIsGameOver(false);
         setHasSubmittedScore(false);
-        lastTime.current = 0;
-        dropCounter.current = 0;
+        lastTimeRef.current = 0;
+        dropCounterRef.current = 0;
     }, []);
 
-    const isValidMove = useCallback((pieceShape: number[][], piecePos: {x:number, y:number}) => {
+    const isValidMove = useCallback((pieceShape: number[][], piecePos: {x:number, y:number}, gameBoard: number[][]) => {
         for (let y = 0; y < pieceShape.length; y++) {
             for (let x = 0; x < pieceShape[y].length; x++) {
                 if (pieceShape[y][x]) {
                     const newX = piecePos.x + x;
                     const newY = piecePos.y + y;
-                    if (newX < 0 || newX >= COLS || newY >= ROWS || (board[newY] && board[newY][newX] !== 0)) {
+                    if (newX < 0 || newX >= COLS || newY >= ROWS || (gameBoard[newY] && gameBoard[newY][newX] !== 0)) {
                         return false;
                     }
                 }
             }
         }
         return true;
-    }, [board]);
+    }, []);
 
     const movePiece = useCallback((dx: number) => {
         if (isGameOver) return;
-        const newPos = { x: currentPiece.pos.x + dx, y: currentPiece.pos.y };
-        if (isValidMove(currentPiece.shape, newPos)) {
-            setCurrentPiece(prev => ({ ...prev, pos: newPos }));
-        }
-    }, [currentPiece, isGameOver, isValidMove]);
-    
-    const dropPiece = useCallback(() => {
-        if (isGameOver) return;
-        const newPos = { x: currentPiece.pos.x, y: currentPiece.pos.y + 1 };
-        if (isValidMove(currentPiece.shape, newPos)) {
-            setCurrentPiece(prev => ({ ...prev, pos: newPos }));
-        } else {
-            setBoard(prevBoard => {
-                const newBoard = prevBoard.map(row => [...row]);
-                currentPiece.shape.forEach((row, y) => {
-                    row.forEach((value, x) => {
-                        if (value) {
-                            if (currentPiece.pos.y + y < 0) return; // Prevent writing out of bounds
-                            newBoard[currentPiece.pos.y + y][currentPiece.pos.x + x] = currentPiece.colorIndex;
-                        }
-                    });
-                });
-                
-                let linesCleared = 0;
-                for (let y = newBoard.length - 1; y >= 0; y--) {
-                    if (newBoard[y].every(val => val !== 0)) {
-                        linesCleared++;
-                        newBoard.splice(y, 1);
-                        newBoard.unshift(Array(COLS).fill(0));
-                        y++;
-                    }
-                }
-                if(linesCleared > 0) {
-                     setScore(s => s + [0, 40, 100, 300, 1200][linesCleared]);
-                }
-                return newBoard;
-            });
-            
-            const newPiece = nextPiece;
-            setNextPiece(getRandomPiece());
-
-            if (!isValidMove(newPiece.shape, newPiece.pos)) {
-                setIsGameOver(true);
-            } else {
-                setCurrentPiece(newPiece);
+        const newPos = { x: playerRef.current.pos.x + dx, y: playerRef.current.pos.y };
+        setBoard(b => {
+             if (isValidMove(playerRef.current.shape, newPos, b)) {
+                playerRef.current.pos = newPos;
             }
-        }
-        dropCounter.current = 0;
-    }, [currentPiece, isGameOver, isValidMove, nextPiece]);
+            return b;
+        })
+    }, [isGameOver, isValidMove]);
     
     const rotatePiece = useCallback(() => {
         if (isGameOver) return;
-        const shape = currentPiece.shape;
+        const shape = playerRef.current.shape;
         const newShape: number[][] = shape[0].map((_, colIndex) => shape.map(row => row[colIndex]).reverse());
-        if (isValidMove(newShape, currentPiece.pos)) {
-            setCurrentPiece(prev => ({ ...prev, shape: newShape }));
-        }
-    }, [currentPiece, isGameOver, isValidMove]);
+        
+        setBoard(b => {
+            if (isValidMove(newShape, playerRef.current.pos, b)) {
+                playerRef.current.shape = newShape;
+            }
+            return b;
+        });
+
+    }, [isGameOver, isValidMove]);
+
+    const dropPiece = useCallback(() => {
+        if (isGameOver) return;
+        
+        const newPos = { x: playerRef.current.pos.x, y: playerRef.current.pos.y + 1 };
+        
+        setBoard(b => {
+            if (isValidMove(playerRef.current.shape, newPos, b)) {
+                playerRef.current.pos = newPos;
+                return b;
+            }
+
+            const newBoard = b.map(row => [...row]);
+            playerRef.current.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        const boardY = playerRef.current.pos.y + y;
+                        const boardX = playerRef.current.pos.x + x;
+                        if (boardY >= 0) {
+                            newBoard[boardY][boardX] = playerRef.current.colorIndex;
+                        }
+                    }
+                });
+            });
+
+            let linesCleared = 0;
+            for (let y = newBoard.length - 1; y >= 0; y--) {
+                if (newBoard[y].every(val => val !== 0)) {
+                    linesCleared++;
+                    newBoard.splice(y, 1);
+                    newBoard.unshift(Array(COLS).fill(0));
+                    y++;
+                }
+            }
+            if(linesCleared > 0) {
+                 setScore(s => s + [0, 40, 100, 300, 1200][linesCleared]);
+            }
+            
+            const newCurrentPiece = nextPiece;
+            setNextPiece(getRandomPiece());
+            playerRef.current = newCurrentPiece;
+
+            if (!isValidMove(newCurrentPiece.shape, newCurrentPiece.pos, newBoard)) {
+                setIsGameOver(true);
+            }
+            
+            return newBoard;
+        });
+
+        dropCounterRef.current = 0;
+
+    }, [isGameOver, isValidMove, nextPiece]);
+    
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -197,55 +219,57 @@ export function TetrisGame() {
         }
     }, [isGameOver, hasSubmittedScore, submitScore]);
     
-    const draw = useCallback((ctx: CanvasRenderingContext2D) => {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        
-        ctx.fillStyle = 'hsl(var(--card))';
-        ctx.fillRect(0,0, ctx.canvas.width, ctx.canvas.height);
-        
-        board.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value !== 0) {
-                    ctx.fillStyle = COLORS[value];
-                    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    ctx.strokeStyle = 'hsl(var(--background))';
-                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                }
-            });
-        });
-        
-        currentPiece.shape.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value) {
-                    ctx.fillStyle = COLORS[currentPiece.colorIndex];
-                    ctx.fillRect((currentPiece.pos.x + x) * BLOCK_SIZE, (currentPiece.pos.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    ctx.strokeStyle = 'hsl(var(--background))';
-                    ctx.strokeRect((currentPiece.pos.x + x) * BLOCK_SIZE, (currentPiece.pos.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                }
-            });
-        });
-    }, [board, currentPiece]);
-    
     useEffect(() => {
         let animationFrameId: number;
+        
+        const draw = () => {
+            const canvas = canvasRef.current;
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if(!ctx) return;
+            
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.fillStyle = 'hsl(var(--card))';
+            ctx.fillRect(0,0, ctx.canvas.width, ctx.canvas.height);
+            
+            board.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        ctx.fillStyle = COLORS[value];
+                        ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.strokeStyle = 'hsl(var(--background))';
+                        ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                });
+            });
+            
+            playerRef.current.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        ctx.fillStyle = COLORS[playerRef.current.colorIndex];
+                        ctx.fillRect((playerRef.current.pos.x + x) * BLOCK_SIZE, (playerRef.current.pos.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.strokeStyle = 'hsl(var(--background))';
+                        ctx.strokeRect((playerRef.current.pos.x + x) * BLOCK_SIZE, (playerRef.current.pos.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                });
+            });
+        }
+        
         const update = (time = 0) => {
             if (isGameOver) {
                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
                 return;
             }
-            const deltaTime = time - lastTime.current;
-            lastTime.current = time;
-            dropCounter.current += deltaTime;
+            const deltaTime = time - lastTimeRef.current;
+            lastTimeRef.current = time;
+            dropCounterRef.current += deltaTime;
+            
             const dropInterval = 1000 - (score / 100);
-            if (dropCounter.current > Math.max(200, dropInterval)) {
+            if (dropCounterRef.current > Math.max(200, dropInterval)) {
                 dropPiece();
             }
             
-            const canvas = canvasRef.current;
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                if (ctx) draw(ctx);
-            }
+            draw();
             animationFrameId = requestAnimationFrame(update);
         }
         
@@ -255,7 +279,7 @@ export function TetrisGame() {
         return () => {
             if(animationFrameId) cancelAnimationFrame(animationFrameId);
         }
-    }, [resetGame, dropPiece, draw, isGameOver, score]);
+    }, [resetGame, dropPiece, isGameOver, score]);
 
 
     const NextPieceDisplay = () => (
