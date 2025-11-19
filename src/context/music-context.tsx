@@ -83,59 +83,72 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast]);
 
+  const playSongAtIndex = useCallback((songs: Song[], index: number) => {
+    setPlaylist(songs);
+    setCurrentSongIndex(index);
+    if (audioElement) {
+      audioElement.src = songs[index].url;
+      if (isPlaying) {
+        audioElement.play().catch(() => setIsPlaying(false));
+      }
+    }
+  }, [audioElement, isPlaying]);
+
   const toggleInternetRadio = useCallback(async () => {
+    const wasPlaying = isPlaying;
+    if (wasPlaying) {
+      audioElement?.pause();
+    }
+    
     const turningOn = !isInternetRadio;
     setIsInternetRadio(turningOn);
     
     if (turningOn) {
       const newSongs = await fetchJamendoSongs(0);
       if (newSongs.length > 0) {
-        setPlaylist(newSongs);
-        setCurrentSongIndex(0);
-        if (isPlaying) {
-          // If already playing, continue playing with new playlist
-          if (audioElement) {
-            audioElement.src = newSongs[0].url;
-            audioElement.play().catch(() => {});
-          }
-        }
+        playSongAtIndex(newSongs, 0);
       } else {
-        // If fetching fails, revert back
+        // If fetching fails, revert back to local songs
         setIsInternetRadio(false);
+        playSongAtIndex(localSongs, 0);
       }
     } else {
-      setPlaylist(localSongs);
-      setCurrentSongIndex(0);
-       if (isPlaying && audioElement) {
-         audioElement.src = localSongs[0].url;
-         audioElement.play().catch(() => {});
-       }
+      playSongAtIndex(localSongs, 0);
     }
-  }, [isInternetRadio, fetchJamendoSongs, isPlaying, audioElement]);
+  }, [isInternetRadio, fetchJamendoSongs, playSongAtIndex, isPlaying, audioElement]);
 
   const togglePlayPause = useCallback(() => {
     if (!audioElement) return;
 
-    if (audioElement.paused) {
-      audioElement.play().catch(() => {});
-      setIsPlaying(true);
-    } else {
+    if (audioElement.src && !audioElement.paused) {
       audioElement.pause();
       setIsPlaying(false);
+    } else {
+      // If src is not set, this is the first play
+      if (!audioElement.src) {
+        audioElement.src = currentSong.url;
+      }
+      audioElement.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
     }
-  }, [audioElement]);
+  }, [audioElement, currentSong]);
 
   const playNext = useCallback(async () => {
     let nextIndex = currentSongIndex + 1;
-    if (nextIndex >= playlist.length) {
+    let currentPlaylist = playlist;
+
+    if (nextIndex >= currentPlaylist.length) {
       if (isInternetRadio) {
         const moreSongs = await fetchJamendoSongs(jamendoOffset);
         if (moreSongs.length > 0) {
-          setPlaylist(prev => [...prev, ...moreSongs]);
-          // Next index remains the same as it's the start of the new batch
+          const newPlaylist = [...currentPlaylist, ...moreSongs];
+          setPlaylist(newPlaylist);
+          // nextIndex remains correct as it's the start of the new batch
         } else {
-          // Loop back to start if no more songs can be fetched
-          nextIndex = 0;
+          nextIndex = 0; // Loop back to start if no more songs can be fetched
         }
       } else {
         nextIndex = 0; // Loop local playlist
@@ -150,11 +163,16 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     const audio = audioElement;
-    if (audio) {
+    if (audio && currentSong) {
+      if (audio.src !== currentSong.url) {
         audio.src = currentSong.url;
-        if(isPlaying) {
-            audio.play().catch(() => {});
-        }
+      }
+      if (isPlaying) {
+        audio.play().catch(() => {
+          // Autoplay might be blocked by the browser.
+          setIsPlaying(false);
+        });
+      }
     }
   }, [currentSong, audioElement, isPlaying]);
 
