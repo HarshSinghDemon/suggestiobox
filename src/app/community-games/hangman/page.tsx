@@ -5,16 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 
 export default function HangmanPage() {
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>Hangman</CardTitle>
-          <CardDescription>Guess the word before the man is hanged!</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <HangmanGame />
-        </CardContent>
-      </Card>
+    <div className="container py-8 mx-auto">
+      <div className="flex items-start justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>Hangman</CardTitle>
+            <CardDescription>Guess the word before the man is hanged!</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <HangmanGame />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
