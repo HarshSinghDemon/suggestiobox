@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,20 +70,6 @@ const games = [
         description: 'Find the hidden words in the puzzle.',
         href: '/community-games/word-search',
         icon: Search,
-        variant: 'fiery',
-    },
-    {
-        name: 'Snake',
-        description: 'Eat the food and grow your snake.',
-        href: '/community-games/snake',
-        icon: SnakeIcon,
-        variant: 'ocean',
-    },
-    {
-        name: 'Minesweeper',
-        description: 'Find all the mines without exploding.',
-        href: '/community-games/minesweeper',
-        icon: Bomb,
         variant: 'fiery',
     },
 ];
