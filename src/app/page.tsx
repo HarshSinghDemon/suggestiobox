@@ -67,7 +67,7 @@ export default function Home() {
 
             <div className="pt-8">
               <p className="text-sm text-foreground/60 font-arcade">
-                  Made with ❤️ by sectionB
+                  Made with ❤️ by 5B
               </p>
             </div>
           </div>
