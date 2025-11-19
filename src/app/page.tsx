@@ -22,12 +22,12 @@ export default function Home() {
                 Box
             </span>
           </h1>
-          <div className="max-w-md space-y-4">
+          <div className="max-w-lg space-y-4">
             <p className="text-lg text-foreground/80">
-              Got full lab assignments, a helpful study tip, or a suggestion for a class? Share it here!
+              Your hub for academic success and community fun. Share notes, drop suggestions, and connect with classmates in our community chat.
             </p>
             <p className="text-lg text-foreground/80">
-              You can also upload helpful files for the community. Made with love by SectionB #ProudtobesectionB
+              When it's time for a break, jump into the arcade for some retro gaming. Learn, share, and play together!
             </p>
           </div>
           <div className="flex flex-col items-center justify-center w-full gap-4">
