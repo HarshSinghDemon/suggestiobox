@@ -59,7 +59,7 @@ export default function Home() {
               </Button>
             </div>
             <div onClick={handleGameClick}>
-                <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-primary/30">
+                <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-orange-500/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white">
                     <Link href="/community-game" prefetch={true}>
                         Play Games
                         <Gamepad2 className="w-6 h-6 ml-2" />
