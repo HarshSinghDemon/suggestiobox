@@ -1,3 +1,4 @@
+
 export function Logo() {
   return (
     <div className="flex items-center gap-2 group">
@@ -25,7 +26,7 @@ export function Logo() {
           <path d="M10 2h4v3h-4z" />
         </svg>
       </div>
-      <span className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-red-500 to-orange-400 bg-[length:200%_auto] animate-shine">
+      <span className="text-lg font-bold tracking-tight whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-red-500 to-orange-400 bg-[length:200%_auto] animate-shine">
         Suggestion Box
       </span>
     </div>
