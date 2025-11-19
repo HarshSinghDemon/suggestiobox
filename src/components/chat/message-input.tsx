@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
@@ -112,8 +112,8 @@ export function MessageInput() {
                     placeholder="Type your message... use @ to mention a user"
                     value={message}
                     onChange={handleInputChange}
-                    onClick={handleInputChange} // To handle cursor changes
                     onKeyUp={(e) => {
+                        // This handles cases where the user moves the cursor with arrow keys
                         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                             handleInputChange(e as any);
                         }
