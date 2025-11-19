@@ -115,6 +115,17 @@ export default {
         },
         'spin-slow': {
           'to': { 'transform': 'rotate(360deg)' },
+        },
+        'tilt': {
+          '0%, 50%, 100%': {
+            transform: 'rotate(0deg)',
+          },
+          '25%': {
+            transform: 'rotate(0.5deg)',
+          },
+          '75%': {
+            transform: 'rotate(-0.5deg)',
+          },
         }
       },
       animation: {
@@ -125,6 +136,7 @@ export default {
         'shine': 'shine 2s linear infinite',
         'wave': 'wave 30s ease-in-out infinite',
         'spin-slow': 'spin-slow 5s linear infinite',
+        'tilt': 'tilt 10s linear infinite',
       },
     },
   },
