@@ -112,6 +112,9 @@ export default {
           '0%': { 'background-position': '0% 50%' },
           '50%': { 'background-position': '100% 50%' },
           '100%': { 'background-position': '0% 50%' },
+        },
+        'spin-slow': {
+          'to': { 'transform': 'rotate(360deg)' },
         }
       },
       animation: {
@@ -121,6 +124,7 @@ export default {
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'shine': 'shine 2s linear infinite',
         'wave': 'wave 30s ease-in-out infinite',
+        'spin-slow': 'spin-slow 5s linear infinite',
       },
     },
   },

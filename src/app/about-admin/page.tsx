@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Mail, Phone } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -25,11 +26,15 @@ export default function AboutAdminPage() {
     <div className="container py-12 mx-auto">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Avatar className="w-24 h-24 border-4 border-primary">
-              <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
-              <AvatarFallback>HS</AvatarFallback>
-            </Avatar>
+          <div className="relative flex justify-center mb-4">
+              <div className="relative w-28 h-28 p-1 rounded-full bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-600 animate-spin-slow">
+                <div className="w-full h-full p-1 bg-background rounded-full">
+                    <Avatar className="w-full h-full">
+                        <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
+                        <AvatarFallback>HS</AvatarFallback>
+                    </Avatar>
+                </div>
+              </div>
           </div>
           <CardTitle className="text-3xl">Harsh Singh</CardTitle>
           <CardDescription className="text-lg text-muted-foreground">
