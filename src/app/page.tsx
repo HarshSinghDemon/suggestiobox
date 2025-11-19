@@ -16,7 +16,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 overflow-x-hidden">
         <WavyBackground 
           className="w-full max-w-4xl mx-auto"
           waveWidth={60}
@@ -24,7 +24,7 @@ export default function Home() {
           speed="fast"
           colors={['#FFD700', '#FFA500', '#FF4500', '#DC143C', '#B22222']}
         >
-          <div className="relative z-10 flex flex-col items-center justify-center space-y-1 md:space-y-2">
+          <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
             <ArcadeIntroAnimation />
             <h1 className="text-2xl md:text-5xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_2px_hsl(45_100%_50%/0.6),0_4px_hsl(35_100%_50%/0.5),0_6px_hsl(25_100%_50%/0.4),0_8px_hsl(15_100%_50%/0.3),0_10px_15px_hsl(260_80%_40%/0.2)]">
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-red-500 to-yellow-300 bg-[length:200%_auto] animate-shine">

@@ -15,7 +15,7 @@ const icons = [
 
 export function ArcadeIntroAnimation() {
   return (
-    <div className="relative w-full h-24 mb-4 overflow-hidden">
+    <div className="relative w-full h-24">
       {icons.map((item, index) => (
         <div
           key={index}
