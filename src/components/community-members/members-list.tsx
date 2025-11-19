@@ -82,7 +82,7 @@ export function CommunityMembersList() {
         <div className="mb-12">
             <Popover>
                 <PopoverTrigger asChild>
-                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-primary/50 bg-gradient-to-tr from-card to-primary/10 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2">
+                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-primary/50 bg-gradient-to-tr from-card to-primary/10 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 animate-tilt">
                          <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-primary">Admin</div>
                         <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-primary">
                             <AvatarImage src={adminUser.photoURL} alt={adminUser.displayName ?? ''} />
@@ -125,8 +125,8 @@ export function CommunityMembersList() {
                         <Popover key={user.id}>
                             <PopoverTrigger asChild>
                                 <div 
-                                    className="flex flex-col items-center p-4 text-center transition-all duration-200 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer"
-                                    style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
+                                    className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer opacity-0"
+                                    style={{ animation: `fade-in-up 0.6s ease-out forwards ${index * 75}ms` }}
                                 >
                                     <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
                                         <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
@@ -151,21 +151,6 @@ export function CommunityMembersList() {
                 No community members found.
             </p>
         )}
-        <style jsx>{`
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .grid > div {
-                opacity: 0; /* Start hidden for animation */
-            }
-        `}</style>
     </div>
   );
 }
