@@ -9,10 +9,13 @@ import {
   sendEmailVerification,
   Auth,
   User,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
-const handleNewUser = async (user: User, year?: string) => {
+export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string }) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
@@ -21,16 +24,18 @@ const handleNewUser = async (user: User, year?: string) => {
     const userData: any = {
       id: user.uid,
       email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
+      displayName: details?.displayName || user.displayName,
+      photoURL: details?.photoURL || user.photoURL,
       createdAt: serverTimestamp(),
-      role: user.email === 'harshroop100@gmail.com' ? 'admin' : 'user', // Set creator as admin
+      role: user.email === 'harshroop100@gmail.com' ? 'admin' : 'user',
     };
-    if (year) {
-      userData.year = year;
+    if (details?.year) {
+      userData.year = details.year;
     }
     await setDoc(userDocRef, userData);
+    return true; // Indicates a new user was created
   }
+  return false; // Indicates user already exists
 };
 
 export const signUpWithEmail = async (
@@ -52,13 +57,10 @@ export const signUpWithEmail = async (
     await updateProfile(user, { displayName, photoURL });
     await sendEmailVerification(user);
 
-
-    // We need to re-fetch the user to get the updated profile
     const updatedUser = auth.currentUser;
     if (updatedUser) {
-        await handleNewUser(updatedUser, year);
+        await handleNewUser(updatedUser, { year });
     }
-
 
     return user;
   } catch (error) {
@@ -78,7 +80,6 @@ export const signInWithEmail = async (
       email,
       password
     );
-    // On sign-in, also ensure the user document exists, especially for the admin
     await handleNewUser(userCredential.user);
     return userCredential.user;
   } catch (error) {
@@ -95,4 +96,26 @@ export const signOut = async (auth: Auth) => {
   }
 };
 
-    
+export const signInWithGoogle = async (auth: Auth) => {
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const isNewUser = await handleNewUser(result.user);
+    return { user: result.user, isNewUser };
+  } catch (error) {
+    console.error('Error signing in with Google: ', error);
+    throw error;
+  }
+}
+
+export const signInWithGitHub = async (auth: Auth) => {
+    const provider = new GithubAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const isNewUser = await handleNewUser(result.user);
+        return { user: result.user, isNewUser };
+    } catch (error) {
+        console.error('Error signing in with GitHub: ', error);
+        throw error;
+    }
+}

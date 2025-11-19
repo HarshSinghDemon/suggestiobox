@@ -244,7 +244,9 @@
   },
   "auth": {
     "providers": [
-      "password"
+      "password",
+      "google",
+      "github"
     ]
   },
   "firestore": {
