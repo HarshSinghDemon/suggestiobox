@@ -18,14 +18,12 @@ export default function VerifyEmailPage() {
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
+    // This page is only for users who have just signed up and are not yet verified.
+    // If a verified user lands here, we can redirect them.
     if (!isUserLoading && user?.emailVerified) {
-      toast({
-        title: 'Success!',
-        description: 'Your email has been verified. You are now logged in.',
-      });
       router.push('/');
     }
-  }, [user, isUserLoading, router, toast]);
+  }, [user, isUserLoading, router]);
   
   const handleResendVerification = async () => {
     if (user) {
@@ -58,12 +56,13 @@ export default function VerifyEmailPage() {
   }
 
   if (!user) {
+    // This case handles when the user signs out from this page or their auth state is cleared.
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
             <Card className="w-full max-w-md mx-auto text-center">
                 <CardHeader>
-                    <CardTitle>Not Logged In</CardTitle>
-                    <CardDescription>You must be logged in to view this page.</CardDescription>
+                    <CardTitle>Sign-up Successful!</CardTitle>
+                    <CardDescription>Please log in to continue.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Button asChild>
@@ -91,7 +90,7 @@ export default function VerifyEmailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Please check your inbox (and spam folder) and click the link to complete your registration. This page will automatically redirect after you have verified your email.
+            Please check your inbox (and spam folder) and click the link to complete your registration. You can close this page after verifying.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleResendVerification} disabled={isSending}>
