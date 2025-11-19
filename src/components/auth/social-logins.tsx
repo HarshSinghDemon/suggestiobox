@@ -45,6 +45,10 @@ export function SocialLogins() {
         router.push('/');
       }
     } catch (error: any) {
+      // Gracefully handle popup closed by user, which is not a true error.
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      }
       console.error(`Error with ${provider} sign-in:`, error);
       toast({
         variant: 'destructive',
