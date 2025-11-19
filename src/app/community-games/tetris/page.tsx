@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function TetrisPage() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-        <Card className="w-full max-w-lg">
+        <Card className="w-full max-w-4xl">
             <CardHeader className='text-center'>
                 <CardTitle>Tetris</CardTitle>
-                <CardDescription>Use arrow keys to move and rotate. Clear lines to score!</CardDescription>
+                <CardDescription>Use arrow keys or on-screen buttons to move and rotate. Clear lines to score!</CardDescription>
             </CardHeader>
             <CardContent>
                 <TetrisGame />
@@ -18,3 +18,5 @@ export default function TetrisPage() {
     </div>
   );
 }
+
+    

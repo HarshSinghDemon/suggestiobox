@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Award, RotateCcw } from 'lucide-react';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { Leaderboard } from './leaderboard';
+import { useToast } from '@/hooks/use-toast';
 
 const SIZE = 4;
 const WIN_TILE = 2048;
@@ -25,16 +29,64 @@ export function Game2048() {
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
     const [isWinner, setIsWinner] = useState(false);
+    const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
     const touchStart = useRef<{ x: number, y: number } | null>(null);
 
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+
+    const submitScore = useCallback(async () => {
+        if (!user || !firestore || hasSubmittedScore || score === 0) return;
+    
+        try {
+          const scoresCollection = collection(firestore, 'games', '2048', 'scores');
+          await addDocumentNonBlocking(scoresCollection, {
+            userId: user.uid,
+            userName: user.displayName || 'Anonymous',
+            userImage: user.photoURL,
+            score: score,
+            createdAt: serverTimestamp(),
+          });
+          setHasSubmittedScore(true);
+          toast({
+            title: "Score Submitted!",
+            description: `Your score of ${score} has been saved.`,
+          });
+        } catch (error) {
+          console.error("Error submitting score:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not submit your score.",
+          });
+        }
+      }, [user, firestore, score, hasSubmittedScore, toast]);
+    
     const resetGame = () => {
         setBoard(addRandomTile(addRandomTile(createEmptyBoard())));
         setScore(0);
         setIsGameOver(false);
         setIsWinner(false);
+        setHasSubmittedScore(false);
     };
 
-    const move = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const checkForGameOver = (currentBoard: number[]) => {
+        const hasEmpty = currentBoard.includes(0);
+        if (hasEmpty) return false;
+
+        for (let i = 0; i < SIZE; i++) {
+            for (let j = 0; j < SIZE; j++) {
+                const current = currentBoard[i * SIZE + j];
+                if (j < SIZE - 1 && current === currentBoard[i * SIZE + j + 1]) return false;
+                if (i < SIZE - 1 && current === currentBoard[(i + 1) * SIZE + j]) return false;
+            }
+        }
+        return true;
+    }
+
+    const move = useCallback((direction: 'up' | 'down' | 'left' | 'right') => {
+        if (isGameOver) return;
         let newBoard = [...board];
         let newScore = score;
         let moved = false;
@@ -46,10 +98,11 @@ export function Game2048() {
         }
         
         let rotations = 0;
-        if(direction === 'up') rotations = 3;
+        if(direction === 'up') rotations = 1;
+        if(direction === 'left') rotations = 0;
         if(direction === 'right') rotations = 2;
-        if(direction === 'down') rotations = 1;
-        
+        if(direction === 'down') rotations = 3;
+
         for(let i=0; i<rotations; i++) newBoard = rotateBoard(newBoard);
 
         for (let i = 0; i < SIZE; i++) {
@@ -70,57 +123,58 @@ export function Game2048() {
             }
         }
 
-        for(let i=0; i<rotations; i++) newBoard = rotateBoard(rotateBoard(rotateBoard(newBoard)));
-
+        for(let i=0; i< (4-rotations) % 4; i++) newBoard = rotateBoard(newBoard);
+        
         if (moved) {
             const finalBoard = addRandomTile(newBoard);
             setBoard(finalBoard);
             setScore(newScore);
 
-            const hasEmpty = finalBoard.includes(0);
-            if (!hasEmpty) {
-                let canMove = false;
-                for (let i = 0; i < SIZE; i++) {
-                    for (let j = 0; j < SIZE; j++) {
-                        const current = finalBoard[i * SIZE + j];
-                        if (j < SIZE - 1 && current === finalBoard[i * SIZE + j + 1]) canMove = true;
-                        if (i < SIZE - 1 && current === finalBoard[(i + 1) * SIZE + j]) canMove = true;
-                    }
-                }
-                if (!canMove) setIsGameOver(true);
+            if(checkForGameOver(finalBoard)) {
+                setIsGameOver(true);
             }
         }
-    };
+    }, [board, score, isGameOver]);
+
+    useEffect(() => {
+        if(isGameOver && !hasSubmittedScore) {
+            submitScore();
+        }
+    }, [isGameOver, hasSubmittedScore, submitScore]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (isGameOver) return;
+            e.preventDefault();
             switch (e.key) {
-                case 'ArrowUp': e.preventDefault(); move('up'); break;
-                case 'ArrowDown': e.preventDefault(); move('down'); break;
-                case 'ArrowLeft': e.preventDefault(); move('left'); break;
-                case 'ArrowRight': e.preventDefault(); move('right'); break;
+                case 'ArrowUp': move('up'); break;
+                case 'ArrowDown': move('down'); break;
+                case 'ArrowLeft': move('left'); break;
+                case 'ArrowRight': move('right'); break;
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [board, isGameOver]);
+    }, [move]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        if (e.touches.length > 0) {
+            touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
     };
 
     const handleTouchEnd = (e: React.TouchEvent) => {
         if (!touchStart.current || isGameOver) return;
-        const dx = e.changedTouches[0].clientX - touchStart.current.x;
-        const dy = e.changedTouches[0].clientY - touchStart.current.y;
-        
-        if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 30) move('right');
-            else if (dx < -30) move('left');
-        } else {
-            if (dy > 30) move('down');
-            else if (dy < -30) move('up');
+        if(e.changedTouches.length > 0) {
+            const dx = e.changedTouches[0].clientX - touchStart.current.x;
+            const dy = e.changedTouches[0].clientY - touchStart.current.y;
+            
+            if (Math.abs(dx) > 30 || Math.abs(dy) > 30) {
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    move(dx > 0 ? 'right' : 'left');
+                } else {
+                    move(dy > 0 ? 'down' : 'up');
+                }
+            }
         }
         touchStart.current = null;
     };
@@ -134,39 +188,47 @@ export function Game2048() {
     };
 
     return (
-        <div className="flex flex-col items-center gap-4">
-            <div className="flex justify-between w-full p-2 rounded-md bg-muted">
-                <div className="text-center">
-                    <div className="text-sm font-semibold">SCORE</div>
-                    <div className="text-2xl font-bold">{score}</div>
-                </div>
-                <Button onClick={resetGame} variant="outline" size="icon">
-                    <RotateCcw className="w-5 h-5"/>
-                </Button>
-            </div>
-            <div 
-                className="relative p-2 rounded-md bg-muted-foreground/50 touch-none"
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div className="grid grid-cols-4 gap-2">
-                    {board.map((val, i) => (
-                        <div key={i} className={cn(
-                            "w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-xl sm:text-3xl font-bold rounded-md transition-all duration-100",
-                             TILE_COLORS[val] || 'bg-purple-600 text-white'
-                        )}>
-                            {val > 0 && val}
-                        </div>
-                    ))}
-                </div>
-                {(isGameOver || isWinner) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
-                        <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
-                        <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
-                        <Button onClick={resetGame} className="mt-4">Play Again</Button>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-4">
+                <div className="flex justify-between w-full p-2 rounded-md bg-muted">
+                    <div className="text-center">
+                        <div className="text-sm font-semibold">SCORE</div>
+                        <div className="text-2xl font-bold">{score}</div>
                     </div>
-                )}
+                    <Button onClick={resetGame} variant="outline" size="sm">
+                        <RotateCcw className="w-4 h-4 mr-2"/>
+                        New Game
+                    </Button>
+                </div>
+                <div 
+                    className="relative p-2 rounded-md bg-muted-foreground/50 touch-none"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    <div className="grid grid-cols-4 gap-2">
+                        {board.map((val, i) => (
+                            <div key={i} className={cn(
+                                "w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-xl sm:text-3xl font-bold rounded-md transition-all duration-100",
+                                TILE_COLORS[val] || 'bg-purple-600 text-white'
+                            )}>
+                                {val > 0 && val}
+                            </div>
+                        ))}
+                    </div>
+                    {(isGameOver || isWinner) && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                            <Award className={cn("w-16 h-16", isWinner ? "text-yellow-500" : "text-destructive")} />
+                            <h2 className="text-3xl font-bold">{isWinner ? "You Win!" : "Game Over"}</h2>
+                            <Button onClick={resetGame} className="mt-4">Play Again</Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="col-span-1">
+                <Leaderboard gameId="2048" />
             </div>
         </div>
     );
 }
+
+    

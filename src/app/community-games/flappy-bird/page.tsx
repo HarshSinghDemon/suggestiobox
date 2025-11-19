@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function FlappyBirdPage() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-4xl">
             <CardHeader className='text-center'>
                 <CardTitle>Flappy Bird</CardTitle>
                 <CardDescription>Click or press space to flap. Avoid the pipes!</CardDescription>
@@ -18,3 +18,5 @@ export default function FlappyBirdPage() {
     </div>
   );
 }
+
+    

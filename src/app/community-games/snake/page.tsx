@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function SnakePage() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-4xl">
         <CardHeader className="text-center">
           <CardTitle>Snake</CardTitle>
           <CardDescription>Use arrow keys or on-screen buttons to move the snake and eat the food.</CardDescription>
@@ -18,3 +18,5 @@ export default function SnakePage() {
     </div>
   );
 }
+
+    

@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function MinesweeperPage() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-4xl">
         <CardHeader className="text-center">
           <CardTitle>Minesweeper</CardTitle>
-          <CardDescription>Click to reveal, right-click to flag. Don't hit the bombs!</CardDescription>
+          <CardDescription>Click to reveal, right-click (or use flag mode) to flag. Don't hit the bombs!</CardDescription>
         </CardHeader>
         <CardContent>
           <MinesweeperGame />
@@ -18,3 +18,5 @@ export default function MinesweeperPage() {
     </div>
   );
 }
+
+    

@@ -57,3 +57,14 @@ export type Notification = {
   isRead: boolean;
   createdAt: Timestamp;
 };
+
+export type GameScore = {
+  id: string;
+  userId: string;
+  userName: string;
+  userImage?: string | null;
+  score: number;
+  createdAt: Timestamp;
+};
+
+    

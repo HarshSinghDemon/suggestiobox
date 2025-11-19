@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, RotateCcw } from 'lucide-react';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { Leaderboard } from './leaderboard';
+import { useToast } from '@/hooks/use-toast';
 
 const GRID_SIZE = 20;
 const CANVAS_SIZE = 400;
@@ -24,6 +27,38 @@ export function SnakeGame() {
     const [direction, setDirection] = useState<Direction>('RIGHT');
     const [isGameOver, setIsGameOver] = useState(false);
     const [score, setScore] = useState(0);
+    const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+    
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+
+    const submitScore = useCallback(async () => {
+        if (!user || !firestore || hasSubmittedScore || score === 0) return;
+
+        try {
+            const scoresCollection = collection(firestore, 'games', 'snake', 'scores');
+            await addDocumentNonBlocking(scoresCollection, {
+                userId: user.uid,
+                userName: user.displayName || 'Anonymous',
+                userImage: user.photoURL,
+                score: score,
+                createdAt: serverTimestamp(),
+            });
+            setHasSubmittedScore(true);
+            toast({
+              title: "Score Submitted!",
+              description: `Your score of ${score} has been saved.`,
+            });
+        } catch (error) {
+            console.error("Error submitting score:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not submit your score.",
+            });
+        }
+    }, [user, firestore, score, toast, hasSubmittedScore]);
 
     const resetGame = () => {
         setSnake([{ x: 10, y: 10 }]);
@@ -31,7 +66,18 @@ export function SnakeGame() {
         setDirection('RIGHT');
         setIsGameOver(false);
         setScore(0);
+        setHasSubmittedScore(false);
     };
+
+    const handleDirectionChange = useCallback((newDirection: Direction) => {
+        const oppositeDirections: Record<Direction, Direction> = {
+            'UP': 'DOWN', 'DOWN': 'UP', 'LEFT': 'RIGHT', 'RIGHT': 'LEFT'
+        };
+        // This logic is tricky with fast inputs, so we check against the direction in state
+        setDirection(currentDirection => 
+            currentDirection === oppositeDirections[newDirection] ? currentDirection : newDirection
+        );
+    }, []);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -45,50 +91,54 @@ export function SnakeGame() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [direction]);
+    }, [handleDirectionChange]);
 
     useEffect(() => {
-        if (isGameOver) return;
+        if (isGameOver) {
+            if (!hasSubmittedScore) {
+                submitScore();
+            }
+            return;
+        };
 
         const gameLoop = setInterval(() => {
-            const newSnake = [...snake];
-            const head = { ...newSnake[0] };
+            setSnake(prevSnake => {
+                const newSnake = [...prevSnake];
+                const head = { ...newSnake[0] };
 
-            switch (direction) {
-                case 'UP': head.y -= 1; break;
-                case 'DOWN': head.y += 1; break;
-                case 'LEFT': head.x -= 1; break;
-                case 'RIGHT': head.x += 1; break;
-            }
+                switch (direction) {
+                    case 'UP': head.y -= 1; break;
+                    case 'DOWN': head.y += 1; break;
+                    case 'LEFT': head.x -= 1; break;
+                    case 'RIGHT': head.x += 1; break;
+                }
 
-            // Check for game over
-            if (
-                head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE ||
-                newSnake.some(segment => segment.x === head.x && segment.y === head.y)
-            ) {
-                setIsGameOver(true);
-                return;
-            }
+                if (
+                    head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE ||
+                    newSnake.some(segment => segment.x === head.x && segment.y === head.y)
+                ) {
+                    setIsGameOver(true);
+                    return prevSnake;
+                }
 
-            newSnake.unshift(head);
+                newSnake.unshift(head);
 
-            // Check for food
-            if (head.x === food.x && head.y === food.y) {
-                setScore(s => s + 1);
-                let newFoodPosition;
-                do {
-                    newFoodPosition = getRandomCoordinate();
-                } while (newSnake.some(segment => segment.x === newFoodPosition.x && segment.y === newFoodPosition.y));
-                setFood(newFoodPosition);
-            } else {
-                newSnake.pop();
-            }
-
-            setSnake(newSnake);
+                if (head.x === food.x && head.y === food.y) {
+                    setScore(s => s + 10);
+                    let newFoodPosition;
+                    do {
+                        newFoodPosition = getRandomCoordinate();
+                    } while (newSnake.some(segment => segment.x === newFoodPosition.x && segment.y === newFoodPosition.y));
+                    setFood(newFoodPosition);
+                } else {
+                    newSnake.pop();
+                }
+                return newSnake;
+            });
         }, 150);
 
         return () => clearInterval(gameLoop);
-    }, [snake, direction, food, isGameOver]);
+    }, [snake, direction, food, isGameOver, hasSubmittedScore, submitScore]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -98,70 +148,60 @@ export function SnakeGame() {
 
         ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        // Draw grid
-        ctx.strokeStyle = 'hsl(var(--muted) / 0.5)';
-        for (let i = 0; i < GRID_SIZE; i++) {
-            for (let j = 0; j < GRID_SIZE; j++) {
-                ctx.strokeRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-            }
-        }
+        ctx.fillStyle = 'hsl(var(--card))';
+        ctx.fillRect(0,0, CANVAS_SIZE, CANVAS_SIZE);
 
-        // Draw snake
         snake.forEach((segment, index) => {
             ctx.fillStyle = index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.7)';
-            ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE -1, CELL_SIZE -1);
         });
 
-        // Draw food
         ctx.fillStyle = 'hsl(var(--destructive))';
         ctx.fillRect(food.x * CELL_SIZE, food.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
     }, [snake, food]);
     
-    const handleDirectionChange = (newDirection: Direction) => {
-        const oppositeDirections: Record<Direction, Direction> = {
-            'UP': 'DOWN', 'DOWN': 'UP', 'LEFT': 'RIGHT', 'RIGHT': 'LEFT'
-        };
-        if (direction !== oppositeDirections[newDirection]) {
-            setDirection(newDirection);
-        }
-    };
-
-
     return (
-        <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-                <canvas
-                    ref={canvasRef}
-                    width={CANVAS_SIZE}
-                    height={CANVAS_SIZE}
-                    className="rounded-md bg-card-foreground/5"
-                />
-                {isGameOver && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
-                        <p className="text-3xl font-bold text-destructive">Game Over</p>
-                        <Button onClick={resetGame} size="sm" className="mt-4">
-                            <RotateCcw className="w-4 h-4 mr-2"/>
-                            Play Again
-                        </Button>
-                    </div>
-                )}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-4">
+                <div className="relative">
+                    <canvas
+                        ref={canvasRef}
+                        width={CANVAS_SIZE}
+                        height={CANVAS_SIZE}
+                        className="rounded-md border"
+                    />
+                    {isGameOver && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">
+                            <p className="text-3xl font-bold text-destructive">Game Over</p>
+                            <Button onClick={resetGame} size="sm" className="mt-4">
+                                <RotateCcw className="w-4 h-4 mr-2"/>
+                                Play Again
+                            </Button>
+                        </div>
+                    )}
+                </div>
+                 <div className="flex items-center justify-between w-full max-w-sm">
+                    <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
+                    <Button onClick={resetGame} size="sm" variant="outline">
+                        <RotateCcw className="w-4 h-4 mr-2"/>
+                        Reset
+                    </Button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 md:hidden">
+                    <div></div>
+                    <Button size="icon" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
+                    <div></div>
+                    <Button size="icon" onClick={() => handleDirectionChange('LEFT')}><ArrowLeft /></Button>
+                    <Button size="icon" onClick={() => handleDirectionChange('DOWN')}><ArrowDown /></Button>
+                    <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
+                </div>
             </div>
-             <div className="flex items-center justify-between w-full">
-                <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
-                <Button onClick={resetGame} size="sm" variant="outline">
-                    <RotateCcw className="w-4 h-4 mr-2"/>
-                    Reset
-                </Button>
-            </div>
-            <div className="grid grid-cols-3 gap-2 md:hidden">
-                <div></div>
-                <Button size="icon" onClick={() => handleDirectionChange('UP')}><ArrowUp /></Button>
-                <div></div>
-                <Button size="icon" onClick={() => handleDirectionChange('LEFT')}><ArrowLeft /></Button>
-                <Button size="icon" onClick={() => handleDirectionChange('DOWN')}><ArrowDown /></Button>
-                <Button size="icon" onClick={() => handleDirectionChange('RIGHT')}><ArrowRight /></Button>
+            <div className="col-span-1">
+                <Leaderboard gameId="snake" />
             </div>
         </div>
     );
 }
+
+    

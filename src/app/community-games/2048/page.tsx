@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 export default function Game2048Page() {
   return (
     <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <CardTitle>2048</CardTitle>
-          <CardDescription>Use arrow keys to slide tiles. Combine them to reach 2048!</CardDescription>
+          <CardDescription>Use arrow keys or swipe to slide tiles. Combine them to reach 2048!</CardDescription>
         </CardHeader>
         <CardContent>
           <Game2048 />
@@ -18,3 +18,5 @@ export default function Game2048Page() {
     </div>
   );
 }
+
+    
