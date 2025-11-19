@@ -40,7 +40,7 @@ export function ArcadeIntroAnimation() {
             }, parseFloat(icon.popDelay) * 1000)
         );
 
-        // Reset animation for continuous looping effect if needed
+        // Reset animation for continuous looping effect
         const animationDuration = 6000; // Corresponds to fly-past duration + buffer
         const interval = setInterval(() => {
             setIcons(initialIcons.map(i => ({...i, popped: false})));
@@ -50,6 +50,8 @@ export function ArcadeIntroAnimation() {
             timers.forEach(clearTimeout);
             clearInterval(interval);
         };
+        // By passing an empty dependency array, this effect runs only once on mount and cleans up on unmount.
+        // The interval handles the looping state reset internally.
     }, []);
 
   return (
