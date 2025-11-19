@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical } from 'lucide-react';
 import Link from 'next/link';
 
 const SnakeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -53,6 +53,18 @@ const games = [
         description: 'Try to get three in a row against the AI.',
         href: '/community-games/tic-tac-toe',
         icon: TicTacToeIcon,
+    },
+    {
+        name: 'Flappy Bird',
+        description: 'Flap your way through the pipes.',
+        href: '/community-games/flappy-bird',
+        icon: Bird,
+    },
+    {
+        name: 'Tetris',
+        description: 'Fit the falling blocks together.',
+        href: '/community-games/tetris',
+        icon: AlignEndVertical,
     },
 ];
 
