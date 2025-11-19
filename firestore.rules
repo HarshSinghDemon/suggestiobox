@@ -3,74 +3,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
-    function isAdmin() {
-      // Use exists() for safety. The user document might not exist.
-      return request.auth != null && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    function isCreator() {
-      return request.auth != null && request.auth.token.email == 'harshroop100@gmail.com';
-    }
-
-    function isUser() {
-       return request.auth != null;
-    }
-
     match /{document=**} {
-      allow read, write: if false;
-    }
-    
-    match /users/{userId} {
-      allow get: if isUser();
-      allow list: if isUser();
-      allow create: if isOwner(userId);
-      
-      // A user can update their own profile, but not their role.
-      // Only an admin can update another user's role.
-      allow update: if (isOwner(userId) && !('role' in request.resource.data))
-                     || (isAdmin() && request.resource.data.keys().hasOnly(['role']));
-
-      // Only an admin can delete a user document.
-      allow delete: if isAdmin() || isCreator();
-    }
-    
-    match /suggestions/{suggestionId} {
-        allow read: if isUser();
-        allow create: if isUser();
-        allow update, delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
-    }
-    
-     match /assignments/{assignmentId} {
-        allow read: if isUser();
-        allow create: if isUser();
-        allow update, delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
-    }
-
-    match /messages/{messageId} {
-        allow read: if isUser();
-        allow create: if isUser();
-        allow delete: if isOwner(resource.data.userId) || isAdmin() || isCreator();
-    }
-
-    match /games/{gameId}/scores/{scoreId} {
-      allow read: if isUser();
-      allow list: if isUser();
-      allow create: if isOwner(request.resource.data.userId);
-    }
-
-    match /musicRequests/{requestId} {
-      allow read: if isAdmin() || isCreator();
-      allow list: if isAdmin() || isCreator();
-      allow create: if isUser();
-      allow delete: if isAdmin() || isCreator();
+      allow read, write: true;
     }
   }
 }
