@@ -3,14 +3,15 @@
 
 import { Gamepad2, Ghost, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
-const icons = [
-  { icon: <Ghost className="w-8 h-8 text-pink-500" />, style: 'animate-float-1' },
-  { icon: <Gamepad2 className="w-8 h-8 text-cyan-400" />, style: 'animate-float-2' },
-  { icon: <Bot className="w-8 h-8 text-lime-400" />, style: 'animate-float-3' },
-  { icon: <Ghost className="w-8 h-8 text-orange-500" />, style: 'animate-float-4' },
-  { icon: <Gamepad2 className="w-8 h-8 text-yellow-400" />, style: 'animate-float-1' },
-  { icon: <Bot className="w-8 h-8 text-purple-500" />, style: 'animate-float-2' },
+const initialIcons = [
+  { id: 1, icon: <Ghost className="w-8 h-8 text-pink-500" />, style: 'animate-float-1', popped: false, popDelay: '1.8s' },
+  { id: 2, icon: <Gamepad2 className="w-8 h-8 text-cyan-400" />, style: 'animate-float-2', popped: false, popDelay: '2.2s' },
+  { id: 3, icon: <Bot className="w-8 h-8 text-lime-400" />, style: 'animate-float-3', popped: false, popDelay: '2.6s' },
+  { id: 4, icon: <Ghost className="w-8 h-8 text-orange-500" />, style: 'animate-float-4', popped: false, popDelay: '3.0s' },
+  { id: 5, icon: <Gamepad2 className="w-8 h-8 text-yellow-400" />, style: 'animate-float-1', popped: false, popDelay: '3.4s' },
+  { id: 6, icon: <Bot className="w-8 h-8 text-purple-500" />, style: 'animate-float-2', popped: false, popDelay: '3.8s' },
 ];
 
 const ShooterPlane = () => (
@@ -28,18 +29,42 @@ const ShooterPlane = () => (
 
 
 export function ArcadeIntroAnimation() {
+    const [icons, setIcons] = useState(initialIcons);
+
+    useEffect(() => {
+        const timers = icons.map(icon => 
+            setTimeout(() => {
+                setIcons(prevIcons => 
+                    prevIcons.map(i => i.id === icon.id ? { ...i, popped: true } : i)
+                );
+            }, parseFloat(icon.popDelay) * 1000)
+        );
+
+        // Reset animation for continuous looping effect if needed
+        const animationDuration = 6000; // Corresponds to fly-past duration + buffer
+        const interval = setInterval(() => {
+            setIcons(initialIcons.map(i => ({...i, popped: false})));
+        }, animationDuration);
+
+        return () => {
+            timers.forEach(clearTimeout);
+            clearInterval(interval);
+        };
+    }, []);
+
   return (
     <div className="relative w-full h-24 overflow-hidden">
-      {icons.map((item, index) => (
+      {icons.map((item) => (
         <div
-          key={index}
+          key={item.id}
           className={cn(
-            'absolute',
-            item.style
+            'absolute transition-opacity duration-300',
+            item.style,
+            item.popped && 'animate-pop'
           )}
           style={{
-            left: `${10 + index * 15}%`,
-            animationDelay: `${index * 0.5}s`,
+            left: `${10 + (item.id -1) * 15}%`,
+            animationDelay: `${(item.id -1) * 0.2}s`,
           }}
         >
           {item.icon}
