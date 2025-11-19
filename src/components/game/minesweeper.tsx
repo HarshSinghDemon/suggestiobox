@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Bomb, Flag } from 'lucide-react';
+import { Bomb, Flag, MousePointerClick, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
@@ -20,7 +20,9 @@ type Cell = {
     adjacentMines: number;
 };
 
-const createBoard = (size: number, mines: number): Cell[][] => {
+type Mode = 'reveal' | 'flag';
+
+const createBoard = (size: number, mines: number, firstClick: {r: number, c: number}): Cell[][] => {
     const board: Cell[][] = Array.from({ length: size }, () =>
         Array.from({ length: size }, () => ({
             isMine: false, isRevealed: false, isFlagged: false, adjacentMines: 0
@@ -31,7 +33,8 @@ const createBoard = (size: number, mines: number): Cell[][] => {
     while (minesPlaced < mines) {
         const row = Math.floor(Math.random() * size);
         const col = Math.floor(Math.random() * size);
-        if (!board[row][col].isMine) {
+        // Ensure first click is not a mine
+        if (!board[row][col].isMine && (row !== firstClick.r || col !== firstClick.c)) {
             board[row][col].isMine = true;
             minesPlaced++;
         }
@@ -59,40 +62,45 @@ const createBoard = (size: number, mines: number): Cell[][] => {
 
 export function MinesweeperGame() {
     const [level, setLevel] = useState<Level>('easy');
-    const [board, setBoard] = useState(createBoard(LEVELS[level].size, LEVELS[level].mines));
+    const [board, setBoard] = useState<Cell[][] | null>(null);
     const [isGameOver, setIsGameOver] = useState(false);
     const [isWinner, setIsWinner] = useState(false);
     const [flagsPlaced, setFlagsPlaced] = useState(0);
+    const [mode, setMode] = useState<Mode>('reveal');
+    const [firstClick, setFirstClick] = useState(true);
 
     const resetGame = (newLevel: Level) => {
         setLevel(newLevel);
-        setBoard(createBoard(LEVELS[newLevel].size, LEVELS[newLevel].mines));
+        setBoard(null);
         setIsGameOver(false);
         setIsWinner(false);
         setFlagsPlaced(0);
+        setFirstClick(true);
     };
     
     useEffect(() => {
+        if (!board || isGameOver || firstClick) return;
+
         const revealedCount = board.flat().filter(cell => cell.isRevealed).length;
-        if (!isGameOver && revealedCount > 0 && revealedCount === (LEVELS[level].size * LEVELS[level].size - LEVELS[level].mines)) {
+        if (revealedCount === (LEVELS[level].size * LEVELS[level].size - LEVELS[level].mines)) {
             setIsWinner(true);
             setIsGameOver(true);
         }
-    }, [board, level, isGameOver]);
+    }, [board, level, isGameOver, firstClick]);
 
 
-    const revealCell = (r: number, c: number, newBoard: Cell[][]) => {
-        if (r < 0 || r >= LEVELS[level].size || c < 0 || c >= LEVELS[level].size || newBoard[r][c].isRevealed || newBoard[r][c].isFlagged) {
+    const revealCell = (r: number, c: number, currentBoard: Cell[][]) => {
+        if (r < 0 || r >= LEVELS[level].size || c < 0 || c >= LEVELS[level].size || currentBoard[r][c].isRevealed || currentBoard[r][c].isFlagged) {
             return;
         }
 
-        newBoard[r][c].isRevealed = true;
+        currentBoard[r][c].isRevealed = true;
 
-        if (newBoard[r][c].adjacentMines === 0 && !newBoard[r][c].isMine) {
+        if (currentBoard[r][c].adjacentMines === 0 && !currentBoard[r][c].isMine) {
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
                     if (dr !== 0 || dc !== 0) {
-                        revealCell(r + dr, c + dc, newBoard);
+                        revealCell(r + dr, c + dc, currentBoard);
                     }
                 }
             }
@@ -100,51 +108,64 @@ export function MinesweeperGame() {
     };
     
     const handleClick = (r: number, c: number) => {
-        if (isGameOver || board[r][c].isFlagged || board[r][c].isRevealed) return;
-
-        if (board[r][c].isMine) {
-            setIsGameOver(true);
-            const newBoard = board.map(row => row.map(cell => ({ ...cell, isRevealed: cell.isMine ? true : cell.isRevealed })));
+        if (isGameOver) return;
+        
+        if (firstClick) {
+            const newBoard = createBoard(LEVELS[level].size, LEVELS[level].mines, {r, c});
+            revealCell(r, c, newBoard);
             setBoard(newBoard);
+            setFirstClick(false);
             return;
         }
 
-        const newBoard = board.map(row => [...row]);
-        revealCell(r, c, newBoard);
-        setBoard(newBoard);
-    };
+        if(!board) return;
 
-    const handleRightClick = (e: React.MouseEvent, r: number, c: number) => {
-        e.preventDefault();
-        if (isGameOver || board[r][c].isRevealed) return;
+        const newBoard = board.map(row => row.map(cell => ({...cell})));
 
-        const newBoard = [...board];
-        const cell = { ...newBoard[r][c] };
-
-        if (cell.isFlagged) {
-            cell.isFlagged = false;
-            setFlagsPlaced(f => f - 1);
+        if (mode === 'flag' || newBoard[r][c].isRevealed) {
+            handleFlag(r, c, newBoard);
         } else {
-            cell.isFlagged = true;
-            setFlagsPlaced(f => f + 1);
+            if (newBoard[r][c].isFlagged) return;
+
+            if (newBoard[r][c].isMine) {
+                setIsGameOver(true);
+                const finalBoard = newBoard.map(row => row.map(cell => ({ ...cell, isRevealed: cell.isMine ? true : cell.isRevealed })));
+                setBoard(finalBoard);
+                return;
+            }
+            revealCell(r, c, newBoard);
         }
-        
-        newBoard[r] = [...newBoard[r]];
-        newBoard[r][c] = cell;
         setBoard(newBoard);
     };
+
+    const handleFlag = (r: number, c: number, boardToUpdate: Cell[][]) => {
+        if (boardToUpdate[r][c].isRevealed) return;
+        
+        boardToUpdate[r][c].isFlagged = !boardToUpdate[r][c].isFlagged;
+        setFlagsPlaced(f => f + (boardToUpdate[r][c].isFlagged ? 1 : -1));
+    };
+
+    const handleContextMenu = (e: React.MouseEvent, r: number, c: number) => {
+        e.preventDefault();
+        if(firstClick || !board || isGameOver) return;
+        const newBoard = board.map(row => row.map(cell => ({...cell})));
+        handleFlag(r,c, newBoard);
+        setBoard(newBoard);
+    }
     
     const numberColors = [
         "text-blue-500", "text-green-500", "text-red-500", "text-purple-500",
         "text-orange-500", "text-yellow-500", "text-pink-500", "text-indigo-500"
     ];
+    
+    const cellSize = `w-7 h-7 sm:w-8 sm:h-8`;
 
     return (
         <div className="flex flex-col items-center gap-4">
-            <div className="flex justify-between w-full">
+            <div className="flex justify-between w-full items-center">
                 <div className='flex items-center gap-2'>
                     <Bomb className="w-5 h-5"/>
-                    <span className="font-mono">{LEVELS[level].mines - flagsPlaced}</span>
+                    <span className="font-mono text-lg">{LEVELS[level].mines - flagsPlaced}</span>
                 </div>
                  <Select value={level} onValueChange={(val: Level) => resetGame(val)}>
                     <SelectTrigger className="w-[120px]">
@@ -156,25 +177,59 @@ export function MinesweeperGame() {
                         <SelectItem value="hard">Hard</SelectItem>
                     </SelectContent>
                 </Select>
+                 <Button variant="outline" size="sm" onClick={() => resetGame(level)}>
+                    <RotateCcw className="w-4 h-4"/>
+                 </Button>
             </div>
 
-            <div className={cn("grid gap-0.5 bg-muted-foreground", `grid-cols-${LEVELS[level].size}`)} style={{gridTemplateColumns: `repeat(${LEVELS[level].size}, minmax(0, 1fr))`}}>
-                {board.map((row, r) => row.map((cell, c) => (
+            <div 
+                className={cn("grid gap-0.5 bg-muted-foreground/50 p-1 rounded-md")} 
+                style={{gridTemplateColumns: `repeat(${LEVELS[level].size}, minmax(0, 1fr))`}}
+            >
+                {board ? board.map((row, r) => row.map((cell, c) => (
                     <button
                         key={`${r}-${c}`}
                         className={cn(
-                            "w-8 h-8 flex items-center justify-center font-bold text-lg",
+                            "flex items-center justify-center font-bold text-lg rounded-sm",
+                             cellSize,
                             cell.isRevealed ? 'bg-muted' : 'bg-muted/50 hover:bg-muted/70',
+                            isGameOver && cell.isMine && !cell.isFlagged ? 'bg-red-500/50' : '',
+                            isGameOver && cell.isFlagged && !cell.isMine ? 'bg-yellow-500/50' : '',
                         )}
                         onClick={() => handleClick(r, c)}
-                        onContextMenu={(e) => handleRightClick(e, r, c)}
+                        onContextMenu={(e) => handleContextMenu(e, r, c)}
                         disabled={isGameOver && !cell.isMine}
                     >
                         {cell.isRevealed ? (
-                            cell.isMine ? <Bomb className="w-5 h-5 text-destructive" /> : (cell.adjacentMines > 0 && <span className={cn(numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
+                            cell.isMine ? <Bomb className="w-5 h-5 text-background" /> : (cell.adjacentMines > 0 && <span className={cn(numberColors[cell.adjacentMines-1])}>{cell.adjacentMines}</span>)
                         ) : cell.isFlagged ? <Flag className="w-5 h-5" /> : ''}
                     </button>
-                )))}
+                ))) : (
+                    <div 
+                        className="flex items-center justify-center text-center text-muted-foreground p-8"
+                        style={{gridColumn: `span ${LEVELS[level].size}`}}
+                    >
+                        Click any cell to start
+                    </div>
+                )}
+            </div>
+
+            <div className='flex items-center gap-2 md:hidden'>
+                <span className='text-sm'>Mode:</span>
+                <Button
+                    size="sm"
+                    variant={mode === 'reveal' ? 'secondary' : 'ghost'}
+                    onClick={() => setMode('reveal')}
+                >
+                    <MousePointerClick className="w-4 h-4 mr-2" /> Reveal
+                </Button>
+                <Button
+                    size="sm"
+                    variant={mode === 'flag' ? 'secondary' : 'ghost'}
+                    onClick={() => setMode('flag')}
+                >
+                    <Flag className="w-4 h-4 mr-2" /> Flag
+                </Button>
             </div>
 
             {isGameOver && (

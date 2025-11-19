@@ -1,9 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain } from 'lucide-react';
 import Link from 'next/link';
 
 const SnakeIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 12H12.01"/><path d="M16 8H16.01"/><path d="M12 16H12.01"/><path d="M12 8H12.01"/><path d="M8 12H8.01"/><path d="M16 12H16.01"/><path d="M12 20H12.01"/><path d="M4 16H4.01"/><path d="M8 16H8.01"/><path d="M8 20H8.01"/><path d="M4 12H4.01"/><path d="M4 8H4.01"/><path d="M8 8H8.01"/><path d="M16 16H16.01"/><path d="M20 12H20.01"/><path d="M20 16H20.01"/></svg>
+);
+
+const TicTacToeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
 );
 
 
@@ -36,7 +40,19 @@ const games = [
         name: '2048',
         description: 'Slide tiles to get the 2048 tile.',
         href: '/community-games/2048',
-        icon: BotIcon,
+        icon: Brain,
+    },
+    {
+        name: 'Rock Paper Scissors',
+        description: 'Challenge the computer in a classic match.',
+        href: '/community-games/rock-paper-scissors',
+        icon: Hand,
+    },
+    {
+        name: 'Tic-Tac-Toe',
+        description: 'Try to get three in a row against the AI.',
+        href: '/community-games/tic-tac-toe',
+        icon: TicTacToeIcon,
     },
 ];
 

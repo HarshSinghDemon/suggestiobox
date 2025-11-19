@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, RotateCcw } from 'lucide-react';
 
 const GRID_SIZE = 20;
 const CANVAS_SIZE = 400;
@@ -36,10 +36,10 @@ export function SnakeGame() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             switch (e.key) {
-                case 'ArrowUp': if(direction !== 'DOWN') setDirection('UP'); break;
-                case 'ArrowDown': if(direction !== 'UP') setDirection('DOWN'); break;
-                case 'ArrowLeft': if(direction !== 'RIGHT') setDirection('LEFT'); break;
-                case 'ArrowRight': if(direction !== 'LEFT') setDirection('RIGHT'); break;
+                case 'ArrowUp': handleDirectionChange('UP'); break;
+                case 'ArrowDown': handleDirectionChange('DOWN'); break;
+                case 'ArrowLeft': handleDirectionChange('LEFT'); break;
+                case 'ArrowRight': handleDirectionChange('RIGHT'); break;
             }
         };
 
@@ -98,9 +98,17 @@ export function SnakeGame() {
 
         ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
+        // Draw grid
+        ctx.strokeStyle = 'hsl(var(--muted) / 0.5)';
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                ctx.strokeRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+        }
+
         // Draw snake
         snake.forEach((segment, index) => {
-            ctx.fillStyle = index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.8)';
+            ctx.fillStyle = index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.7)';
             ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
         });
 
@@ -122,20 +130,29 @@ export function SnakeGame() {
 
     return (
         <div className="flex flex-col items-center gap-4">
-            <canvas
-                ref={canvasRef}
-                width={CANVAS_SIZE}
-                height={CANVAS_SIZE}
-                className="rounded-md bg-muted"
-            />
-             <div className="flex items-center justify-between w-full">
-                <p className="font-semibold">Score: {score}</p>
+            <div className="relative">
+                <canvas
+                    ref={canvasRef}
+                    width={CANVAS_SIZE}
+                    height={CANVAS_SIZE}
+                    className="rounded-md bg-card-foreground/5"
+                />
                 {isGameOver && (
-                    <div className="text-center">
-                        <p className="font-bold text-destructive">Game Over</p>
-                        <Button onClick={resetGame} size="sm" className="mt-1">Play Again</Button>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
+                        <p className="text-3xl font-bold text-destructive">Game Over</p>
+                        <Button onClick={resetGame} size="sm" className="mt-4">
+                            <RotateCcw className="w-4 h-4 mr-2"/>
+                            Play Again
+                        </Button>
                     </div>
                 )}
+            </div>
+             <div className="flex items-center justify-between w-full">
+                <p className="text-lg font-semibold">Score: <span className="font-bold text-primary">{score}</span></p>
+                <Button onClick={resetGame} size="sm" variant="outline">
+                    <RotateCcw className="w-4 h-4 mr-2"/>
+                    Reset
+                </Button>
             </div>
             <div className="grid grid-cols-3 gap-2 md:hidden">
                 <div></div>
