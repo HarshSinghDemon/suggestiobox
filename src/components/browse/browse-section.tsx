@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useMemo } from 'react';
 import {
   Tabs,
   TabsContent,
@@ -9,12 +11,14 @@ import {
 import { ItemCard } from './item-card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Suggestion, Assignment } from '@/lib/types';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { SemesterFilter } from './semester-filter';
 
 type BrowseSectionProps = {
   activeTab: 'suggestions' | 'assignments';
+  activeSemester?: '1st' | '3rd' | '5th';
 };
 
 function ItemGridSkeleton() {
@@ -34,6 +38,7 @@ function ItemGridSkeleton() {
 
 export function BrowseSection({
   activeTab,
+  activeSemester,
 }: BrowseSectionProps) {
   const firestore = useFirestore();
   const router = useRouter();
@@ -41,20 +46,36 @@ export function BrowseSection({
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc'), limit(50));
+    return query(collection(firestore, 'suggestions'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
   const assignmentsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc'), limit(50));
+    return query(collection(firestore, 'assignments'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
   const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
   const { data: assignments, isLoading: assignmentsLoading } = useCollection<Assignment>(assignmentsQuery);
 
+  const filteredSuggestions = useMemo(() => {
+    if (!suggestions) return [];
+    if (!activeSemester) return suggestions;
+    return suggestions.filter(item => item.semester === activeSemester);
+  }, [suggestions, activeSemester]);
+
+  const filteredAssignments = useMemo(() => {
+    if (!assignments) return [];
+    if (!activeSemester) return assignments;
+    return assignments.filter(item => item.semester === activeSemester);
+  }, [assignments, activeSemester]);
+
+
   const handleTabChange = (value: string) => {
     const params = new URLSearchParams();
     params.set('tab', value);
+    if (activeSemester) {
+      params.set('semester', activeSemester);
+    }
     router.push(`${pathname}?${params.toString()}`);
   };
   
@@ -69,34 +90,35 @@ export function BrowseSection({
           <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
         </TabsList>
+        <SemesterFilter />
       </div>
       <TabsContent value="suggestions">
         {suggestionsLoading ? (
             <ItemGridSkeleton />
-        ) : suggestions && suggestions.length > 0 ? (
+        ) : filteredSuggestions && filteredSuggestions.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {suggestions.map((item) => (
+            {filteredSuggestions.map((item) => (
               <ItemCard key={item.id} item={item} type="suggestion" variant={getRandomVariant()} />
             ))}
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No suggestions found.
+            No suggestions found for this semester.
           </p>
         )}
       </TabsContent>
       <TabsContent value="assignments">
       {assignmentsLoading ? (
           <ItemGridSkeleton />
-      ) : assignments && assignments.length > 0 ? (
+      ) : filteredAssignments && filteredAssignments.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {assignments.map((item) => (
+            {filteredAssignments.map((item) => (
               <ItemCard key={item.id} item={item} type="assignment" variant={getRandomVariant()} />
             ))}
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No assignments found.
+            No assignments found for this semester.
           </p>
         )}
       </TabsContent>

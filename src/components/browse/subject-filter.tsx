@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -7,35 +8,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SUBJECTS } from '@/lib/constants';
-import { useRouter, usePathname } from 'next/navigation';
+import { SEMESTER_SUBJECTS } from '@/lib/constants';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 type SubjectFilterProps = {
-  activeTab: 'suggestions' | 'assignments';
-  activeSubject?: string;
+  activeSemester: '1st' | '3rd' | '5th';
 };
 
-export function SubjectFilter({ activeTab, activeSubject }: SubjectFilterProps) {
+export function SubjectFilter({ activeSemester }: SubjectFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const handleSubjectChange = (subject: string) => {
-    const params = new URLSearchParams();
-    params.set('tab', activeTab);
+    const params = new URLSearchParams(searchParams);
     if (subject && subject !== 'all') {
       params.set('subject', subject);
+    } else {
+      params.delete('subject');
     }
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const subjects = activeSemester ? SEMESTER_SUBJECTS[activeSemester] : [];
+
   return (
-    <Select onValueChange={handleSubjectChange} defaultValue={activeSubject || 'all'}>
+    <Select
+      onValueChange={handleSubjectChange}
+      defaultValue={searchParams.get('subject') || 'all'}
+      disabled={!activeSemester}
+    >
       <SelectTrigger className="w-full md:w-[240px]">
         <SelectValue placeholder="Filter by subject..." />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All Subjects</SelectItem>
-        {SUBJECTS.map((subject) => (
+        {subjects.map((subject) => (
           <SelectItem key={subject} value={subject}>
             {subject}
           </SelectItem>
