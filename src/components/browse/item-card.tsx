@@ -33,7 +33,7 @@ export function ItemCard({ item, type }: ItemCardProps) {
   const detailsUrl = `/${type}s/${id}`;
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
+    <Card className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:border-primary/50 hover:-translate-y-2">
       <CardHeader>
         <div className="flex items-start gap-4">
           <SubjectIcon subject={subject} className="w-8 h-8 mt-1 text-primary"/>

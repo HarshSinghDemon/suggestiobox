@@ -86,8 +86,8 @@ export default function CommunityGamePage() {
 
         <div className="grid grid-cols-1 gap-6 mt-12 md:grid-cols-2 lg:grid-cols-3">
             {games.map((game) => (
-                <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-1">
-                    <Card className="flex flex-col h-full hover:shadow-xl hover:border-primary/50">
+                <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-2">
+                    <Card className="flex flex-col h-full transition-shadow duration-300 hover:shadow-xl hover:border-primary/50">
                         <CardHeader className="flex flex-row items-center gap-4">
                             <game.icon className="w-10 h-10 text-primary" />
                             <div>
