@@ -18,19 +18,17 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // This effect runs only on the client side
     const isWindows = navigator.userAgent.includes('Win');
     if (isWindows) {
       document.body.style.overflow = 'hidden';
     }
 
-    // Cleanup function to restore scrolling when the component unmounts
     return () => {
       if (isWindows) {
         document.body.style.overflow = 'auto';
       }
     };
-  }, []); // Empty dependency array means this runs once when the component mounts
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
@@ -41,7 +39,7 @@ export default function Home() {
         speed="fast"
         colors={['#FFD700', '#FFA500', '#FF4500', '#DC143C', '#B22222']}
       >
-        <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
+        <div className="relative z-10 flex flex-col items-center justify-center space-y-6 md:space-y-8">
         <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_2px_hsl(45_100%_50%/0.6),0_4px_hsl(35_100%_50%/0.5),0_6px_hsl(25_100%_50%/0.4),0_8px_hsl(15_100%_50%/0.3),0_10px_15px_hsl(260_80%_40%/0.2)]">
             <span className="text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-red-500 to-yellow-300 bg-[length:200%_auto] animate-shine">
                 The
@@ -51,31 +49,31 @@ export default function Home() {
                 Box
             </span>
           </h1>
-          <div className="max-w-lg space-y-4">
-            <p className="text-lg text-foreground/80">
+          <div className="max-w-md space-y-4 md:max-w-lg">
+            <p className="text-base md:text-lg text-foreground/80">
               Your hub for academic success and community fun. Share notes, drop suggestions, and connect with classmates in our community chat.
             </p>
-            <p className="text-lg text-foreground/80">
+            <p className="text-base md:text-lg text-foreground/80">
               When it's time for a break, jump into the arcade for some retro gaming. Learn, share, and play together!
             </p>
           </div>
           <div className="flex flex-col items-center justify-center w-full gap-4">
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105">
+            <div className="flex flex-col items-center w-full gap-4 sm:flex-row sm:justify-center">
+              <Button asChild size="lg" className="w-full px-8 py-6 text-lg transition-all duration-300 rounded-full sm:w-auto shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/30 hover:scale-105">
                   <Link href="/suggestions/new" prefetch={true}>
                       Give a Suggestion
                       <ChevronRight className="w-6 h-6 ml-2" />
                   </Link>
               </Button>
-              <Button asChild size="lg" variant="secondary" className="rounded-full px-8 py-6 text-lg shadow-lg hover:shadow-muted/30 transition-all duration-300 hover:scale-105">
+              <Button asChild size="lg" variant="secondary" className="w-full px-8 py-6 text-lg transition-all duration-300 rounded-full sm:w-auto shadow-lg hover:shadow-muted/30 hover:scale-105">
                   <Link href="/browse" prefetch={true}>
                       Explore Content
                       <ChevronRight className="w-6 h-6 ml-2" />
                   </Link>
               </Button>
             </div>
-            <div onClick={handleGameClick}>
-                <Button asChild size="lg" className="rounded-full px-8 py-6 text-lg font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-orange-500/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white bg-[length:200%_auto] animate-wave">
+            <div onClick={handleGameClick} className="w-full sm:w-auto">
+                <Button asChild size="lg" className="w-full px-8 py-6 text-lg rounded-full sm:w-auto font-arcade animate-pulse-scale hover:animate-shake shadow-lg shadow-orange-500/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-white bg-[length:200%_auto] animate-wave">
                     <Link href="/community-game" prefetch={true}>
                         Play Games
                         <Gamepad2 className="w-6 h-6 ml-2" />

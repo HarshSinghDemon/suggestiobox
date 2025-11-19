@@ -23,20 +23,20 @@ const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function AboutAdminPage() {
   return (
-    <div className="container py-12 mx-auto">
+    <div className="container py-8 mx-auto md:py-12">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
           <div className="relative flex justify-center mb-4">
-            <div className="absolute w-32 h-32 rounded-full -inset-1 bg-gradient-to-r from-purple-600 to-yellow-500 blur animate-spin-slow"></div>
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"></div>
             <div className="relative inline-block p-1 bg-background rounded-full">
-                <Avatar className="w-28 h-28">
+                <Avatar className="w-24 h-24 md:w-28 md:h-28">
                     <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
                     <AvatarFallback>HS</AvatarFallback>
                 </Avatar>
             </div>
           </div>
-          <CardTitle className="text-3xl">Harsh Singh</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
+          <CardTitle className="text-2xl md:text-3xl">Harsh Singh</CardTitle>
+          <CardDescription className="text-base md:text-lg text-muted-foreground">
             Site Administrator & Creator
           </CardDescription>
         </CardHeader>
@@ -45,26 +45,26 @@ export default function AboutAdminPage() {
             Harsh is the passionate developer behind this platform, dedicated to building helpful tools for the community. He is committed to ensuring a safe, valuable, and seamless experience for all users.
           </p>
           <div className="pt-4 space-y-4 border-t">
-            <h3 className="text-xl font-semibold text-center">Contact Information</h3>
-            <div className="flex items-center justify-center gap-4">
-              <Mail className="w-5 h-5 text-muted-foreground" />
-              <a href="mailto:harshroop100@gmail.com" className="font-medium hover:underline">
+            <h3 className="text-lg font-semibold text-center md:text-xl">Contact Information</h3>
+            <div className="flex items-center justify-center gap-2 md:gap-4">
+              <Mail className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+              <a href="mailto:harshroop100@gmail.com" className="text-sm font-medium md:text-base hover:underline">
                 harshroop100@gmail.com
               </a>
             </div>
-            <div className="flex items-center justify-center gap-4">
-              <Phone className="w-5 h-5 text-muted-foreground" />
-              <a href="tel:8210294946" className="font-medium hover:underline">
+            <div className="flex items-center justify-center gap-2 md:gap-4">
+              <Phone className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+              <a href="tel:8210294946" className="text-sm font-medium md:text-base hover:underline">
                 8210294946
               </a>
             </div>
-            <div className="flex items-center justify-center gap-4">
-              <InstagramIcon className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center justify-center gap-2 md:gap-4">
+              <InstagramIcon className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
               <a 
                 href="https://www.instagram.com/specifichxrsh" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="font-medium hover:underline"
+                className="text-sm font-medium md:text-base hover:underline"
               >
                 @specifichxrsh
               </a>
