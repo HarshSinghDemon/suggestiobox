@@ -72,6 +72,13 @@ export function Header() {
                 Pookie Contributors
             </Link>
             <Link
+                href="/community-members"
+                className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                prefetch={false}
+            >
+                Community Members
+            </Link>
+            <Link
                 href="/suggestions/new"
                 className="text-sm font-medium transition-colors text-foreground/60 hover:text-foreground/80"
                 prefetch={false}
@@ -122,6 +129,7 @@ export function Header() {
                 <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/community-chat')}><MessageSquare className="w-4 h-4 mr-2" /><span>Community Chat</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/pookie-contributors')}><Trophy className="w-4 h-4 mr-2" /><span>Pookie Contributors</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/community-members')}><Users className="w-4 h-4 mr-2" /><span>Community Members</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
                 <DropdownMenuSeparator />
