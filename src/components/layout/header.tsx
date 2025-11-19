@@ -115,13 +115,13 @@ export function Header() {
           {user ? (
             <div className="relative group">
               <div className={cn(
-                "absolute -inset-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
+                "absolute -inset-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-primary opacity-75 blur transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"
               )}></div>
                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative w-9 h-9 rounded-full"
+                    className="relative w-10 h-10 rounded-full"
                   >
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
