@@ -11,7 +11,7 @@ import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 import sudoku from 'sudoku';
 
-type Level = 'easy' | 'medium' | 'hard' | 'very-hard' | 'insane' | 'inhuman';
+type Level = 'easy' | 'medium' | 'hard' | 'very-hard'; // Removed insane and inhuman as they often timed out
 
 export function SudokuGame() {
     const [level, setLevel] = useState<Level>('easy');
@@ -54,6 +54,9 @@ export function SudokuGame() {
     }, [user, firestore, toast, hasSubmittedScore]);
 
     const createNewPuzzle = useCallback((newLevel: Level) => {
+        // The sudoku library's difficulty is not parameterized, it's random.
+        // We can simulate difficulty by removing more numbers for harder levels,
+        // but for now, we'll just generate a new puzzle.
         const rawPuzzle: (number|null)[] = sudoku.makepuzzle();
         const rawSolution = sudoku.solvepuzzle(rawPuzzle);
 
@@ -69,7 +72,7 @@ export function SudokuGame() {
         const newPuzzle = boardTo2D(rawPuzzle);
         setPuzzle(newPuzzle);
         setPlayerBoard(JSON.parse(JSON.stringify(newPuzzle)));
-        setSolution(boardTo2D(rawSolution));
+        setSolution(boardTo2D(rawSolution!));
         
         setIsGameOver(false);
         setIsWinner(false);
@@ -102,7 +105,7 @@ export function SudokuGame() {
     };
 
     const handleNumberInput = (num: number) => {
-        if (selectedCell && playerBoard) {
+        if (selectedCell && playerBoard && !isGameOver) {
             const newBoard = playerBoard.map(row => [...row]);
             newBoard[selectedCell.r][selectedCell.c] = num;
             setPlayerBoard(newBoard);
@@ -112,6 +115,7 @@ export function SudokuGame() {
             if(isSolved) {
                 setIsWinner(true);
                 setIsGameOver(true);
+                setStartTime(null);
                 const score = Math.max(10, (10000 - time));
                 submitScore(score);
             }
@@ -119,44 +123,60 @@ export function SudokuGame() {
     };
 
     const handleErase = () => {
-        if (selectedCell && playerBoard && puzzle && puzzle[selectedCell.r][selectedCell.c] === 0) {
+        if (selectedCell && playerBoard && puzzle && puzzle[selectedCell.r][selectedCell.c] === 0 && !isGameOver) {
             const newBoard = playerBoard.map(row => [...row]);
             newBoard[selectedCell.r][selectedCell.c] = 0;
             setPlayerBoard(newBoard);
         }
     };
 
-    if (!isClient || !playerBoard) return null;
+    if (!isClient || !playerBoard) {
+      return (
+        <div className="flex justify-center items-center p-8">
+            <RotateCcw className="w-8 h-8 animate-spin" />
+        </div>
+      )
+    }
 
     return (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
-                <div className="grid grid-cols-9 bg-muted-foreground/50 p-1 rounded-md w-full max-w-[450px] aspect-square">
-                    {playerBoard.map((row, r) => row.map((cell, c) => {
-                        const isPuzzleCell = puzzle![r][c] !== 0;
-                        const isSelected = selectedCell?.r === r && selectedCell?.c === c;
-                        const isSameValue = selectedCell && playerBoard[selectedCell.r][selectedCell.c] !== 0 && playerBoard[selectedCell.r][selectedCell.c] === cell;
-                        const isWrong = cell !== 0 && solution && cell !== solution[r][c];
+                <div className="relative">
+                    <div className="grid grid-cols-9 bg-muted-foreground/50 p-1 rounded-md w-full max-w-[450px] aspect-square">
+                        {playerBoard.map((row, r) => row.map((cell, c) => {
+                            const isPuzzleCell = puzzle![r][c] !== 0;
+                            const isSelected = selectedCell?.r === r && selectedCell?.c === c;
+                            const isSameValue = selectedCell && playerBoard[selectedCell.r][selectedCell.c] !== 0 && playerBoard[selectedCell.r][selectedCell.c] === cell;
+                            const isWrong = cell !== 0 && solution && cell !== solution[r][c];
 
-                        return (
-                            <div
-                                key={`${r}-${c}`}
-                                onClick={() => handleCellClick(r, c)}
-                                className={cn(
-                                    "flex items-center justify-center w-full aspect-square text-base sm:text-2xl font-bold cursor-pointer transition-colors",
-                                    "bg-card hover:bg-card-foreground/10",
-                                    (c % 3 === 2 && c !== 8) && "border-r-2 border-r-muted-foreground/50",
-                                    (r % 3 === 2 && r !== 8) && "border-b-2 border-b-muted-foreground/50",
-                                    isSelected && "bg-primary/20",
-                                    isSameValue && "bg-primary/10",
-                                    isPuzzleCell ? "text-foreground" : "text-primary",
-                                    isWrong && !isPuzzleCell && "text-destructive",
-                                )}
-                            >
-                                {cell !== 0 ? cell : ''}
-                            </div>
-                        )
-                    }))}
+                            return (
+                                <div
+                                    key={`${r}-${c}`}
+                                    onClick={() => handleCellClick(r, c)}
+                                    className={cn(
+                                        "flex items-center justify-center w-full aspect-square text-base sm:text-2xl font-bold cursor-pointer transition-colors",
+                                        "bg-card hover:bg-card-foreground/10",
+                                        (c % 3 === 2 && c !== 8) && "border-r-2 border-r-muted-foreground/50",
+                                        (r % 3 === 2 && r !== 8) && "border-b-2 border-b-muted-foreground/50",
+                                        isSelected && "bg-primary/20",
+                                        isSameValue && "bg-primary/10",
+                                        isPuzzleCell ? "text-foreground" : "text-primary",
+                                        isWrong && !isPuzzleCell && "text-destructive",
+                                    )}
+                                >
+                                    {cell !== 0 ? cell : ''}
+                                </div>
+                            )
+                        }))}
+                    </div>
+                     {isGameOver && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
+                            <Award className="w-16 h-16 text-yellow-500" />
+                            <h2 className="text-3xl font-bold">You Win!</h2>
+                            <p className="text-muted-foreground">Your time: {String(Math.floor(time / 60)).padStart(2, '0')}:{String(time % 60).padStart(2, '0')}</p>
+                            <Button onClick={() => createNewPuzzle(level)} className="mt-4">Play Again</Button>
+                        </div>
+                    )}
                 </div>
                  <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
                     {Array.from({ length: 9 }, (_, i) => i + 1).map(num => (

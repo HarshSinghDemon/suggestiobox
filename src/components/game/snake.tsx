@@ -7,10 +7,9 @@ import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const GRID_SIZE = 20;
-const CANVAS_SIZE = 400;
-const CELL_SIZE = CANVAS_SIZE / GRID_SIZE;
 
 const getRandomCoordinate = () => {
     const x = Math.floor(Math.random() * GRID_SIZE);
@@ -28,6 +27,23 @@ export function SnakeGame() {
     const [isGameOver, setIsGameOver] = useState(false);
     const [score, setScore] = useState(0);
     const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+    const [canvasSize, setCanvasSize] = useState(400);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const container = canvasRef.current?.parentElement;
+            if (container) {
+                setCanvasSize(Math.min(container.clientWidth, 400));
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Initial size
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const CELL_SIZE = canvasSize / GRID_SIZE;
     
     const { user } = useUser();
     const firestore = useFirestore();
@@ -70,6 +86,7 @@ export function SnakeGame() {
     };
 
     const handleDirectionChange = useCallback((newDirection: Direction) => {
+        if(isGameOver) return;
         setDirection((prevDirection) => {
             if (
                 (newDirection === 'UP' && prevDirection === 'DOWN') ||
@@ -81,10 +98,11 @@ export function SnakeGame() {
             }
             return newDirection;
         });
-    }, []);
+    }, [isGameOver]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            e.preventDefault();
             switch (e.key) {
                 case 'ArrowUp': handleDirectionChange('UP'); break;
                 case 'ArrowDown': handleDirectionChange('DOWN'); break;
@@ -150,10 +168,10 @@ export function SnakeGame() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
 
         ctx.fillStyle = 'hsl(var(--card))';
-        ctx.fillRect(0,0, CANVAS_SIZE, CANVAS_SIZE);
+        ctx.fillRect(0,0, canvasSize, canvasSize);
 
         snake.forEach((segment, index) => {
             ctx.fillStyle = index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.7)';
@@ -163,7 +181,7 @@ export function SnakeGame() {
         ctx.fillStyle = 'hsl(var(--destructive))';
         ctx.fillRect(food.x * CELL_SIZE, food.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 
-    }, [snake, food]);
+    }, [snake, food, canvasSize, CELL_SIZE]);
     
     return (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -171,9 +189,9 @@ export function SnakeGame() {
                 <div className="relative">
                     <canvas
                         ref={canvasRef}
-                        width={CANVAS_SIZE}
-                        height={CANVAS_SIZE}
-                        className="rounded-md border w-full max-w-[400px]"
+                        width={canvasSize}
+                        height={canvasSize}
+                        className="rounded-md border"
                     />
                     {isGameOver && (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80">

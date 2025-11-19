@@ -144,6 +144,7 @@ export function WordSearchGame() {
     useEffect(() => {
         if (!isGameOver && puzzleData && foundWords.length === themes[theme].length) {
             setIsGameOver(true);
+            setStartTime(null);
             const score = Math.max(10, (themes[theme].length * 100) - time);
             submitScore(score);
         }
@@ -169,6 +170,7 @@ export function WordSearchGame() {
     };
 
     const handleMouseDown = (r: number, c: number) => {
+        if(isGameOver) return;
         isMouseDown.current = true;
         setSelection([r, c]);
         setCurrentPath([[r, c]]);
