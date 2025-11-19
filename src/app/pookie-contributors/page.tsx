@@ -3,6 +3,7 @@ import { PookieContributorsList } from '@/components/contributors/pookie-contrib
 import { Trophy } from 'lucide-react';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 function ContributorListSkeleton() {
     return (
@@ -24,23 +25,25 @@ function ContributorListSkeleton() {
 
 export default function PookieContributorsPage() {
   return (
-    <div className="container py-12 mx-auto">
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-                <Trophy className="w-16 h-16 text-primary" />
-            </div>
-          <CardTitle className="text-3xl">Pookie Contributor Leaderboard</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
-            Ranking of the top contributors to the community.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-4">
-            <Suspense fallback={<ContributorListSkeleton />}>
-                <PookieContributorsList />
-            </Suspense>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthWrapper>
+      <div className="container py-12 mx-auto">
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                  <Trophy className="w-16 h-16 text-primary" />
+              </div>
+            <CardTitle className="text-3xl">Pookie Contributor Leaderboard</CardTitle>
+            <CardDescription className="text-lg text-muted-foreground">
+              Ranking of the top contributors to the community.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="mt-4">
+              <Suspense fallback={<ContributorListSkeleton />}>
+                  <PookieContributorsList />
+              </Suspense>
+          </CardContent>
+        </Card>
+      </div>
+    </AuthWrapper>
   );
 }

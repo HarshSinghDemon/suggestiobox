@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 function MemberListSkeleton() {
     return (
@@ -24,26 +25,28 @@ function MemberListSkeleton() {
 
 export default function CommunityMembersPage() {
   return (
-    <div className="container py-12 mx-auto">
-      <Card className={cn(
-          "max-w-6xl mx-auto opacity-0 animate-fade-in-scale",
-          "animation-delay-200"
-      )}>
-        <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-                <Users className="w-16 h-16 text-primary" />
-            </div>
-          <CardTitle className="text-3xl">Community Members</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
-            A list of all the awesome people in our community.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mt-4">
-            <Suspense fallback={<MemberListSkeleton />}>
-                <CommunityMembersList />
-            </Suspense>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthWrapper>
+      <div className="container py-12 mx-auto">
+        <Card className={cn(
+            "max-w-6xl mx-auto opacity-0 animate-fade-in-scale",
+            "animation-delay-200"
+        )}>
+          <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                  <Users className="w-16 h-16 text-primary" />
+              </div>
+            <CardTitle className="text-3xl">Community Members</CardTitle>
+            <CardDescription className="text-lg text-muted-foreground">
+              A list of all the awesome people in our community.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="mt-4">
+              <Suspense fallback={<MemberListSkeleton />}>
+                  <CommunityMembersList />
+              </Suspense>
+          </CardContent>
+        </Card>
+      </div>
+    </AuthWrapper>
   );
 }

@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, memo, useMemo } from 'react';
 import Link from 'next/link';
 import { Users } from 'lucide-react';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 function ChatSkeleton() {
   return (
@@ -69,70 +70,72 @@ function CommunityChatPage() {
   const isLoading = isLoadingMessages || isLoadingUsers;
 
   return (
-    <div className="container flex flex-col h-[calc(100vh-4rem)] py-6">
-        <style jsx global>{`
-            @keyframes-fade-in-up {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            .animate-fade-in-up {
-                animation: keyframes-fade-in-up 0.5s ease-out forwards;
-            }
-        `}</style>
-        <Card className="flex flex-col flex-1 w-full max-w-4xl mx-auto">
-            <CardHeader>
-                <CardTitle>Community Chat</CardTitle>
-                <div className="flex items-center justify-between">
-                  <CardDescription>
-                      Ask for help, share tips, or just chat with other students.
-                  </CardDescription>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    {isLoadingUsers ? (
-                      <Skeleton className="w-8 h-4" />
-                    ) : (
-                      <span>{totalUsers}</span>
-                    )}
-                    <span>{totalUsers === 1 ? 'user' : 'users'} online</span>
-                  </div>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-                <ScrollArea className="h-full" ref={scrollAreaRef}>
-                     <div className="p-6 space-y-4" ref={viewportRef}>
-                        {isLoading ? (
-                            <ChatSkeleton />
-                        ) : messages && messages.length > 0 ? (
-                            messages.map((msg) => <ChatMessage key={msg.id} message={msg} author={usersMap.get(msg.userId)} />)
-                        ) : (
-                            <p className="text-center text-muted-foreground">
-                            No messages yet. Be the first to say something!
-                            </p>
-                        )}
+    <AuthWrapper>
+      <div className="container flex flex-col h-[calc(100vh-4rem)] py-6">
+          <style jsx global>{`
+              @keyframes-fade-in-up {
+                  from {
+                      opacity: 0;
+                      transform: translateY(10px);
+                  }
+                  to {
+                      opacity: 1;
+                      transform: translateY(0);
+                  }
+              }
+              .animate-fade-in-up {
+                  animation: keyframes-fade-in-up 0.5s ease-out forwards;
+              }
+          `}</style>
+          <Card className="flex flex-col flex-1 w-full max-w-4xl mx-auto">
+              <CardHeader>
+                  <CardTitle>Community Chat</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardDescription>
+                        Ask for help, share tips, or just chat with other students.
+                    </CardDescription>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="w-4 h-4" />
+                      {isLoadingUsers ? (
+                        <Skeleton className="w-8 h-4" />
+                      ) : (
+                        <span>{totalUsers}</span>
+                      )}
+                      <span>{totalUsers === 1 ? 'user' : 'users'} online</span>
                     </div>
-                </ScrollArea>
-            </CardContent>
-            <CardFooter className="pt-6 border-t">
-                {user ? (
-                    <MessageInput />
-                ) : (
-                    <p className="w-full text-sm text-center text-muted-foreground">
-                        Please{' '}
-                        <Link href="/login" className="underline text-primary" prefetch={false}>
-                            log in
-                        </Link>{' '}
-                        to send messages.
-                    </p>
-                )}
-            </CardFooter>
-        </Card>
-    </div>
+                  </div>
+              </CardHeader>
+              <CardContent className="flex-1 p-0 overflow-hidden">
+                  <ScrollArea className="h-full" ref={scrollAreaRef}>
+                       <div className="p-6 space-y-4" ref={viewportRef}>
+                          {isLoading ? (
+                              <ChatSkeleton />
+                          ) : messages && messages.length > 0 ? (
+                              messages.map((msg) => <ChatMessage key={msg.id} message={msg} author={usersMap.get(msg.userId)} />)
+                          ) : (
+                              <p className="text-center text-muted-foreground">
+                              No messages yet. Be the first to say something!
+                              </p>
+                          )}
+                      </div>
+                  </ScrollArea>
+              </CardContent>
+              <CardFooter className="pt-6 border-t">
+                  {user ? (
+                      <MessageInput />
+                  ) : (
+                      <p className="w-full text-sm text-center text-muted-foreground">
+                          Please{' '}
+                          <Link href="/login" className="underline text-primary" prefetch={false}>
+                              log in
+                          </Link>{' '}
+                          to send messages.
+                      </p>
+                  )}
+              </CardFooter>
+          </Card>
+      </div>
+    </AuthWrapper>
   );
 }
 

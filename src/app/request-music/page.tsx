@@ -9,6 +9,7 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Music } from 'lucide-react';
 import Link from 'next/link';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 export default function RequestMusicPage() {
   const { user, isUserLoading } = useUser();
@@ -77,35 +78,37 @@ export default function RequestMusicPage() {
   }
 
   return (
-    <div className="container py-12 mx-auto">
-      <Card className="max-w-xl mx-auto">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Music className="w-16 h-16 text-primary" />
-          </div>
-          <CardTitle className="text-3xl">Request a Song</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
-            Have a favorite track you'd like to hear? Let us know!
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex items-center gap-4">
-            <Input
-              type="text"
-              placeholder="Enter song name and artist..."
-              value={songName}
-              onChange={(e) => setSongName(e.target.value)}
-              disabled={isSubmitting}
-              required
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isSubmitting || songName.trim() === ''}>
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Submit Request
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthWrapper>
+      <div className="container py-12 mx-auto">
+        <Card className="max-w-xl mx-auto">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Music className="w-16 h-16 text-primary" />
+            </div>
+            <CardTitle className="text-3xl">Request a Song</CardTitle>
+            <CardDescription className="text-lg text-muted-foreground">
+              Have a favorite track you'd like to hear? Let us know!
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="flex items-center gap-4">
+              <Input
+                type="text"
+                placeholder="Enter song name and artist..."
+                value={songName}
+                onChange={(e) => setSongName(e.target.value)}
+                disabled={isSubmitting}
+                required
+                className="flex-1"
+              />
+              <Button type="submit" disabled={isSubmitting || songName.trim() === ''}>
+                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Submit Request
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </AuthWrapper>
   );
 }
