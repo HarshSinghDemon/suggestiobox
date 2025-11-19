@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -28,12 +28,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Timestamp } from 'firebase/firestore';
-import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 type User = FirebaseUser & {
     createdAt?: Timestamp;
@@ -115,24 +115,16 @@ export function AdminUsersTable() {
   }
 
 
-  const handleDelete = async (userId: string) => {
+  const handleDelete = (userId: string) => {
     if (!firestore) return;
     
-    try {
-        const docRef = doc(firestore, 'users', userId);
-        await deleteDoc(docRef);
-        toast({
-            title: 'Success',
-            description: 'User document deleted successfully from the database.',
-        });
-    } catch(e) {
-        console.error("Error deleting user document:", e);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not delete user document. See console for details.',
-        });
-    }
+    const docRef = doc(firestore, 'users', userId);
+    deleteDocumentNonBlocking(docRef);
+
+    toast({
+        title: 'Success',
+        description: 'User document deleted successfully from the database.',
+    });
   };
 
   const getInitials = (name: string | null | undefined) => {
@@ -266,5 +258,3 @@ export function AdminUsersTable() {
     </div>
   );
 }
-
-    
