@@ -6,13 +6,14 @@ import { ChevronRight, Gamepad2, Music } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, useState } from 'react';
+import { YouTubePlayer, type YouTubePlayerRef } from '@/components/youtube-player';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
 });
 
 export default function Home() {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const playerRef = useRef<YouTubePlayerRef>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handleGameClick = () => {
@@ -21,12 +22,11 @@ export default function Home() {
   };
   
   const toggleMusic = () => {
-    if (audioRef.current) {
+    if (playerRef.current) {
         if (isPlaying) {
-            audioRef.current.pause();
+            playerRef.current.pauseVideo();
         } else {
-            audioRef.current.volume = 0.2;
-            audioRef.current.play();
+            playerRef.current.playVideo();
         }
         setIsPlaying(!isPlaying);
     }
@@ -42,16 +42,24 @@ export default function Home() {
       if (isWindows) {
         document.body.style.overflow = 'auto';
       }
-      // Clean up the audio when component unmounts
-      if(audioRef.current) {
-        audioRef.current.pause();
+      if(playerRef.current) {
+        playerRef.current.pauseVideo();
       }
     };
   }, []);
 
   return (
     <>
-      <audio ref={audioRef} src="https://cdn.pixabay.com/audio/2022/02/07/audio_841dd54366.mp3" loop />
+      <YouTubePlayer 
+        ref={playerRef}
+        videoId="rqJSJQww8z4"
+        onStateChange={(event) => {
+            // event.data === 0 means video ended
+            if (event.data === 0) {
+                setIsPlaying(false);
+            }
+        }}
+      />
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
         <WavyBackground 
           className="w-full max-w-4xl mx-auto"

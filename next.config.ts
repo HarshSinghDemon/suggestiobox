@@ -38,6 +38,9 @@ const nextConfig: NextConfig = {
       maxDuration: 120, // 2 minutes
     },
   },
+  env: {
+    NEXT_PUBLIC_YOUTUBE_API_KEY: process.env.NEXT_PUBLIC_YOUTUBE_API_KEY,
+  },
 };
 
 export default nextConfig;
