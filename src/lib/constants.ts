@@ -6,16 +6,6 @@ export const SUBJECTS = [
   "Cloud Computing",
   "Artificial Intelligence",
   "Compiler Design",
-  "Semiconductor Physics",
-  "Basic Electrical and Electronic Engineering",
-  "English",
-  "Foundation for AI",
-  "Understanding Harmony and Ethical Human Conducts",
-  "Calculus",
-  "Python",
-  "DSA",
-  "Computer Organization and Architecture",
-  "Probability and Statistics",
 ] as const;
 
 export const ASSIGNMENT_SUBJECTS = [
@@ -24,11 +14,7 @@ export const ASSIGNMENT_SUBJECTS = [
   "DBMS",
   "Cloud Computing",
   "Artificial Intelligence",
-  "Semiconductor Physics",
-  "Basic Electrical and Electronic Engineering",
-  "Python",
-  "DSA",
-  "Computer Organization and Architecture",
+  "Compiler Design",
 ] as const;
 
 export type Subject = (typeof SUBJECTS)[number];
@@ -38,20 +24,8 @@ export const SEMESTERS = ["1st", "3rd", "5th"] as const;
 export type Semester = (typeof SEMESTERS)[number];
 
 export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
-    "1st": [
-        "Semiconductor Physics",
-        "Basic Electrical and Electronic Engineering",
-        "English",
-        "Foundation for AI",
-        "Understanding Harmony and Ethical Human Conducts",
-        "Calculus",
-    ],
-    "3rd": [
-        "Python",
-        "DSA",
-        "Computer Organization and Architecture",
-        "Probability and Statistics",
-    ],
+    "1st": [],
+    "3rd": [],
     "5th": [
         "Computer Networks",
         "Data Analytics",
@@ -63,20 +37,14 @@ export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
 };
 
 export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]> = {
-    "1st": [
-        "Semiconductor Physics",
-        "Basic Electrical and Electronic Engineering",
-    ],
-    "3rd": [
-        "Python",
-        "DSA",
-        "Computer Organization and Architecture",
-    ],
+    "1st": [],
+    "3rd": [],
     "5th": [
         "Computer Networks",
         "Data Analytics",
         "DBMS",
         "Cloud Computing",
         "Artificial Intelligence",
+        "Compiler Design",
     ]
 };
