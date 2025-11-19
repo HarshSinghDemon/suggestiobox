@@ -18,16 +18,16 @@ export function FlappyBirdGame() {
         canvas.width = 288;
         canvas.height = 512;
 
-        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.4, lift: -7, velocity: 0 };
+        let bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.3, lift: -6, velocity: 0 };
         let pipes: { x: number, y: number, width: number, height: number, passed: boolean }[] = [];
         let pipeWidth = 52;
-        let pipeGap = 120;
+        let pipeGap = 130;
         let frameCount = 0;
         let localScore = 0;
         let animationFrameId: number;
         
         const resetGame = () => {
-            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.4, lift: -7, velocity: 0 };
+            bird = { x: 50, y: 150, width: 34, height: 24, gravity: 0.3, lift: -6, velocity: 0 };
             pipes = [];
             frameCount = 0;
             localScore = 0;
@@ -74,14 +74,14 @@ export function FlappyBirdGame() {
             ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
 
             // Pipes
-            if (frameCount % 90 === 0) {
+            if (frameCount % 120 === 0) { // Increased from 90 to 120 to increase spacing
                 const pipeY = Math.random() * (canvas.height - pipeGap - 100) + 50;
                 pipes.push({ x: canvas.width, y: 0, width: pipeWidth, height: pipeY, passed: false });
                 pipes.push({ x: canvas.width, y: pipeY + pipeGap, width: pipeWidth, height: canvas.height - pipeY - pipeGap, passed: true });
             }
 
             pipes.forEach(pipe => {
-                pipe.x -= 2;
+                pipe.x -= 1.5; // Reduced from 2 to 1.5
                 ctx.fillStyle = '#4ade80'; // green-400
                 ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
                 
