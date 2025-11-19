@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 type User = {
     id: string;
@@ -59,6 +60,12 @@ export function CommunityMembersList() {
   if (isLoading) {
     return <MemberListSkeleton />;
   }
+  
+  const getYearBadgeClass = (year?: '1st' | '2nd' | '3rd') => cn({
+    'border-sky-500/30 bg-sky-500/20 text-sky-400': year === '1st',
+    'border-amber-500/30 bg-amber-500/20 text-amber-400': year === '2nd',
+    'border-emerald-500/30 bg-emerald-500/20 text-emerald-400': year === '3rd',
+  });
 
   return (
     <div>
@@ -68,18 +75,22 @@ export function CommunityMembersList() {
             </h3>
         </div>
         {users && users.length > 0 ? (
-             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {users.map((user) => (
-                    <div key={user.id} className="flex flex-col items-center p-4 text-center border rounded-lg shadow-sm">
-                        <Avatar className="w-20 h-20 mb-4 border-2 border-primary">
+             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {users.map((user, index) => (
+                    <div 
+                        key={user.id} 
+                        className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50"
+                        style={{ animationDelay: `${index * 50}ms`, animation: `fadeInUp 0.5s ease-out forwards` }}
+                    >
+                        <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-colors duration-300">
                             <AvatarImage src={user.photoURL} alt={user.displayName} />
-                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                            <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
                         </Avatar>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex flex-col items-center gap-2'>
                           <p className="font-semibold truncate">{user.displayName}</p>
-                          {user.year && <Badge variant="outline">{user.year} Year</Badge>}
+                          {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
                     </div>
                 ))}
             </div>
@@ -88,6 +99,21 @@ export function CommunityMembersList() {
                 No community members found.
             </p>
         )}
+        <style jsx>{`
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .grid > div {
+                opacity: 0; /* Start hidden for animation */
+            }
+        `}</style>
     </div>
   );
 }
