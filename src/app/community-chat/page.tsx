@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, memo } from 'react';
 import Link from 'next/link';
+import { Users } from 'lucide-react';
 
 function ChatSkeleton() {
   return (
@@ -41,7 +42,15 @@ function CommunityChatPage() {
     [firestore]
   );
 
-  const { data: messages, isLoading } = useCollection<Message>(messagesQuery);
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'users') : null),
+    [firestore]
+  );
+
+  const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
+  const { data: users, isLoading: isLoadingUsers } = useCollection(usersQuery);
+
+  const totalUsers = users?.length ?? 0;
   
   useEffect(() => {
     if (viewportRef.current) {
@@ -51,14 +60,27 @@ function CommunityChatPage() {
     }
   }, [messages]);
 
+  const isLoading = isLoadingMessages || isLoadingUsers;
+
   return (
     <div className="container flex flex-col h-[calc(100vh-4rem)] py-6">
         <Card className="flex flex-col flex-1 w-full max-w-4xl mx-auto">
             <CardHeader>
                 <CardTitle>Community Chat</CardTitle>
-                <CardDescription>
-                    Ask for help, share tips, or just chat with other students.
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <CardDescription>
+                      Ask for help, share tips, or just chat with other students.
+                  </CardDescription>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    {isLoadingUsers ? (
+                      <Skeleton className="w-8 h-4" />
+                    ) : (
+                      <span>{totalUsers}</span>
+                    )}
+                    <span>{totalUsers === 1 ? 'user' : 'users'} online</span>
+                  </div>
+                </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
                 <ScrollArea className="h-full" ref={scrollAreaRef}>
