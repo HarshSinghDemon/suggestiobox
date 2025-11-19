@@ -109,8 +109,9 @@ export default {
           'to': { 'background-position': '200% center' },
         },
         'wave': {
-          '0%': { 'background-position': '-200% 0' },
-          '100%': { 'background-position': '200% 0' },
+          '0%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+          '100%': { 'background-position': '0% 50%' },
         }
       },
       animation: {
@@ -119,7 +120,7 @@ export default {
         'pulse-scale': 'pulse-scale 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'shine': 'shine 2s linear infinite',
-        'wave': 'wave 5s ease-in-out infinite',
+        'wave': 'wave 10s ease-in-out infinite',
       },
     },
   },
