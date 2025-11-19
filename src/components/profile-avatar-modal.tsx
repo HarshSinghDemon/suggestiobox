@@ -26,8 +26,13 @@ interface ProfileAvatarModalProps {
 }
 
 const AVATAR_STYLES = {
-    'bottts': 'Robots',
-    'bottts-neutral': 'Robots (Neutral)',
+    'bottts-neutral': 'Robots',
+    'fun-emoji': 'Emoji',
+    'adventurer': 'Adventurer',
+    'avataaars': 'Character',
+    'pixel-art': 'Pixel Art',
+    'lorelei': 'Illustrative',
+    'miniavs': 'Minimalist',
 };
 
 type AvatarStyleKey = keyof typeof AVATAR_STYLES;
