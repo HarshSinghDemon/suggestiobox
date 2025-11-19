@@ -23,11 +23,11 @@ export default function Home() {
         waveWidth={60}
         waveOpacity={0.6}
         speed="fast"
-        colors={['#8A2BE2', '#4B0082', '#9400D3', '#8B008B', '#9932CC']}
+        colors={['#FFD700', '#FFA500', '#FF4500', '#DC143C', '#B22222']}
       >
         <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
         <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_2px_hsl(var(--primary)/0.5),0_4px_hsl(var(--primary)/0.4),0_6px_hsl(var(--primary)/0.3),0_8px_hsl(var(--primary)/0.2),0_10px_15px_hsl(var(--primary)/0.2)]">
-            <span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-cyan-300 to-purple-400 bg-[length:200%_auto] animate-shine">
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500 bg-[length:200%_auto] animate-shine">
                 The
                 <br />
                 Suggestion
