@@ -18,10 +18,16 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
-      <WavyBackground className="w-full max-w-4xl mx-auto">
+      <WavyBackground 
+        className="w-full max-w-4xl mx-auto"
+        waveWidth={60}
+        waveOpacity={0.6}
+        speed="fast"
+        colors={['#8A2BE2', '#4B0082', '#9400D3', '#8B008B', '#9932CC']}
+      >
         <div className="relative z-10 flex flex-col items-center justify-center space-y-8">
         <h1 className="text-4xl md:text-6xl font-arcade tracking-tighter leading-relaxed [text-shadow:0_2px_hsl(var(--primary)/0.5),0_4px_hsl(var(--primary)/0.4),0_6px_hsl(var(--primary)/0.3),0_8px_hsl(var(--primary)/0.2),0_10px_15px_hsl(var(--primary)/0.2)]">
-            <span className="text-transparent bg-clip-text bg-gradient-to-br from-violet-300 via-cyan-200 to-violet-300 bg-[length:200%_auto] animate-shine">
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-purple-400 via-cyan-300 to-purple-400 bg-[length:200%_auto] animate-shine">
                 The
                 <br />
                 Suggestion
