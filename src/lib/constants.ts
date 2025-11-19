@@ -15,6 +15,7 @@ export const SUBJECTS = [
   "Python",
   "DSA",
   "Computer Organization and Architecture",
+  "Probability and Statistics",
 ] as const;
 
 export const ASSIGNMENT_SUBJECTS = [
@@ -23,6 +24,7 @@ export const ASSIGNMENT_SUBJECTS = [
   "DBMS",
   "Cloud Computing",
   "Artificial Intelligence",
+  "Compiler Design",
   "Semiconductor Physics",
   "Basic Electrical and Electronic Engineering",
   "English",
@@ -32,6 +34,7 @@ export const ASSIGNMENT_SUBJECTS = [
   "Python",
   "DSA",
   "Computer Organization and Architecture",
+  "Probability and Statistics",
 ] as const;
 
 export type Subject = (typeof SUBJECTS)[number];
@@ -53,6 +56,7 @@ export const SEMESTER_SUBJECTS: Record<Semester, Subject[]> = {
         "Python",
         "DSA",
         "Computer Organization and Architecture",
+        "Probability and Statistics",
     ],
     "5th": [
         "Computer Networks",
@@ -77,6 +81,7 @@ export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]>
         "Python",
         "DSA",
         "Computer Organization and Architecture",
+        "Probability and Statistics",
     ],
     "5th": [
         "Computer Networks",
@@ -84,5 +89,6 @@ export const SEMESTER_ASSIGNMENT_SUBJECTS: Record<Semester, AssignmentSubject[]>
         "DBMS",
         "Cloud Computing",
         "Artificial Intelligence",
+        "Compiler Design",
     ]
 };
