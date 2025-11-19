@@ -32,6 +32,10 @@ export function SubjectFilter({ activeSemester }: SubjectFilterProps) {
 
   const subjects = activeSemester ? SEMESTER_SUBJECTS[activeSemester] : [];
 
+  if (subjects.length === 0) {
+      return null;
+  }
+
   return (
     <Select
       onValueChange={handleSubjectChange}

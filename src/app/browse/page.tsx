@@ -1,3 +1,4 @@
+
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,6 +7,7 @@ const BrowseSection = dynamic(() => import('@/components/browse/browse-section')
   loading: () => (
     <div className="space-y-8">
       <div className="flex flex-col items-center gap-4 md:flex-row">
+        <Skeleton className="h-10 w-[200px]" />
         <Skeleton className="h-10 w-[200px]" />
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -26,17 +28,22 @@ type BrowsePageProps = {
   searchParams: {
     tab?: 'suggestions' | 'assignments';
     semester?: '1st' | '3rd' | '5th';
+    subject?: string;
   };
 };
 
 export default function BrowsePage({ searchParams }: BrowsePageProps) {
-  const { tab = 'suggestions', semester } = searchParams;
+  const { tab = 'suggestions', semester, subject } = searchParams;
 
   return (
     <div className="container px-4 py-8 mx-auto md:px-6">
       <h1 className="mb-8 text-3xl font-bold tracking-tight">Dashboard</h1>
       <Suspense fallback={<p>Loading...</p>}>
-        <BrowseSection activeTab={tab} activeSemester={semester} />
+        <BrowseSection 
+          activeTab={tab} 
+          activeSemester={semester} 
+          activeSubject={subject} 
+        />
       </Suspense>
     </div>
   );

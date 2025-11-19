@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useMemo } from 'react';
@@ -15,10 +16,13 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { SemesterFilter } from './semester-filter';
+import { SubjectFilter } from './subject-filter';
+import { SEMESTERS } from '@/lib/constants';
 
 type BrowseSectionProps = {
   activeTab: 'suggestions' | 'assignments';
   activeSemester?: '1st' | '3rd' | '5th';
+  activeSubject?: string;
 };
 
 function ItemGridSkeleton() {
@@ -39,6 +43,7 @@ function ItemGridSkeleton() {
 export function BrowseSection({
   activeTab,
   activeSemester,
+  activeSubject,
 }: BrowseSectionProps) {
   const firestore = useFirestore();
   const router = useRouter();
@@ -71,15 +76,21 @@ export function BrowseSection({
 
   const filteredSuggestions = useMemo(() => {
     if (!suggestions) return [];
-    if (!activeSemester) return suggestions;
-    return suggestions.filter(item => item.semester === activeSemester);
-  }, [suggestions, activeSemester]);
+    return suggestions.filter(item => {
+        const semesterMatch = !activeSemester || item.semester === activeSemester;
+        const subjectMatch = !activeSubject || item.subject === activeSubject;
+        return semesterMatch && subjectMatch;
+    });
+  }, [suggestions, activeSemester, activeSubject]);
 
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
-    if (!activeSemester) return assignments;
-    return assignments.filter(item => item.semester === activeSemester);
-  }, [assignments, activeSemester]);
+    return assignments.filter(item => {
+        const semesterMatch = !activeSemester || item.semester === activeSemester;
+        const subjectMatch = !activeSubject || item.subject === activeSubject;
+        return semesterMatch && subjectMatch;
+    });
+  }, [assignments, activeSemester, activeSubject]);
 
 
   const handleTabChange = (value: string) => {
@@ -88,12 +99,16 @@ export function BrowseSection({
     if (activeSemester) {
       params.set('semester', activeSemester);
     }
+     if (activeSubject) {
+      params.set('subject', activeSubject);
+    }
     router.push(`${pathname}?${params.toString()}`);
   };
   
   const variants: ('default' | 'fiery' | 'ocean')[] = ['default', 'fiery', 'ocean'];
   const getRandomVariant = () => variants[Math.floor(Math.random() * variants.length)];
 
+  const validSemester = activeSemester && SEMESTERS.includes(activeSemester);
 
   return (
     <Tabs defaultValue={activeTab} className="w-full" onValueChange={handleTabChange}>
@@ -102,7 +117,10 @@ export function BrowseSection({
           <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
         </TabsList>
-        <SemesterFilter />
+        <div className="flex flex-col w-full gap-2 md:flex-row md:w-auto">
+            <SemesterFilter />
+            {validSemester && <SubjectFilter activeSemester={activeSemester} />}
+        </div>
       </div>
       <TabsContent value="suggestions">
         {suggestionsLoading || usersLoading ? (
@@ -115,7 +133,7 @@ export function BrowseSection({
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No suggestions found for this semester.
+            No suggestions found for this filter.
           </p>
         )}
       </TabsContent>
@@ -130,7 +148,7 @@ export function BrowseSection({
           </div>
         ) : (
           <p className="py-16 text-center text-muted-foreground">
-            No assignments found for this semester.
+            No assignments found for this filter.
           </p>
         )}
       </TabsContent>
