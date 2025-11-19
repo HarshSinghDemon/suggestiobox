@@ -9,7 +9,7 @@ import {
   Auth,
   User,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const handleNewUser = async (user: User) => {
   const db = getFirestore(user.auth.app);
@@ -22,6 +22,7 @@ const handleNewUser = async (user: User) => {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
+      createdAt: serverTimestamp(),
     };
     await setDoc(userDocRef, userData);
   }

@@ -26,12 +26,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Timestamp } from 'firebase/firestore';
 
 type User = {
     id: string;
     displayName: string;
     photoURL: string;
     email: string;
+    createdAt?: Timestamp;
 };
 
 function TableSkeleton() {
@@ -40,6 +42,7 @@ function TableSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 p-4">
           <Skeleton className="w-10 h-10 rounded-full" />
+          <Skeleton className="flex-1 h-8" />
           <Skeleton className="flex-1 h-8" />
           <Skeleton className="w-24 h-8" />
           <Skeleton className="w-10 h-8" />
@@ -97,6 +100,7 @@ export function AdminUsersTable() {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead>Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -114,6 +118,9 @@ export function AdminUsersTable() {
                   </div>
                 </TableCell>
                 <TableCell className="truncate">{user.email}</TableCell>
+                <TableCell>
+                    {user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}
+                </TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -144,7 +151,7 @@ export function AdminUsersTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} className="h-24 text-center">
+              <TableCell colSpan={4} className="h-24 text-center">
                 No users found.
               </TableCell>
             </TableRow>
