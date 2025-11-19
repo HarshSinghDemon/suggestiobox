@@ -1,0 +1,304 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the StudyShare Central platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date and time the user account was created."
+        },
+        "year": {
+            "type": "string",
+            "description": "The academic year of the user.",
+            "enum": ["1st", "2nd", "3rd"]
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "createdAt",
+        "year"
+      ]
+    },
+    "Suggestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Suggestion",
+      "type": "object",
+      "description": "Represents a suggestion uploaded by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Suggestion entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Suggestion)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the suggestion."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the suggestion."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject of the suggestion."
+        },
+        "semester": {
+            "type": "string",
+            "description": "The semester the suggestion is for.",
+            "enum": ["1st", "3rd", "5th"]
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the uploaded file in Firebase Storage.",
+          "format": "uri"
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Date and time when the suggestion was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "description",
+        "subject",
+        "semester",
+        "fileUrl",
+        "uploadDate"
+      ]
+    },
+    "Assignment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Assignment",
+      "type": "object",
+      "description": "Represents an assignment uploaded by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Assignment entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Assignment)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the assignment."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject of the assignment."
+        },
+        "semester": {
+            "type": "string",
+            "description": "The semester the assignment is for.",
+            "enum": ["1st", "3rd", "5th"]
+        },
+        "fileUrl": {
+          "type": "string",
+          "description": "URL of the uploaded file in Firebase Storage.",
+          "format": "uri"
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Date and time when the assignment was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "description",
+        "subject",
+        "semester",
+        "fileUrl",
+        "uploadDate"
+      ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a single message in the community chat.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Message entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who sent the message."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The display name of the user who sent the message."
+        },
+        "userImage": {
+          "type": "string",
+          "description": "The profile picture URL of the user.",
+          "format": "uri"
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the chat message."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the message was created.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "text", "createdAt"]
+    },
+    "GameScore": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Game Score",
+      "type": "object",
+      "description": "Represents a score achieved by a user in a game.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who achieved the score."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "userImage": {
+          "type": "string",
+          "description": "The profile picture URL of the user.",
+          "format": "uri"
+        },
+        "score": {
+          "type": "number",
+          "description": "The score achieved in the game."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the score was achieved.",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "userName", "score", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.  This is the root for all user-owned data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching their Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/suggestions/{suggestionId}",
+        "definition": {
+          "entityName": "Suggestion",
+          "schema": {
+            "$ref": "#/backend/entities/Suggestion"
+          },
+          "description": "Stores suggestions uploaded by any user in a single root collection.",
+          "params": [
+            {
+              "name": "suggestionId",
+              "description": "The unique identifier of the suggestion."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/assignments/{assignmentId}",
+        "definition": {
+          "entityName": "Assignment",
+          "schema": {
+            "$ref": "#/backend/entities/Assignment"
+          },
+          "description": "Stores assignments uploaded by any user in a single root collection.",
+          "params": [
+            {
+              "name": "assignmentId",
+              "description": "The unique identifier of the assignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores all chat messages in a single root collection for the community chat.",
+          "params": [
+            {
+              "name": "messageId",
+              "description": "The unique identifier of the chat message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/games/{gameId}/scores/{scoreId}",
+        "definition": {
+          "entityName": "GameScore",
+          "schema": {
+            "$ref": "#/backend/entities/GameScore"
+          },
+          "description": "Stores scores for each game in a subcollection.",
+          "params": [
+            {
+              "name": "gameId",
+              "description": "The unique identifier for the game (e.g., 'tetris', 'snake')."
+            },
+            {
+              "name": "scoreId",
+              "description": "The unique identifier for the score entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to address the 'auth/operation-not-allowed' error, ensure Authorization Independence, and facilitate secure and scalable data management for the StudyShare Central application. The error suggests an issue with Firebase Authentication configuration, which will be handled on the Firebase console configurations, as the JSON generation is for the Firestore structure only. The structure focuses on organizing user data, suggestions, and assignments in a way that simplifies security rules and optimizes query performance.\n\n**Authorization Independence (Denormalization):**\n\n*   The `userId` field is included in both `suggestions` and `assignments` collections. This denormalization allows security rules to validate ownership (`request.auth.uid == resource.data.userId`) without needing to perform expensive `get()` operations to retrieve user data.  This ensures that authorization checks are atomic and independent of other data.\n\n**Structural Segregation (Homogeneous Security Posture):**\n\n*   User-specific data (suggestions, assignments) are stored under the `/users/{userId}` path.  This segregation ensures that all documents within a given user's subcollections share the same security requirements (i.e., only the user can create/modify/delete them).\n\n**Access Modeling:**\n\n*   **Private Data (User-Owned):**  Suggestions and assignments are placed under `/users/{userId}/suggestions` and `/users/{userId}/assignments` respectively, enforcing path-based ownership.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of data into user-specific subcollections enables secure `list` operations. Rules can easily restrict listing to only the data owned by the authenticated user.\n\n**Invariants:**\n\n*   The structure supports the integrity of ownership through the consistent use of `userId` in both `suggestions` and `assignments`.\n\nIn summary, this design prioritizes security, scalability, and debuggability by denormalizing authorization data, structurally segregating data based on access requirements, and enforcing consistent access patterns."
+  }
+}

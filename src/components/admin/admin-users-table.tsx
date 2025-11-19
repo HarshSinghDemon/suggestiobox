@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -27,6 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Timestamp } from 'firebase/firestore';
+import { Badge } from '../ui/badge';
 
 type User = {
     id: string;
@@ -34,6 +36,7 @@ type User = {
     photoURL: string;
     email: string;
     createdAt?: Timestamp;
+    year?: '1st' | '2nd' | '3rd';
 };
 
 function TableSkeleton() {
@@ -105,6 +108,7 @@ export function AdminUsersTable() {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead className='hidden sm:table-cell'>Year</TableHead>
             <TableHead className="hidden md:table-cell">User ID</TableHead>
             <TableHead className="hidden lg:table-cell">Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -124,6 +128,9 @@ export function AdminUsersTable() {
                   </div>
                 </TableCell>
                 <TableCell className="truncate">{user.email}</TableCell>
+                 <TableCell className="hidden sm:table-cell">
+                    {user.year ? <Badge variant="secondary">{user.year} Year</Badge> : <span className='text-muted-foreground'>N/A</span>}
+                 </TableCell>
                 <TableCell className="hidden font-mono text-xs md:table-cell">
                     <div className="flex items-center gap-2">
                         <span className="truncate">{user.id}</span>
@@ -165,7 +172,7 @@ export function AdminUsersTable() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
+              <TableCell colSpan={6} className="h-24 text-center">
                 No users found.
               </TableCell>
             </TableRow>

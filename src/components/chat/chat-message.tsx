@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Message } from '@/lib/types';
@@ -19,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import React from 'react';
+import { Badge } from '../ui/badge';
 
 type ChatMessageProps = {
   message: Message;
@@ -72,6 +74,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <p className="font-semibold">{message.userName || 'Anonymous'}</p>
+          {message.userYear && <Badge variant="secondary">{message.userYear} Year</Badge>}
           <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
         <p className="text-foreground/90">{renderMessageWithMentions(message.text)}</p>

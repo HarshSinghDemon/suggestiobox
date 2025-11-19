@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -13,12 +14,14 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
+import { Badge } from '../ui/badge';
 
 type User = {
     id: string;
     displayName: string;
     photoURL: string;
     email: string;
+    year?: '1st' | '2nd' | '3rd';
 };
 
 function MemberListSkeleton() {
@@ -72,7 +75,10 @@ export function CommunityMembersList() {
                             <AvatarImage src={user.photoURL} alt={user.displayName} />
                             <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                         </Avatar>
-                        <p className="font-semibold truncate">{user.displayName}</p>
+                        <div className='flex items-center gap-2'>
+                          <p className="font-semibold truncate">{user.displayName}</p>
+                          {user.year && <Badge variant="outline">{user.year} Year</Badge>}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                 ))}

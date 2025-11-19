@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,11 +22,13 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, User as UserIcon } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import Image from 'next/image';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  year: z.enum(['1st', '2nd', '3rd'], { required_error: 'Please select your year.'}),
 });
 
 export function SignUpForm() {
@@ -59,7 +62,7 @@ export function SignUpForm() {
     const finalPhotoURL = avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(values.name)}`;
     
     try {
-        await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL);
+        await signUpWithEmail(auth, values.email, values.password, values.name, finalPhotoURL, values.year);
         router.push('/verify-email');
     } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
@@ -97,6 +100,29 @@ export function SignUpForm() {
                 <FormControl>
                   <Input placeholder="Your Name" {...field} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="year"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Year</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your year" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="1st">1st Year</SelectItem>
+                    <SelectItem value="2nd">2nd Year</SelectItem>
+                    <SelectItem value="3rd">3rd Year</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -11,19 +12,22 @@ import {
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
-const handleNewUser = async (user: User) => {
+const handleNewUser = async (user: User, year?: string) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
   if (!userDoc.exists()) {
-    const userData = {
+    const userData: any = {
       id: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
       createdAt: serverTimestamp(),
     };
+    if (year) {
+      userData.year = year;
+    }
     await setDoc(userDocRef, userData);
   }
 };
@@ -33,7 +37,8 @@ export const signUpWithEmail = async (
   email: string,
   password: string,
   displayName: string,
-  photoURL: string
+  photoURL: string,
+  year: string
 ) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -50,7 +55,7 @@ export const signUpWithEmail = async (
     // We need to re-fetch the user to get the updated profile
     const updatedUser = auth.currentUser;
     if (updatedUser) {
-        await handleNewUser(updatedUser);
+        await handleNewUser(updatedUser, year);
     }
 
 

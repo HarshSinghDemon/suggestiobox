@@ -7,6 +7,7 @@ export type FirebaseUser = {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  year?: '1st' | '2nd' | '3rd';
 };
 
 export type Suggestion = {
@@ -47,6 +48,7 @@ export type Message = {
   userId: string;
   userName: string | null;
   userImage: string | null;
+  userYear?: '1st' | '2nd' | '3rd';
 };
 
 export type Notification = {

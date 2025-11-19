@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
@@ -15,6 +16,7 @@ type User = {
   displayName: string;
   photoURL: string;
   email: string;
+  year?: '1st' | '2nd' | '3rd';
 };
 
 export function MessageInput() {
@@ -27,6 +29,15 @@ export function MessageInput() {
   const [tagQuery, setTagQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const lastCursorPos = useRef(0);
+
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null),
+    [firestore]
+  );
+  
+  const { data: users } = useCollection<User>(usersQuery);
+  const currentUserData = users?.find(u => u.id === user?.uid);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
@@ -85,6 +96,7 @@ export function MessageInput() {
         userId: user.uid,
         userName: user.displayName,
         userImage: user.photoURL,
+        userYear: currentUserData?.year,
       };
 
       await addDocumentNonBlocking(messagesCol, messageData);
