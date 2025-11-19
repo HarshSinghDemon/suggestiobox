@@ -115,7 +115,7 @@ export function HangmanGame() {
 
     const BODY_PARTS = [HEAD, BODY, RIGHT_ARM, LEFT_ARM, RIGHT_LEG, LEFT_LEG];
     return (
-      <div className="relative h-[280px] w-[200px]">
+      <div className="relative h-[280px] w-full max-w-[200px] sm:max-w-none">
         {BODY_PARTS.slice(0, mistakes)}
         <div className="absolute top-0 right-0 w-1 h-12 bg-foreground" />
         <div className="h-1 ml-24 w-36 bg-foreground" />
@@ -130,9 +130,9 @@ export function HangmanGame() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        <div className="flex flex-col items-center col-span-1 md:col-span-2 gap-6">
-            <div className="flex flex-col items-center gap-4">
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
+        <div className="flex flex-col items-center col-span-1 md:col-span-3 gap-6">
+            <div className="flex flex-col items-center w-full gap-4">
                 <HangmanDrawing />
                  <div className="flex flex-wrap justify-center gap-1 text-xl font-bold tracking-wider uppercase sm:gap-2 sm:text-2xl sm:tracking-widest">
                     {word.split('').map((letter, index) => (
@@ -169,7 +169,7 @@ export function HangmanGame() {
                 </div>
             )}
         </div>
-        <div className="space-y-4 md:col-span-1">
+        <div className="space-y-4 md:col-span-2">
             <div className="p-4 rounded-md bg-muted">
                 <h3 className="mb-2 text-lg font-semibold text-center">Your Score</h3>
                  <div className="text-3xl font-bold text-center text-primary">{score}</div>
