@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 bg-background text-foreground overflow-x-hidden">
         <WavyBackground 
           className="w-full max-w-4xl mx-auto"
           waveWidth={60}

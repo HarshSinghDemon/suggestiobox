@@ -57,7 +57,7 @@ export function SocialLogins() {
   };
 
   return (
-    <div className="flex justify-center -ml-2">
+    <div className="flex justify-center">
         <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" type="button" disabled={googleLoading || githubLoading} onClick={() => handleSocialLogin('google')}>
                 {googleLoading ? (

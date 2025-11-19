@@ -193,7 +193,7 @@ export function Game2048() {
     };
 
     return (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="flex flex-col gap-8 md:grid md:grid-cols-3">
             <div 
                 className="relative p-2 rounded-md bg-card-foreground/20 touch-none md:col-span-2"
                 onTouchStart={handleTouchStart}

@@ -130,7 +130,7 @@ export function HangmanGame() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
+    <div className="flex flex-col gap-8 md:grid md:grid-cols-5">
         <div className="flex flex-col items-center col-span-1 md:col-span-3 gap-6">
             <div className="flex flex-col items-center w-full gap-4">
                 <HangmanDrawing />

@@ -146,7 +146,7 @@ export function ConnectFourGame() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="flex flex-col gap-8 md:grid md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div className="p-2 rounded-lg bg-blue-900/50">
                     <div className="grid gap-1" style={{gridTemplateColumns: `repeat(${COLS}, 1fr)`}}>

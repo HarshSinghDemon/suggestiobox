@@ -101,7 +101,7 @@ export function MemoryGame() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <div className="flex flex-col gap-8 md:grid md:grid-cols-3">
         <div className="relative md:col-span-2">
             <div className="grid grid-cols-6 gap-2 sm:gap-4">
                 {cards.map((card, index) => {

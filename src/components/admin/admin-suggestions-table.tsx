@@ -120,7 +120,7 @@ export function AdminSuggestionsTable({ supabaseUrl, supabaseAnonKey }: AdminSug
   }
 
   return (
-    <div className="border rounded-md">
+    <div className="w-full overflow-x-auto border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>

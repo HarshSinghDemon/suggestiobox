@@ -139,7 +139,7 @@ export function SudokuGame() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex flex-col gap-4 md:grid md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div className="relative">
                     <div className="grid grid-cols-9 bg-muted-foreground/50 p-1 rounded-md w-full max-w-[450px] aspect-square">

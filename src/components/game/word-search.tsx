@@ -212,7 +212,7 @@ export function WordSearchGame() {
     if (!isClient || !puzzleData) return null;
 
     return (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="flex flex-col gap-8 md:grid md:grid-cols-3">
             <div className="flex flex-col items-center gap-4 md:col-span-2">
                 <div
                     className="relative grid p-1 bg-muted-foreground/50 rounded-md select-none touch-none"
