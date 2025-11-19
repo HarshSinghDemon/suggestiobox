@@ -36,6 +36,7 @@ export const WavyBackground = ({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>(0);
+  const mousePosition = useRef({ x: 0, y: 0 });
 
   const getSpeed = useCallback(() => {
     switch (speed) {
@@ -60,8 +61,10 @@ export const WavyBackground = ({
 
       for (let i = 0; i < waveCount; i++) {
         const angle = step + (i * Math.PI) / 5;
+        // Introduce mouse interaction
+        const mouseEffect = Math.sin(mousePosition.current.x / width * Math.PI * 2) * 0.1;
         const x = i * waveWidthValue - waveWidthValue;
-        const y = height / 2 + Math.sin(angle) * waveHeight * 0.2;
+        const y = height / 2 + Math.sin(angle) * (waveHeight * (0.2 + mouseEffect));
 
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -88,6 +91,10 @@ export const WavyBackground = ({
     };
     render();
   }, [colors, getSpeed, waveOpacity, waveWidth]);
+  
+  const handleMouseMove = (event: MouseEvent) => {
+    mousePosition.current = { x: event.clientX, y: event.clientY };
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -106,10 +113,12 @@ export const WavyBackground = ({
         };
         
         window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', handleMouseMove);
         resize();
         
         return () => {
           window.removeEventListener('resize', resize);
+          window.removeEventListener('mousemove', handleMouseMove);
           if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
           }
