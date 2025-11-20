@@ -110,9 +110,9 @@ export function CommunityMembersList() {
                     {adminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <div className='cursor-pointer'>
-                                    <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
-                                    <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
+                                <div className='cursor-pointer' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+                                    <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-500 animate-text-shine">Admin</h2>
+                                    <p className="text-2xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -120,17 +120,17 @@ export function CommunityMembersList() {
                             </PopoverContent>
                         </Popover>
                     ) : (
-                        <div>
-                            <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
-                            <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
+                        <div style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+                            <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-500 animate-text-shine">Admin</h2>
+                            <p className="text-2xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
                         </div>
                     )}
                     {coAdminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <div className='text-right cursor-pointer'>
-                                    <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                                    <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
+                                <div className='text-right cursor-pointer' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+                                    <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-blue-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
+                                    <p className="text-2xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-lime-300 to-green-500 animate-text-shine [animation-delay:0.7s]">Atrik</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -138,9 +138,9 @@ export function CommunityMembersList() {
                             </PopoverContent>
                         </Popover>
                     ) : (
-                         <div className='text-right'>
-                            <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                            <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
+                         <div className='text-right' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+                            <h2 className="text-xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-blue-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
+                            <p className="text-2xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-lime-300 to-green-500 animate-text-shine [animation-delay:0.7s]">Atrik</p>
                         </div>
                     )}
                 </div>
