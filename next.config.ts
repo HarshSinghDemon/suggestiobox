@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'img.jamendo.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'usercontent.jamendo.com',
+      },
     ],
   },
   experimental: {
