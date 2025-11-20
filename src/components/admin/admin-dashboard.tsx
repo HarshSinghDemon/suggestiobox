@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +15,7 @@ type AdminDashboardProps = {
 export function AdminDashboard({ supabaseUrl, supabaseAnonKey }: AdminDashboardProps) {
   return (
     <Tabs defaultValue="suggestions" className="w-full">
-      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
         <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
         <TabsTrigger value="assignments">Assignments</TabsTrigger>
         <TabsTrigger value="messages">Messages</TabsTrigger>
