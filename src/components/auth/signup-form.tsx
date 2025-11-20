@@ -24,6 +24,7 @@ import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { moderateText } from '@/ai/flows/moderate-text';
+import { validateEmail } from '@/ai/flows/validate-email';
 import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
@@ -63,6 +64,14 @@ export function SignUpForm() {
     setIsSigningUp(true);
 
     try {
+        // First, validate the email for temporary services
+        const emailValidation = await validateEmail({ email: values.email });
+        if (emailValidation.isTemporary) {
+            setError('Please use a permanent email address. Temporary emails are not allowed.');
+            setIsSigningUp(false);
+            return;
+        }
+
         const moderationResult = await moderateText({ text: values.name });
         if (moderationResult.isHarmful) {
             setError(moderationResult.reason || 'Your display name is not appropriate. Please choose another one.');
