@@ -13,8 +13,17 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '0d91aedbe93d49259da6d0c1f7cf4ebd';
-const REDIRECT_URI = 'https://suggestionbox-khaki.vercel.app/spotify-player';
-const SCOPES = "streaming user-read-private user-read-email user-read-playback-state user-modify-playback-state";
+
+const getRedirectUri = () => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  if (window.location.hostname === 'localhost') {
+    return 'http://localhost:9002/spotify-player';
+  }
+  return 'https://suggestionbox-khaki.vercel.app/spotify-player';
+};
+
 
 // Helper to generate a random string for the code verifier
 const generateRandomString = (length: number) => {
@@ -40,6 +49,8 @@ const base64encode = (input: ArrayBuffer) => {
 
 
 export default function SpotifyPlayerPage() {
+    const REDIRECT_URI = getRedirectUri();
+
     // This function will handle redirecting the user to Spotify for authentication
     const handleLogin = async () => {
         const codeVerifier = generateRandomString(64);
@@ -51,7 +62,7 @@ export default function SpotifyPlayerPage() {
         const params = {
             response_type: 'code',
             client_id: CLIENT_ID,
-            scope: SCOPES,
+            scope: "streaming user-read-private user-read-email user-read-playback-state user-modify-playback-state",
             code_challenge_method: 'S256',
             code_challenge: codeChallenge,
             redirect_uri: REDIRECT_URI,
@@ -119,7 +130,7 @@ export default function SpotifyPlayerPage() {
                 }
             }
         },
-        []
+        [REDIRECT_URI]
     );
 
     if (!CLIENT_ID) {
@@ -133,7 +144,7 @@ export default function SpotifyPlayerPage() {
                 The Spotify Client ID is not configured. Please set the 
                 <code className="mx-1 font-mono">NEXT_PUBLIC_SPOTIFY_CLIENT_ID</code>
                 in your <code className="mx-1 font-mono">.env</code> file. You also need to configure the Redirect URI in your
-                Spotify Developer Dashboard to <code className="mx-1 font-mono">{REDIRECT_URI}</code>.
+                Spotify Developer Dashboard.
               </AlertDescription>
             </Alert>
           </div>
@@ -282,3 +293,5 @@ const PlayerUI = () => {
     </Card>
   );
 };
+
+    

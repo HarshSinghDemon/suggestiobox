@@ -36,6 +36,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'ryvsxwjnldugnwxjhgem.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.scdn.co',
+      },
     ],
   },
   experimental: {
@@ -50,3 +54,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+    
