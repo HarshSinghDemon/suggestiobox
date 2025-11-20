@@ -5,7 +5,6 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
-import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 
 type Particle = {
@@ -18,12 +17,15 @@ type Particle = {
     life: number;
 };
 
+type Difficulty = 'slow' | 'fast';
+
 
 export function BrickBreakerGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<'start' | 'playing' | 'gameOver' | 'won'>('start');
   const [score, setScore] = useState(0);
   const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>('slow');
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -89,7 +91,9 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = 2;
+    const baseSpeed = difficulty === 'fast' ? 4 : 2;
+    const pointsPerBrick = difficulty === 'fast' ? 20 : 10;
+    
     let speedMultiplier = 1;
     let dx = (Math.random() - 0.5) * baseSpeed * 1.5;
     if (Math.abs(dx) < 0.5) dx = dx > 0 ? 0.5 : -0.5;
@@ -174,15 +178,15 @@ export function BrickBreakerGame() {
     canvas.addEventListener("touchmove", touchMoveHandler, { passive: false });
     
     const createParticles = (brick: {x:number, y:number}) => {
-        for (let i = 0; i < 20; i++) { // More particles for a bigger blast
+        for (let i = 0; i < 20; i++) {
             particles.push({
                 x: brick.x + brickWidth / 2,
                 y: brick.y + brickHeight / 2,
-                radius: Math.random() * 2.5 + 1.5, // Slightly larger particles
-                color: `hsl(0, 100%, ${Math.random() * 30 + 50}%)`, // Shades of red
-                vx: (Math.random() - 0.5) * 5, // Faster horizontal velocity
-                vy: (Math.random() - 0.5) * 5, // Faster vertical velocity
-                life: 40, // Longer life
+                radius: Math.random() * 2.5 + 1.5,
+                color: `hsl(0, 100%, ${Math.random() * 30 + 50}%)`,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                life: 40,
             });
         }
     }
@@ -195,10 +199,10 @@ export function BrickBreakerGame() {
                     if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
                         dy = -dy;
                         b.status = 0;
-                        localScore += 10;
-                        setScore(s => s + 10);
+                        localScore += pointsPerBrick;
+                        setScore(s => s + pointsPerBrick);
                         createParticles(b);
-                        if(localScore == brickRowCount*brickColumnCount*10) {
+                        if(localScore == brickRowCount*brickColumnCount*pointsPerBrick) {
                             setGameState('won');
                             submitScore(localScore + 100); // Bonus for winning
                         }
@@ -282,7 +286,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 5000); 
+        speedMultiplier = 1 + (localScore / (difficulty === 'fast' ? 2500 : 5000));
         const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
         const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
@@ -320,28 +324,36 @@ export function BrickBreakerGame() {
       canvas.removeEventListener("touchstart", touchStartHandler);
       canvas.removeEventListener("touchmove", touchMoveHandler);
     };
-  }, [gameState, submitScore]);
+  }, [gameState, submitScore, difficulty]);
   
-  const startGame = () => {
+  const startGame = (selectedDifficulty: Difficulty) => {
+      setDifficulty(selectedDifficulty);
       setGameState('playing');
       setScore(0);
       setHasSubmittedScore(false);
+  }
+
+  const resetGame = () => {
+    setGameState('start');
   }
 
   return (
     <div className="relative w-full h-full">
         <canvas ref={canvasRef} className="w-full h-full rounded-md bg-card-foreground/10" />
             {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-center bg-background/80">
                 <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
                 <p className='text-muted-foreground'>Your Score: {score}</p>
-                <Button onClick={startGame} className="mt-4">
-                    {gameState === 'start' ? 'Start Game' : 'Play Again'}
-                </Button>
+                {gameState === 'start' ? (
+                  <div className='flex gap-4'>
+                    <Button onClick={() => startGame('slow')}>Start Slow</Button>
+                    <Button onClick={() => startGame('fast')} variant="destructive">Start Fast</Button>
+                  </div>
+                ) : (
+                  <Button onClick={resetGame}>Play Again</Button>
+                )}
             </div>
         )}
     </div>
   );
 }
-
-    
