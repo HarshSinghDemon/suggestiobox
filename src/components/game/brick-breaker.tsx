@@ -7,7 +7,6 @@ import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
-import { RotateCcw } from 'lucide-react';
 
 type Particle = {
     x: number;
@@ -65,7 +64,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = canvas.width * 0.75;
+            canvas.height = container.clientHeight;
         }
     };
     
@@ -90,7 +89,7 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = 2.5;
+    const baseSpeed = 2;
     let speedMultiplier = 1;
     let dx = baseSpeed;
     let dy = -baseSpeed;
@@ -100,7 +99,7 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 5;
+    let brickRowCount = 8;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
@@ -110,6 +109,7 @@ export function BrickBreakerGame() {
 
     let particles: Particle[] = [];
     let paddleHitFlash = 0;
+    let ballTrail: {x: number, y: number}[] = [];
     
     const brickColors = [
         "hsl(var(--chart-1))", 
@@ -208,12 +208,25 @@ export function BrickBreakerGame() {
     }
 
     function drawBall() {
+        // Trail
+        ballTrail.push({x, y});
+        if(ballTrail.length > 10) ballTrail.shift();
+        
+        for(let i = 0; i < ballTrail.length; i++) {
+            ctx!.beginPath();
+            ctx!.arc(ballTrail[i].x, ballTrail[i].y, ballRadius * (i / ballTrail.length), 0, Math.PI*2);
+            ctx!.fillStyle = `hsla(var(--primary-hsl), ${i / ballTrail.length * 0.5})`;
+            ctx!.fill();
+            ctx!.closePath();
+        }
+
         ctx!.beginPath();
         ctx!.arc(x, y, ballRadius, 0, Math.PI*2);
         ctx!.fillStyle = "hsl(var(--primary))";
         ctx!.fill();
         ctx!.closePath();
     }
+
     function drawPaddle() {
         ctx!.beginPath();
         ctx!.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
@@ -268,7 +281,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 5000); 
+        speedMultiplier = 1 + (localScore / 10000); 
         const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
         const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
@@ -315,9 +328,9 @@ export function BrickBreakerGame() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        <div className="relative md:col-span-2">
-            <canvas ref={canvasRef} className="w-full rounded-md bg-card-foreground/10" />
+    <div className="grid grid-cols-1 md:grid-cols-4 h-full">
+        <div className="relative md:col-span-3 h-full">
+            <canvas ref={canvasRef} className="w-full h-full rounded-md bg-card-foreground/10" />
              {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
                     <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
@@ -328,7 +341,7 @@ export function BrickBreakerGame() {
                 </div>
             )}
         </div>
-        <div className="space-y-4 md:col-span-1">
+        <div className="space-y-4 md:col-span-1 p-4 border-l">
             <div className="flex flex-col items-center justify-center p-4 rounded-md bg-muted">
                 <p className="text-lg font-semibold">Score</p>
                 <p className="text-3xl font-bold text-primary">{score}</p>
@@ -338,5 +351,3 @@ export function BrickBreakerGame() {
     </div>
   );
 }
-
-    
