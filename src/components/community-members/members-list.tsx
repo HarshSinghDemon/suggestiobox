@@ -93,7 +93,7 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        <Card className="relative w-full max-w-2xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt group aspect-[2/1]">
+        <Card className="relative w-full max-w-2xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt group aspect-[2/1] border-0">
             <Image 
                 src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
                 alt="Site Administrators"
