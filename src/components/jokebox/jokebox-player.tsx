@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import YouTubePlayer, { YouTubePlayer as YouTubePlayerType } from 'youtube-player';
 import type { Jukebox, FirebaseUser } from '@/lib/types';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
@@ -35,13 +35,10 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
     const canSkip = song && user && (isAdmin || user.uid === requesterId);
 
     useEffect(() => {
+        let player: YouTubePlayerType | null = null;
+    
         if (playerContainerRef.current && song?.videoId) {
-            // Destroy previous instance if it exists
-            if (playerRef.current) {
-                playerRef.current.destroy();
-            }
-
-            const player = YouTubePlayer(playerContainerRef.current, {
+            player = YouTubePlayer(playerContainerRef.current, {
                 videoId: song.videoId,
                 playerVars: {
                     autoplay: 1,
@@ -50,35 +47,32 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
                     rel: 0,
                 },
             });
-
             playerRef.current = player;
-
+    
             player.on('stateChange', (event) => {
-                if (event.data === 0) { // 0 = 'ended'
+                // state 0 is 'ended'
+                if (event.data === 0) {
                     onSongEnd();
                 }
             });
-            
+    
             player.on('ready', () => {
-              if (isPlaying) {
-                player.playVideo();
-              }
+                if (isPlaying) {
+                    player?.playVideo();
+                }
             });
-
-        } else if (!song && playerRef.current) {
-            // If no song, destroy the player
-            playerRef.current.destroy();
-            playerRef.current = null;
+    
         }
-
-        // Cleanup on component unmount
+    
+        // Cleanup function
         return () => {
-            if (playerRef.current) {
-                playerRef.current.destroy();
+            if (player) {
+                player.destroy();
                 playerRef.current = null;
             }
         };
-    }, [song?.videoId]); // Re-run effect only when the song video ID changes
+    }, [song?.videoId]); // Only re-run when the video ID changes.
+    
 
     if (!song) {
         return (
