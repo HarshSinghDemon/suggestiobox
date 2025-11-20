@@ -28,6 +28,7 @@ const SpotifyContext = createContext<SpotifyContextType | undefined>(undefined);
 const getRedirectUri = () => {
     if (typeof window === 'undefined') return '';
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // Spotify allows http for localhost redirect URIs.
     return isLocalhost
       ? 'http://localhost:9002/spotify-player'
       : 'https://suggestionbox-khaki.vercel.app/spotify-player';
@@ -57,8 +58,14 @@ const fetchApi = async (endpoint: string, token: string) => {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({ error: { message: 'An unknown API error occurred.' } }));
-        throw new Error(`Spotify API error: ${errorBody.error.message}`);
+        const errorBody = await response.text();
+        try {
+            const errorJson = JSON.parse(errorBody);
+            throw new Error(`Spotify API error: ${errorJson.error.message}`);
+        } catch (e) {
+            // If parsing fails, the body is not JSON (e.g., HTML error page)
+            throw new Error(`Spotify API request failed with status ${response.status}. Response was not valid JSON.`);
+        }
     }
     return response.json();
 };
@@ -75,9 +82,11 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
         const storedToken = localStorage.getItem('spotify_access_token');
         if (storedToken) {
             callback(storedToken);
-            setAccessToken(storedToken); // Ensure state is updated on initial load
+            if (!accessToken) {
+                setAccessToken(storedToken);
+            }
         }
-    }, []);
+    }, [accessToken]);
 
     const login = async () => {
         setIsLoading(true);
@@ -122,7 +131,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
              setAccessToken(storedToken);
         }
 
-        if (code && !accessToken) {
+        if (code && !storedToken) {
             const exchangeToken = async () => {
                 setIsLoading(true);
                 const codeVerifier = window.localStorage.getItem('spotify_code_verifier');
@@ -177,6 +186,9 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
             setTopTracks(topData.items);
         } catch (error: any) {
             console.error('Error fetching Spotify data:', error);
+            if (error.message.includes('token expired')) {
+                logout(); // Log out if token is expired
+            }
             toast({ variant: 'destructive', title: 'Spotify Error', description: `Could not fetch your data: ${error.message}` });
         } finally {
             setIsLoading(false);
@@ -240,20 +252,48 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
 const SpotifyProviderCore = ({ children, accessToken, value }: { children: ReactNode, accessToken: string | null, value: any }) => {
     const player = useSpotifyPlayer();
     const device = usePlayerDevice();
-    const playbackState = usePlaybackState(true, 1000); // Poll for updates
+    const playbackState = usePlaybackState(true, 1000);
+    const { toast } = useToast();
 
-    const playTrack = useCallback((uri: string) => {
-        if (player && device?.device_id && accessToken) {
-            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device.device_id}`, {
+    const playTrack = useCallback(async (uri: string) => {
+        if (!player || !device?.device_id || !accessToken) {
+            toast({
+                variant: 'destructive',
+                title: 'Playback Error',
+                description: 'Spotify player is not ready. Please try again.',
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device.device_id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`
                 },
                 body: JSON.stringify({ uris: [uri] })
-            }).catch(error => console.error("Error playing track:", error));
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error.message || 'Failed to start playback.');
+            }
+
+            toast({
+                title: 'Playback Started',
+                description: 'Your song is now playing.',
+            });
+            
+        } catch (error: any) {
+            console.error("Error playing track:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Playback Failed',
+                description: error.message,
+            });
         }
-    }, [player, device?.device_id, accessToken]);
+    }, [player, device?.device_id, accessToken, toast]);
 
     return (
         <SpotifyContext.Provider value={{...value, player, device, playbackState, playTrack }}>
