@@ -3,15 +3,14 @@
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { JokeboxMessage } from '@/lib/types';
-import { collection, query, orderBy, limit, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, serverTimestamp, addDoc, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Send, Loader2 } from 'lucide-react';
-import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -89,6 +88,36 @@ export function JokeboxChat() {
   );
   const { data: messages, isLoading } = useCollection<JokeboxMessage>(messagesQuery);
   const reversedMessages = useMemo(() => messages?.slice().reverse() ?? [], [messages]);
+  
+  useEffect(() => {
+    const cleanupOldMessages = async () => {
+      if (!firestore) return;
+      const twoMinutesAgo = Timestamp.fromMillis(Date.now() - 2 * 60 * 1000);
+      const oldMessagesQuery = query(
+        collection(firestore, 'jukeboxMessages'),
+        where('isSystemMessage', '==', true),
+        where('createdAt', '<', twoMinutesAgo)
+      );
+      
+      try {
+        const querySnapshot = await getDocs(oldMessagesQuery);
+        if (!querySnapshot.empty) {
+          const batch = writeBatch(firestore);
+          querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+        }
+      } catch (error) {
+        console.error("Failed to clean up old system messages:", error);
+      }
+    };
+
+    const intervalId = setInterval(cleanupOldMessages, 2 * 60 * 1000); // Run every 2 minutes
+    cleanupOldMessages(); // Run once on mount
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [firestore]);
 
 
   useEffect(() => {
