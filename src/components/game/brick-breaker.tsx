@@ -99,7 +99,7 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 12;
+    let brickRowCount = 7;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
