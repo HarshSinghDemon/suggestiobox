@@ -11,7 +11,7 @@ import { RequestForm, type SearchResult } from '@/components/jokebox/request-for
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
 import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking, useDoc } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc, addDoc, getDoc } from 'firebase/firestore';
 import type { MusicRequest, Jukebox } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -35,11 +35,11 @@ const JokeboxPageContent = () => {
     const isLoading = isLoadingJukebox || isLoadingRequests;
     
     // A song is considered "in progress" if there's a current song object in the state
-    const isSongInProgress = !!jukeboxState?.currentSong;
+    const isSongPlaying = !!jukeboxState?.currentSong;
 
 
     const handlePlayNow = useCallback(async (searchResult: SearchResult) => {
-        if (!user || !firestore) return;
+        if (!user || !firestore || !jukeboxStateRef) return;
         
         const newSong: MusicRequest = {
             id: searchResult.id.videoId,
@@ -52,7 +52,7 @@ const JokeboxPageContent = () => {
             createdAt: new Date() as any,
         };
 
-        await setDoc(jukeboxStateRef!, {
+        await setDoc(jukeboxStateRef, {
             currentSong: newSong,
             isPlaying: true,
             timestamp: serverTimestamp(),
@@ -79,18 +79,29 @@ const JokeboxPageContent = () => {
           createdAt: serverTimestamp(),
         };
 
-        await addDoc(collection(firestore, 'musicRequests'), newRequest);
+        const newRequestRef = await addDoc(collection(firestore, 'musicRequests'), newRequest);
         
-        await addDoc(collection(firestore, 'jukeboxMessages'), {
-          userId: 'system',
-          userName: 'Jokebox Bot',
-          text: `${userName} requested "${video.snippet.title}"`,
-          isSystemMessage: true,
-          createdAt: serverTimestamp(),
-        });
-  
-        toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
-    }, [user, firestore, toast]);
+        // Check if nothing is playing, if so, play this song immediately
+        const currentState = await getDoc(jukeboxStateRef!);
+        if (!currentState.exists() || !currentState.data()?.currentSong) {
+            await setDoc(jukeboxStateRef!, {
+                currentSong: { id: newRequestRef.id, ...newRequest },
+                isPlaying: true,
+                timestamp: serverTimestamp(),
+                requesterId: user.uid,
+            });
+            await deleteDocumentNonBlocking(newRequestRef);
+        } else {
+             await addDoc(collection(firestore, 'jukeboxMessages'), {
+                userId: 'system',
+                userName: 'Jokebox Bot',
+                text: `${userName} requested "${video.snippet.title}"`,
+                isSystemMessage: true,
+                createdAt: serverTimestamp(),
+            });
+            toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
+        }
+    }, [user, firestore, toast, jukeboxStateRef]);
 
     const upNext = useMemo(() => {
         if (!requests) return [];
@@ -99,21 +110,24 @@ const JokeboxPageContent = () => {
 
 
     const handleSongEnd = useCallback(async () => {
-        if (!firestore) return;
-
-        const nextSong = requests?.[0];
+        if (!firestore || !jukeboxStateRef) return;
         
-        if (nextSong) {
-            await setDoc(jukeboxStateRef!, {
-                currentSong: nextSong,
+        const nextSongInQueue = requests?.[0];
+
+        if (nextSongInQueue) {
+            // Play the next song from the queue
+            await setDoc(jukeboxStateRef, {
+                currentSong: nextSongInQueue,
                 isPlaying: true,
                 timestamp: serverTimestamp(),
-                requesterId: nextSong.userId,
+                requesterId: nextSongInQueue.userId,
             });
-            const songRef = doc(firestore, 'musicRequests', nextSong.id);
-            await deleteDocumentNonBlocking(songRef);
+            // Delete the song that is now playing from the queue
+            const songToDeleteRef = doc(firestore, 'musicRequests', nextSongInQueue.id);
+            await deleteDocumentNonBlocking(songToDeleteRef);
         } else {
-            await setDoc(jukeboxStateRef!, {
+            // No more songs in queue, clear the player
+            await setDoc(jukeboxStateRef, {
                 currentSong: null,
                 isPlaying: false,
                 timestamp: serverTimestamp(),
@@ -127,6 +141,7 @@ const JokeboxPageContent = () => {
             title: 'Skipped!',
             description: `Skipping to the next song.`,
         });
+        // This will trigger the onSongEnd logic, which handles playing the next track
         await handleSongEnd();
     }, [toast, handleSongEnd]);
 
@@ -154,7 +169,7 @@ const JokeboxPageContent = () => {
                         <RequestForm 
                             onPlaySong={handlePlayNow} 
                             onAddToQueue={handleAddToQueue} 
-                            isSongPlaying={isSongInProgress} 
+                            isSongPlaying={isSongPlaying} 
                         />
                     </CardContent>
                 </Card>
