@@ -44,7 +44,7 @@ const useYouTubeSearch = (apiKey: string) => {
         setError(null);
         setResults([]);
 
-        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=20&key=${apiKey}`;
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=20&key=${apiKey}`;
 
         try {
             const response = await fetch(url);
@@ -54,7 +54,7 @@ const useYouTubeSearch = (apiKey: string) => {
             }
             const data: YouTubeSearchResponse = await response.json();
             if (data.items.length === 0) {
-                toast({ title: 'No Results', description: `No videos found for "${query}".` });
+                toast({ title: 'No Results', description: `No music found for "${query}".` });
             }
             setResults(data.items);
         } catch (err: any) {
@@ -90,7 +90,7 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
                 width: '0',
                 height: '0',
                 playerVars: {
-                    autoplay: 1, // Set autoplay to 1
+                    autoplay: 1,
                     controls: 0,
                 },
             });
@@ -108,8 +108,6 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
         return () => {
             if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-            // The player might be destroyed by other effects, so we don't destroy it here
-            // to avoid errors if the component re-renders quickly.
         };
     }, []);
     
@@ -137,7 +135,6 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
     const handleSelectTrack = (track: YouTubeSearchResult) => {
         setCurrentTrack(track);
-        // Using cueVideoById is sometimes more reliable for autoplay
         playerRef.current?.cueVideoById(track.id.videoId);
         playerRef.current?.playVideo();
     };
