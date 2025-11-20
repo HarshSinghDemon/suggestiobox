@@ -11,7 +11,7 @@ export default function BrickBreakerPage() {
     const { user } = useUser();
   return (
     <AuthWrapper>
-      <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex flex-col h-[calc(100vh-4rem)] md:flex-row">
         <div className="flex-grow">
             <Card className="flex flex-col h-full border-0 rounded-none">
                 <CardHeader className="text-center">
@@ -23,7 +23,7 @@ export default function BrickBreakerPage() {
                 </CardContent>
             </Card>
         </div>
-        <div className="p-4 bg-background">
+        <div className="w-full p-4 md:w-1/4 md:p-0 md:pl-4">
             {user && <Leaderboard gameId="brick-breaker" />}
         </div>
       </div>
