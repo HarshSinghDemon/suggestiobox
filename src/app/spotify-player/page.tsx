@@ -10,7 +10,6 @@ import { WebPlaybackSDK, useSpotifyPlayer, usePlaybackState, usePlayerDevice } f
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '0d91aedbe93d49259da6d0c1f7cf4ebd';
@@ -283,5 +282,3 @@ const PlayerUI = () => {
     </Card>
   );
 };
-
-    
