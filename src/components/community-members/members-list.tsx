@@ -104,8 +104,14 @@ export function CommunityMembersList() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
             <div className="absolute bottom-0 left-0 right-0 p-4 text-center md:p-6">
                 <div className="flex justify-between">
-                    <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
-                    <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                    <div>
+                        <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
+                        <p className="text-lg text-white/90">Harsh</p>
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                        <p className="text-lg text-white/90">Atrik</p>
+                    </div>
                 </div>
                 <p className="mt-2 text-sm text-white/80 md:text-base">The creators and maintainers of this platform.</p>
             </div>
