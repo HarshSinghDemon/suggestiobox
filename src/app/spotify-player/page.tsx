@@ -5,7 +5,7 @@ import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSpotify } from "@/context/spotify-context";
-import { Music, Loader2, Search, History, Star } from "lucide-react";
+import { Music, Loader2, Search, History, Star, LogOut } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -55,7 +55,8 @@ function TrackItem({ track, onPlay }: { track: SpotifyTrack, onPlay: (uri: strin
 export default function SpotifyPlayerPage() {
     const { 
         isLoggedIn, 
-        login, 
+        login,
+        logout,
         recentlyPlayed, 
         topTracks,
         searchResults,
@@ -105,10 +106,18 @@ export default function SpotifyPlayerPage() {
             <div className="container py-12 mx-auto">
                  <Card className="max-w-2xl mx-auto">
                     <CardHeader>
-                        <CardTitle>Your Spotify Music</CardTitle>
-                        <CardDescription>
-                            Your recently played, top tracks, and a search away from your next song.
-                        </CardDescription>
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <CardTitle>Your Spotify Music</CardTitle>
+                                <CardDescription>
+                                    Your recently played, top tracks, and a search away from your next song.
+                                </CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={logout}>
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Logout
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <Tabs defaultValue="search">
