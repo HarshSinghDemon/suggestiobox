@@ -25,7 +25,7 @@ import { useState } from 'react';
 import { JukeboxControls } from '../jukebox-controls';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
 
-const ADMIN_EMAIL = 'harshroop100@gmail.com';
+const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
 const NavLink = ({ href, children, onNavigate }: { href: string, children: React.ReactNode, onNavigate: () => void }) => {
     const router = useRouter();
@@ -63,7 +63,7 @@ export function Header() {
       .substring(0, 2);
   };
   
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
 
   const UserAvatarButton = () => (
      <Button 
