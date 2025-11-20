@@ -13,6 +13,7 @@ import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
 import type { MusicRequest } from '@/lib/types';
+import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 
 const JokeboxPageContent = () => {
     const { user } = useUser();
@@ -26,28 +27,25 @@ const JokeboxPageContent = () => {
     const { data: requests, isLoading } = useCollection<MusicRequest>(requestsQuery);
 
     const handleSelectSong = (searchResult: SearchResult) => {
-        // Convert SearchResult to MusicRequest format for the player
         const songToPlay: MusicRequest = {
-            id: searchResult.id.videoId, // Use videoId as a temporary unique key
+            id: searchResult.id.videoId, 
             videoId: searchResult.id.videoId,
             title: searchResult.snippet.title,
             thumbnail: searchResult.snippet.thumbnails.default.url,
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            createdAt: new Date() as any, // Not a real timestamp, but satisfies the type
+            createdAt: new Date() as any,
         };
         setSelectedSong(songToPlay);
     };
 
     const handleSongEnd = () => {
-        // When a directly selected song ends, clear it to let the queue play next
         if (selectedSong) {
             setSelectedSong(null);
         }
     };
     
-    // The player should prioritize the directly selected song, otherwise play from the queue.
     const currentSong = selectedSong || (requests && requests.length > 0 ? requests[0] : undefined);
     const upNext = selectedSong ? requests : requests?.slice(1);
 
@@ -76,14 +74,24 @@ const JokeboxPageContent = () => {
                     </CardContent>
                 </Card>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Up Next</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <RequestsList requests={upNext ?? []} isLoading={isLoading} />
-                </CardContent>
-            </Card>
+            <div className="space-y-8">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Up Next</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <RequestsList requests={upNext ?? []} isLoading={isLoading} />
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Jokebox Chat</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <JokeboxChat />
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

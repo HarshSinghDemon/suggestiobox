@@ -33,7 +33,7 @@ interface RequestFormProps {
 export function RequestForm({ onPlaySong }: RequestFormProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingSongId, setSubmittingSongId] = useState<string | null>(null);
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -67,22 +67,32 @@ export function RequestForm({ onPlaySong }: RequestFormProps) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to request a song.' });
       return;
     }
-    setIsSubmitting(true);
+    setSubmittingSongId(video.id.videoId);
     try {
+      const userName = user.displayName || 'Anonymous';
       await addDocumentNonBlocking(collection(firestore, 'musicRequests'), {
         userId: user.uid,
-        userName: user.displayName || 'Anonymous',
-        songName: video.snippet.title, // songName is deprecated but let's keep it for now
+        userName: userName,
+        songName: video.snippet.title,
         videoId: video.id.videoId,
         thumbnail: video.snippet.thumbnails.default.url,
         title: video.snippet.title,
         createdAt: serverTimestamp(),
       });
+      
+      await addDocumentNonBlocking(collection(firestore, 'jukeboxMessages'), {
+        userId: 'system',
+        userName: 'Jokebox Bot',
+        text: `${userName} requested "${video.snippet.title}"`,
+        isSystemMessage: true,
+        createdAt: serverTimestamp(),
+      });
+
       toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Request Failed', description: error.message });
     } finally {
-      setIsSubmitting(false);
+      setSubmittingSongId(null);
     }
   };
   
@@ -110,11 +120,11 @@ export function RequestForm({ onPlaySong }: RequestFormProps) {
                 <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md" />
                 <p className="flex-1 text-sm font-medium truncate">{result.snippet.title}</p>
                 <div className="flex gap-2">
-                  <Button size="icon" variant="outline" onClick={() => handlePlayNow(result)} disabled={isSubmitting} aria-label="Play Now">
+                  <Button size="icon" variant="outline" onClick={() => handlePlayNow(result)} disabled={!!submittingSongId} aria-label="Play Now">
                     <Play className="w-4 h-4" />
                   </Button>
-                  <Button size="icon" onClick={() => handleAddToQueue(result)} disabled={isSubmitting} aria-label="Add to Queue">
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : <Send className="w-4 h-4" />}
+                  <Button size="icon" onClick={() => handleAddToQueue(result)} disabled={!!submittingSongId} aria-label="Add to Queue">
+                    {submittingSongId === result.id.videoId ? <Loader2 className="animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>

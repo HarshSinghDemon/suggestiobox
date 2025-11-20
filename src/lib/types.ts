@@ -96,4 +96,14 @@ export type MusicRequest = {
   title: string;
   createdAt: Timestamp;
 };
+
+export type JokeboxMessage = {
+  id: string;
+  text: string;
+  createdAt: Timestamp;
+  userId: string;
+  userName: string | null;
+  userImage?: string | null;
+  isSystemMessage?: boolean;
+};
     
