@@ -46,11 +46,11 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
 
     const audioRef = useRef<HTMLAudioElement>(null);
 
-    const searchTracks = useCallback(async () => {
-        if (!searchTerm.trim()) return;
+    const fetchTracks = useCallback(async (query?: string) => {
         setIsLoading(true);
         try {
-            const response = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=${clientId}&format=json&search=${encodeURIComponent(searchTerm)}`);
+            const searchParams = query ? `&search=${encodeURIComponent(query)}` : '&order=popularity_month&limit=20';
+            const response = await fetch(`https://api.jamendo.com/v3.0/tracks/?client_id=${clientId}&format=json${searchParams}`);
             const data = await response.json();
             if (data.results) {
                 setTracks(data.results);
@@ -60,7 +60,21 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
         } finally {
             setIsLoading(false);
         }
-    }, [searchTerm, clientId]);
+    }, [clientId]);
+    
+    // Fetch popular tracks on initial load
+    useEffect(() => {
+        fetchTracks();
+    }, [fetchTracks]);
+
+
+    const handleSearch = () => {
+        if (!searchTerm.trim()) {
+            fetchTracks(); // Fetch popular if search is empty
+        } else {
+            fetchTracks(searchTerm);
+        }
+    }
 
     useEffect(() => {
         if (audioRef.current) {
@@ -99,9 +113,9 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
                     placeholder="Search for a track..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && searchTracks()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                <Button type="button" onClick={searchTracks} disabled={isLoading}>
+                <Button type="button" onClick={handleSearch} disabled={isLoading}>
                     {isLoading ? <Loader2 className="animate-spin" /> : <Search />}
                 </Button>
             </div>
@@ -131,7 +145,7 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
                 ) : (
                     <div className="text-center text-muted-foreground py-8">
                         <Music className="w-12 h-12 mx-auto mb-2" />
-                        <p>No tracks found. Try searching for something!</p>
+                        <p>No tracks found. Try searching for something else!</p>
                     </div>
                 )}
             </div>
