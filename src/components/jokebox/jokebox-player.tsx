@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import YouTubePlayer, { YouTubePlayer as YouTubePlayerType } from 'youtube-player';
 import type { Jukebox, FirebaseUser } from '@/lib/types';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
@@ -16,11 +16,13 @@ interface JokeboxPlayerProps {
 }
 
 export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPlayerProps) {
+    const playerRef = useRef<YouTubePlayerType | null>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const { user } = useUser();
     const firestore = useFirestore();
 
     const song = jukeboxState?.currentSong;
+    const isPlaying = jukeboxState?.isPlaying;
     const requesterId = jukeboxState?.requesterId;
     
     const userDocRef = useMemoFirebase(() => {
@@ -31,40 +33,52 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
     const isAdmin = userData?.role === 'admin';
 
     const canSkip = song && user && (isAdmin || user.uid === requesterId);
-    
+
     useEffect(() => {
-        let player: YouTubePlayerType | null = null;
-    
-        if (song?.videoId && playerContainerRef.current) {
-          // Clear the container before creating a new player
-          playerContainerRef.current.innerHTML = '';
-    
-          player = YouTubePlayer(playerContainerRef.current, {
-            videoId: song.videoId,
-            playerVars: {
-              autoplay: 1, // Autoplay the new video
-              controls: 1,
-              modestbranding: 1,
-              rel: 0,
-            },
-          });
-    
-          const onStateChange = (event: any) => {
-            if (event.data === 0) { // 0 = 'ended'
-              onSongEnd();
+        if (playerContainerRef.current && song?.videoId) {
+            // Destroy previous instance if it exists
+            if (playerRef.current) {
+                playerRef.current.destroy();
             }
-          };
-    
-          player.on('stateChange', onStateChange);
+
+            const player = YouTubePlayer(playerContainerRef.current, {
+                videoId: song.videoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 1,
+                    modestbranding: 1,
+                    rel: 0,
+                },
+            });
+
+            playerRef.current = player;
+
+            player.on('stateChange', (event) => {
+                if (event.data === 0) { // 0 = 'ended'
+                    onSongEnd();
+                }
+            });
+            
+            player.on('ready', () => {
+              if (isPlaying) {
+                player.playVideo();
+              }
+            });
+
+        } else if (!song && playerRef.current) {
+            // If no song, destroy the player
+            playerRef.current.destroy();
+            playerRef.current = null;
         }
-    
-        // Cleanup function
+
+        // Cleanup on component unmount
         return () => {
-          if (player) {
-            player.destroy();
-          }
+            if (playerRef.current) {
+                playerRef.current.destroy();
+                playerRef.current = null;
+            }
         };
-      }, [song, onSongEnd]); // Re-run effect only when the song or onSongEnd callback changes
+    }, [song?.videoId]); // Re-run effect only when the song video ID changes
 
     if (!song) {
         return (
