@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 import type {NextConfig} from 'next';
 
@@ -30,7 +31,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'ryvsxwjnldugnwxjhgem.supabase.co',
+      },
     ],
   },
   experimental: {
