@@ -192,6 +192,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
     const searchTracks = async (query: string) => {
         if (!accessToken) return;
         setIsLoading(true);
+        setSearchResults([]);
         try {
             const data = await fetchApi(`/search?q=${encodeURIComponent(query)}&type=track&limit=20`, accessToken);
             setSearchResults(data.tracks.items);
@@ -215,6 +216,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
     };
 
     if (!CLIENT_ID) {
+        console.error("Spotify Client ID is not configured. Player functionality will be disabled.");
         return (
             <SpotifyContext.Provider value={{...value, player: null, device: null, playbackState: null, playTrack: () => {}}}>
                 {children}
@@ -268,5 +270,3 @@ export const useSpotify = () => {
     }
     return context;
 };
-
-    
