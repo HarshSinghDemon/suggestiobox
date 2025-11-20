@@ -128,13 +128,6 @@ export function Header() {
                 >
                     Pookie Contributors
                 </Link>
-                 <Link
-                    href="/jokebox"
-                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                    prefetch={false}
-                >
-                    Jokebox
-                </Link>
                 <Link
                     href="/suggestions/new"
                     className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
@@ -270,9 +263,6 @@ export function Header() {
                             </NavLink>
                             <NavLink href="/community-game" onNavigate={() => setIsSheetOpen(false)}>
                                 <Gamepad2 className="w-5 h-5 mr-3" /> Games
-                            </NavLink>
-                            <NavLink href="/jokebox" onNavigate={() => setIsSheetOpen(false)}>
-                                <Radio className="w-5 h-5 mr-3" /> Jokebox
                             </NavLink>
                             <NavLink href="/pookie-contributors" onNavigate={() => setIsSheetOpen(false)}>
                                 <Trophy className="w-5 h-5 mr-3" /> Contributors

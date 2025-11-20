@@ -85,33 +85,4 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
-
-export type MusicRequest = {
-  id: string;
-  userId: string;
-  userName: string;
-  songName: string;
-  videoId: string;
-  thumbnail: string;
-  title: string;
-  createdAt: Timestamp;
-};
-
-export type JokeboxMessage = {
-  id: string;
-  text: string;
-  createdAt: Timestamp;
-  userId: string;
-  userName: string | null;
-  userImage?: string | null;
-  isSystemMessage?: boolean;
-};
-
-export type Jukebox = {
-    id: string;
-    currentSong: MusicRequest | null;
-    isPlaying: boolean;
-    timestamp: Timestamp;
-    requesterId: string | null;
-}
     
