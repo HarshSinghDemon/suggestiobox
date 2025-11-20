@@ -114,7 +114,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
     };
     
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location().search);
+        const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const storedToken = localStorage.getItem('spotify_access_token');
 
