@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
@@ -53,7 +54,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = container.clientWidth * 0.6; // Adjusted aspect ratio for a wider game
+            canvas.height = container.clientWidth * 0.8; // Make canvas taller
         }
     };
     
@@ -77,15 +78,15 @@ export function BrickBreakerGame() {
     let ballRadius = 8;
     let x = canvas.width / 2;
     let y = canvas.height - 30;
-    let dx = 1.5; // Slower horizontal speed
-    let dy = -1.5; // Slower vertical speed
+    let dx = 2; // Slightly faster horizontal speed
+    let dy = -2; // Slightly faster vertical speed
 
     let paddleHeight = 10;
     let paddleWidth = canvas.width / 6.4;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 5;
-    let brickColumnCount = 9; // Increased brick count for wider screen
+    let brickRowCount = 7; // More rows for taller canvas
+    let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 30;
