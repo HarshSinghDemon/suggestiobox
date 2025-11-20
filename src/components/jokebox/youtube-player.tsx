@@ -20,19 +20,16 @@ import {
     Plus, 
     Trash2, 
     ListMusic,
-    Loader2 
+    Loader2,
+    Music2
 } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
 
-// API Key provided by the user
-const API_KEY = "AIzaSyDGHJKP0d5ge1eQR5Kzszg8oS_lChoYut8";
-
-// --- Types ---
 interface YouTubeTrack {
     id: string;
     title: string;
     channel: string;
     thumbnail: string;
-    duration?: number; // Duration in seconds
 }
 
 interface YouTubeSearchResult {
@@ -44,8 +41,11 @@ interface YouTubeSearchResult {
     };
 }
 
-// --- Main Component ---
-export function YoutubePlayer() {
+interface YoutubePlayerProps {
+    apiKey: string;
+}
+
+export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
     const { toast } = useToast();
 
     // Search State
@@ -58,33 +58,28 @@ export function YoutubePlayer() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(0);
+    const [duration, setDuration] = useState(180); // Default duration
+    const [volume, setVolume] = useState(0.5);
 
     // Playlist State
     const [playlist, setPlaylist] = useState<YouTubeTrack[]>([]);
-    const [showPlaylist, setShowPlaylist] = useState(true);
     
     // Refs
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
     
-    // --- Core Functions ---
-
-    /**
-     * Searches for songs on YouTube using the Data API.
-     */
     const searchSongs = useCallback(async () => {
         if (!query.trim()) return;
         setIsLoading(true);
         setSearchResults([]);
 
-        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=20&videoCategoryId=10&key=${API_KEY}`;
+        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=20&videoCategoryId=10&key=${apiKey}`;
         
         try {
             const response = await fetch(url);
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error.message || "API request failed. Check quota.");
+                throw new Error(errorData.error.message || "API request failed. Check your API key or quota.");
             }
             const data = await response.json();
 
@@ -92,11 +87,17 @@ export function YoutubePlayer() {
                 toast({ title: 'No songs found', description: `Your search for "${query}" returned no results.` });
                 return;
             }
+            
+            const decodedTitle = (title: string) => {
+                const txt = document.createElement("textarea");
+                txt.innerHTML = title;
+                return txt.value;
+            };
 
             const tracks: YouTubeTrack[] = data.items.map((item: YouTubeSearchResult) => ({
                 id: item.id.videoId,
-                title: item.snippet.title,
-                channel: item.snippet.channelTitle,
+                title: decodedTitle(item.snippet.title),
+                channel: decodedTitle(item.snippet.channelTitle),
                 thumbnail: item.snippet.thumbnails.medium.url,
             }));
             setSearchResults(tracks);
@@ -106,18 +107,12 @@ export function YoutubePlayer() {
         } finally {
             setIsLoading(false);
         }
-    }, [query, toast]);
+    }, [query, toast, apiKey]);
 
-    /**
-     * Loads and plays a song using its video ID in the hidden iframe.
-     * @param videoId The YouTube video ID.
-     * @param title The song title.
-     * @param channel The artist/channel name.
-     */
     const playSong = useCallback((track: YouTubeTrack) => {
         if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         
-        const embedUrl = `https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&playsinline=1&modestbranding=1`;
+        const embedUrl = `https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&playsinline=1&modestbranding=1&fs=0&iv_load_policy=3&rel=0`;
         if (iframeRef.current) {
             iframeRef.current.src = embedUrl;
         }
@@ -126,12 +121,9 @@ export function YoutubePlayer() {
         setIsPlaying(true);
         setProgress(0);
         
-        // Since we can't get real duration, we simulate it for the progress bar.
-        // We will fetch it later if possible, but for now, assume 3 minutes.
         const estimatedDuration = 180;
         setDuration(estimatedDuration);
         
-        // Simulate progress bar update
         progressIntervalRef.current = setInterval(() => {
             setProgress(prev => {
                 if (prev >= 100) {
@@ -144,29 +136,21 @@ export function YoutubePlayer() {
     }, []);
 
     const togglePause = () => {
-        // This is a simulated pause. We reload the iframe to stop it.
-        if (isPlaying && iframeRef.current) {
-            iframeRef.current.src = 'about:blank';
-            if(progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        if (isPlaying) {
+            if (iframeRef.current) iframeRef.current.src = 'about:blank';
+            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
             setIsPlaying(false);
-        } else if (!isPlaying && currentTrack) {
+        } else if (currentTrack) {
             playSong(currentTrack);
         }
     };
 
-    const toggleMute = () => {
-        // This is a simulated mute.
-        setIsMuted(!isMuted);
-    };
-
-    // --- Playlist Functions ---
+    const toggleMute = () => setIsMuted(!isMuted);
 
     const loadPlaylist = useCallback(() => {
         try {
             const savedPlaylist = localStorage.getItem('ytAudioPlaylist');
-            if (savedPlaylist) {
-                setPlaylist(JSON.parse(savedPlaylist));
-            }
+            if (savedPlaylist) setPlaylist(JSON.parse(savedPlaylist));
         } catch (error) {
             console.error("Failed to load playlist from localStorage", error);
         }
@@ -207,138 +191,154 @@ export function YoutubePlayer() {
         playSong(playlist[prevIndex]);
     }, [currentTrack, playlist, playSong]);
 
-    // --- UI Components ---
-
     const SearchResults = () => (
-        <div className="space-y-2">
-            {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="w-full h-16 rounded-md" />)
-            ) : searchResults.length > 0 ? (
-                searchResults.map(track => (
-                    <div key={track.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-accent">
-                        <Image src={track.thumbnail} alt={track.title} width={48} height={48} className="object-cover rounded" />
-                        <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate">{track.title}</p>
-                            <p className="text-sm truncate text-muted-foreground">{track.channel}</p>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)}><Plus className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className="w-4 h-4" /></Button>
-                    </div>
-                ))
-            ) : (
-                <p className="py-8 text-center text-muted-foreground">Search for music to begin.</p>
-            )}
-        </div>
-    );
-    
-    const Playlist = () => (
-        <div className={cn("p-4 space-y-2 border-l bg-background/50", showPlaylist ? 'block' : 'hidden')}>
-            <h3 className="text-lg font-semibold">Playlist</h3>
-            <div className="space-y-2 overflow-y-auto max-h-96">
-                {playlist.length > 0 ? (
-                    playlist.map(track => (
-                        <div key={track.id} className={cn("flex items-center gap-2 p-2 rounded-md cursor-pointer hover:bg-accent", currentTrack?.id === track.id && "bg-accent")}>
-                            <div className="flex-1 min-w-0" onClick={() => playSong(track)}>
-                                <p className="text-sm font-semibold truncate">{track.title}</p>
-                                <p className="text-xs truncate text-muted-foreground">{track.channel}</p>
+        <ScrollArea className='h-full'>
+            <div className="p-1 sm:p-4 space-y-2">
+                {isLoading ? (
+                    Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="w-full h-20 rounded-md" />)
+                ) : searchResults.length > 0 ? (
+                    searchResults.map(track => (
+                        <div key={track.id} className="flex items-center gap-3 p-2 rounded-md group hover:bg-accent">
+                            <div className='relative overflow-hidden rounded-md shrink-0 w-14 h-14'>
+                                <Image src={track.thumbnail} alt={track.title} layout='fill' className="object-cover transition-transform duration-300 group-hover:scale-110" />
                             </div>
-                            <Button variant="ghost" size="icon" className="w-6 h-6" onClick={() => removeFromPlaylist(track.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold truncate">{track.title}</p>
+                                <p className="text-sm truncate text-muted-foreground">{track.channel}</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)} className='opacity-0 group-hover:opacity-100'><Plus className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className="w-4 h-4" /></Button>
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-center text-muted-foreground">Your playlist is empty.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-24">
+                        <Music2 className="w-12 h-12 mb-4" />
+                        <h3 className='text-lg font-semibold'>Find Your Sound</h3>
+                        <p className='text-sm'>Search for songs, artists, or albums to start listening.</p>
+                    </div>
                 )}
             </div>
+        </ScrollArea>
+    );
+    
+    const Playlist = () => (
+        <div className="flex flex-col h-full bg-background/50">
+            <h3 className="p-4 text-lg font-semibold tracking-tight border-b">Playlist</h3>
+            <ScrollArea className='flex-1'>
+                <div className="p-2 space-y-1">
+                    {playlist.length > 0 ? (
+                        playlist.map(track => (
+                            <div key={track.id} className={cn("flex items-center gap-2 p-2 rounded-md cursor-pointer group hover:bg-accent", currentTrack?.id === track.id && "bg-primary/20")}>
+                                <div className="flex-1 min-w-0" onClick={() => playSong(track)}>
+                                    <p className="text-sm font-semibold truncate">{track.title}</p>
+                                    <p className="text-xs truncate text-muted-foreground">{track.channel}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => removeFromPlaylist(track.id)}><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-12">
+                            <ListMusic className="w-10 h-10 mb-2" />
+                            <p className="text-sm">Your playlist is empty.</p>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
         </div>
     );
+    
+    const formatTime = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
 
-    // --- Render ---
     return (
-        <div className="flex flex-col h-[calc(100vh-10rem)]">
-            {/* Hidden Iframe for Audio Playback */}
+        <div className="flex flex-col h-full">
             <iframe
                 ref={iframeRef}
-                id="yt-audio"
+                title="YouTube Audio Player"
                 allow="autoplay"
                 style={{ width: '1px', height: '1px', opacity: 0, position: 'absolute', top: '-100px' }}
                 onError={() => toast({ variant: 'destructive', title: 'Playback Error', description: 'Failed to load video.'})}
             ></iframe>
             
-            {/* Main Content */}
             <div className="flex-1 min-h-0 md:grid md:grid-cols-3">
-                <div className="p-4 md:col-span-2">
-                    <div className="flex gap-2 mb-4">
-                        <Input
-                            placeholder="Search songs on YouTube..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && searchSongs()}
-                        />
-                        <Button onClick={searchSongs} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                        </Button>
+                <div className="flex flex-col h-full md:col-span-2">
+                    <div className="p-4 border-b">
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Search songs, artists, albums..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && searchSongs()}
+                                className='text-base'
+                            />
+                            <Button onClick={searchSongs} disabled={isLoading} className='shrink-0'>
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                            </Button>
+                        </div>
                     </div>
-                    <div className="overflow-y-auto h-[calc(100%-4rem)]">
-                        <SearchResults />
+                    <div className="flex-1 min-h-0">
+                      <SearchResults />
                     </div>
                 </div>
-                <div className="hidden md:block">
+                <div className="hidden border-l md:block">
                   <Playlist />
                 </div>
             </div>
 
-            {/* Player Controls */}
-            <div className="p-4 border-t bg-background">
+            <div className="p-3 border-t bg-background">
                 <div className="flex items-center gap-4">
-                    {currentTrack ? (
-                        <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className="rounded" />
-                    ) : (
-                        <div className="flex items-center justify-center w-14 h-14 bg-muted rounded"><ListMusic /></div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{currentTrack?.title || 'No song selected'}</p>
-                        <p className="text-sm truncate text-muted-foreground">{currentTrack?.channel || '---'}</p>
+                    <div className="flex items-center flex-1 gap-3 min-w-0">
+                        {currentTrack ? (
+                            <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className="rounded-md" />
+                        ) : (
+                            <div className="flex items-center justify-center w-14 h-14 bg-muted rounded-md shrink-0"><Music2 className='w-6 h-6 text-muted-foreground' /></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <p className="font-semibold truncate">{currentTrack?.title || 'No song selected'}</p>
+                            <p className="text-sm truncate text-muted-foreground">{currentTrack?.channel || '---'}</p>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={playPrevious} disabled={!currentTrack}><SkipBack /></Button>
-                        <Button variant="default" size="icon" className="w-12 h-12 rounded-full" onClick={togglePause} disabled={!currentTrack}>
-                            {isPlaying ? <Pause /> : <Play className="pl-1" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={playNext} disabled={!currentTrack}><SkipForward /></Button>
+                    <div className="flex flex-col items-center justify-center flex-grow gap-2 max-w-xs">
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" onClick={playPrevious} disabled={playlist.length < 2}><SkipBack /></Button>
+                            <Button variant="default" size="icon" className="w-12 h-12 rounded-full" onClick={togglePause} disabled={!currentTrack}>
+                                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 pl-0.5 fill-current" />}
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={playNext} disabled={playlist.length < 2}><SkipForward /></Button>
+                        </div>
+                        <div className="flex items-center w-full gap-2">
+                            <span className="text-xs font-mono text-muted-foreground">{formatTime(progress / 100 * duration)}</span>
+                            <Slider
+                                value={[progress]}
+                                max={100}
+                                step={1}
+                                className="w-full"
+                                onValueChange={([value]) => { /* Seeking is not possible with this method */ }}
+                                disabled={!currentTrack}
+                            />
+                            <span className="text-xs font-mono text-muted-foreground">{formatTime(duration)}</span>
+                        </div>
                     </div>
                     <div className="items-center hidden gap-2 md:flex">
                         <Button variant="ghost" size="icon" onClick={toggleMute}>
-                            {isMuted ? <VolumeX /> : <Volume2 />}
+                            {isMuted || volume === 0 ? <VolumeX className='text-muted-foreground' /> : <Volume2 className='text-muted-foreground' />}
                         </Button>
                         <Slider
-                            defaultValue={[1]}
+                            value={[isMuted ? 0 : volume]}
                             max={1}
-                            step={0.1}
+                            step={0.05}
                             className="w-24"
-                            onValueChange={(value) => { /* Simulated volume */ }}
-                            disabled
+                            onValueChange={([value]) => {
+                                setVolume(value);
+                                if (value > 0 && isMuted) setIsMuted(false);
+                            }}
                         />
                     </div>
                 </div>
-                 {currentTrack && (
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs font-mono text-muted-foreground">{formatTime(progress / 100 * duration)}</span>
-                        <Slider
-                            value={[progress]}
-                            max={100}
-                            step={1}
-                            className="w-full"
-                        />
-                        <span className="text-xs font-mono text-muted-foreground">{formatTime(duration)}</span>
-                    </div>
-                )}
             </div>
         </div>
     );
-}
-
-const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
