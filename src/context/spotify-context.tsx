@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { WebPlaybackSDK, usePlayerDevice, usePlaybackState, useSpotifyPlayer } from 'react-spotify-web-playback-sdk';
 import { useToast } from '@/hooks/use-toast';
+import type { SpotifyTrack } from '@/lib/types';
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '0d91aedbe93d49259da6d0c1f7cf4ebd';
 
@@ -15,6 +16,9 @@ type SpotifyContextType = {
     device: Spotify.Device | null;
     playbackState: Spotify.PlaybackState | null;
     recentlyPlayed: SpotifyApi.PlayHistoryObject[];
+    topTracks: SpotifyTrack[];
+    searchResults: SpotifyTrack[];
+    searchTracks: (query: string) => Promise<void>;
     isLoading: boolean;
     playTrack: (uri: string) => void;
 };
@@ -51,24 +55,53 @@ const base64encode = (input: ArrayBuffer) => {
 export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [recentlyPlayed, setRecentlyPlayed] = useState<SpotifyApi.PlayHistoryObject[]>([]);
+    const [topTracks, setTopTracks] = useState<SpotifyTrack[]>([]);
+    const [searchResults, setSearchResults] = useState<SpotifyTrack[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const fetchRecentlyPlayed = async (token: string) => {
+    const fetchApi = useCallback(async (endpoint: string, token: string) => {
+        const response = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(`Spotify API error: ${errorBody.error.message}`);
+        }
+        return response.json();
+    }, []);
+
+
+    const fetchRecentlyPlayed = useCallback(async (token: string) => {
         try {
-            const response = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=20', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!response.ok) throw new Error('Failed to fetch recently played');
-            const data = await response.json();
+            const data = await fetchApi('/me/player/recently-played?limit=20', token);
             setRecentlyPlayed(data.items);
         } catch (error) {
             console.error('Error fetching recently played:', error);
             toast({ variant: 'destructive', title: 'Spotify Error', description: 'Could not fetch recently played tracks.' });
         }
-    };
+    }, [fetchApi, toast]);
+    
+    const fetchTopTracks = useCallback(async (token: string) => {
+        try {
+            const data = await fetchApi('/me/top/tracks?time_range=short_term&limit=20', token);
+            setTopTracks(data.items);
+        } catch (error) {
+            console.error('Error fetching top tracks:', error);
+            toast({ variant: 'destructive', title: 'Spotify Error', description: 'Could not fetch your top tracks.' });
+        }
+    }, [fetchApi, toast]);
+    
+    const searchTracks = async (query: string) => {
+        if (!accessToken) return;
+        try {
+            const data = await fetchApi(`/search?q=${encodeURIComponent(query)}&type=track&limit=20`, accessToken);
+            setSearchResults(data.tracks.items);
+        } catch (error) {
+            console.error('Error searching tracks:', error);
+            toast({ variant: 'destructive', title: 'Spotify Error', description: 'Could not perform search.' });
+        }
+    }
     
     const getOAuthToken: (callback: (token: string) => void) => void = useCallback((callback) => {
         const storedToken = localStorage.getItem('spotify_access_token');
@@ -86,7 +119,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
         const codeChallenge = base64encode(hashed);
         
         const REDIRECT_URI = getRedirectUri();
-        const scope = "streaming user-read-private user-read-email user-read-playback-state user-modify-playback-state";
+        const scope = "streaming user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read";
 
         const params = {
             response_type: 'code',
@@ -107,6 +140,8 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('spotify_access_token');
         localStorage.removeItem('spotify_refresh_token');
         setRecentlyPlayed([]);
+        setTopTracks([]);
+        setSearchResults([]);
     };
     
     useEffect(() => {
@@ -166,15 +201,21 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
      useEffect(() => {
         if (accessToken) {
             setIsLoading(true);
-            fetchRecentlyPlayed(accessToken).finally(() => setIsLoading(false));
+            Promise.all([
+                fetchRecentlyPlayed(accessToken),
+                fetchTopTracks(accessToken)
+            ]).finally(() => setIsLoading(false));
         }
-    }, [accessToken]);
+    }, [accessToken, fetchRecentlyPlayed, fetchTopTracks]);
     
     const value = {
         isLoggedIn: !!accessToken,
         login,
         logout,
         recentlyPlayed,
+        topTracks,
+        searchResults,
+        searchTracks,
         isLoading,
     };
 

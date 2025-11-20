@@ -75,4 +75,15 @@ export type GameScore = {
   createdAt: Timestamp;
 };
 
+export type SpotifyTrack = {
+  id: string;
+  name: string;
+  uri: string;
+  artists: { name: string }[];
+  album: {
+    name: string;
+    images: { url: string }[];
+  };
+  played_at?: string; // This is for recently played
+};
     
