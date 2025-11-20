@@ -49,23 +49,32 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
+  const [volume, setVolume] = useState(0.1); // Start at 10% volume
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentTrack = currentTrackIndex !== null ? musicTracks[currentTrackIndex] : null;
 
-  const playNext = useCallback(() => {
-    setCurrentTrackIndex(prevIndex => {
-      const nextIndex = prevIndex !== null ? (prevIndex + 1) % musicTracks.length : 0;
-      return nextIndex;
-    });
+  const playRandomTrack = useCallback(() => {
+    let nextIndex;
+    do {
+      nextIndex = Math.floor(Math.random() * musicTracks.length);
+    } while (nextIndex === currentTrackIndex && musicTracks.length > 1); // Avoid playing the same song twice
+    setCurrentTrackIndex(nextIndex);
     setIsPlaying(true);
-  }, []);
+  }, [currentTrackIndex]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (!audioRef.current) {
         audioRef.current = new Audio();
+      }
+      
+      // Start playing "Ben 10 Theme" on initial load
+      const ben10Index = musicTracks.findIndex(track => track.title === 'Ben 10 Theme');
+      if (ben10Index !== -1 && currentTrackIndex === null) {
+          setCurrentTrackIndex(ben10Index);
+          setIsPlaying(true);
       }
     }
   }, []);
@@ -73,7 +82,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {
-      const handleEnded = () => playNext();
+      const handleEnded = () => playRandomTrack();
       const handlePlay = () => setIsPlaying(true);
       const handlePause = () => setIsPlaying(false);
       
@@ -87,7 +96,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
         audio.removeEventListener('pause', handlePause);
       }
     }
-  }, [playNext]);
+  }, [playRandomTrack]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -124,18 +133,11 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
   const playPause = useCallback(() => {
     if (currentTrackIndex === null) {
-      setCurrentTrackIndex(0);
-      setIsPlaying(true);
+      playRandomTrack();
     } else {
       setIsPlaying(prev => !prev);
     }
-  }, [currentTrackIndex]);
-
-  const playPrev = useCallback(() => {
-    const prevIndex = currentTrackIndex !== null ? (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length : musicTracks.length - 1;
-    setCurrentTrackIndex(prevIndex);
-    setIsPlaying(true);
-  }, [currentTrackIndex]);
+  }, [currentTrackIndex, playRandomTrack]);
 
   const value = {
     tracklist: musicTracks,
@@ -145,8 +147,8 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     volume,
     playTrack,
     playPause,
-    playNext,
-    playPrev,
+    playNext: playRandomTrack,
+    playPrev: playRandomTrack, // playPrev will also play a random track
     setVolume,
   };
 
