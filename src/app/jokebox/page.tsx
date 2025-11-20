@@ -5,7 +5,6 @@ import { Suspense, useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
-import dynamic from 'next/dynamic';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Radio } from 'lucide-react';
 import { RequestForm, type SearchResult } from '@/components/jokebox/request-form';
@@ -49,7 +48,8 @@ const JokeboxPageContent = () => {
     };
     
     // The player should prioritize the directly selected song, otherwise play from the queue.
-    const currentSong = selectedSong || requests?.[0];
+    const currentSong = selectedSong || (requests && requests.length > 0 ? requests[0] : undefined);
+    const upNext = selectedSong ? requests : requests?.slice(1);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -62,7 +62,7 @@ const JokeboxPageContent = () => {
                         <JokeboxPlayer 
                             song={currentSong} 
                             onSongEnd={handleSongEnd}
-                            isQueueSong={!selectedSong && !!requests?.[0]}
+                            isQueueSong={!selectedSong && !!(requests && requests.length > 0)}
                         />
                     </CardContent>
                 </Card>
@@ -81,7 +81,7 @@ const JokeboxPageContent = () => {
                     <CardTitle>Up Next</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <RequestsList requests={requests?.slice(1) ?? []} isLoading={isLoading} />
+                    <RequestsList requests={upNext ?? []} isLoading={isLoading} />
                 </CardContent>
             </Card>
         </div>

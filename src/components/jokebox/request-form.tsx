@@ -45,6 +45,7 @@ export function RequestForm({ onPlaySong }: RequestFormProps) {
 
   const handleSearch = async ({ query }: { query: string }) => {
     setIsSearching(true);
+    setSearchResults([]);
     try {
       const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
       if (!apiKey) throw new Error('YouTube API key is not configured.');
@@ -71,14 +72,13 @@ export function RequestForm({ onPlaySong }: RequestFormProps) {
       await addDocumentNonBlocking(collection(firestore, 'musicRequests'), {
         userId: user.uid,
         userName: user.displayName || 'Anonymous',
-        songName: video.snippet.title,
+        songName: video.snippet.title, // songName is deprecated but let's keep it for now
         videoId: video.id.videoId,
         thumbnail: video.snippet.thumbnails.default.url,
         title: video.snippet.title,
         createdAt: serverTimestamp(),
       });
       toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
-      // Do not clear search results after adding to queue
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Request Failed', description: error.message });
     } finally {
@@ -99,6 +99,8 @@ export function RequestForm({ onPlaySong }: RequestFormProps) {
           {isSearching ? <Loader2 className="animate-spin" /> : <Search />}
         </Button>
       </form>
+      
+      {isSearching && <Loader2 className="w-6 h-6 mx-auto my-4 animate-spin" />}
 
       {searchResults.length > 0 && (
         <ScrollArea className="h-64">
