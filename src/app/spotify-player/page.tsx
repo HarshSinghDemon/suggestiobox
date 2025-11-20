@@ -18,10 +18,11 @@ const getRedirectUri = () => {
   if (typeof window === 'undefined') {
     return '';
   }
-  if (window.location.hostname === 'localhost') {
-    return 'http://localhost:9002/spotify-player';
-  }
-  return 'https://suggestionbox-khaki.vercel.app/spotify-player';
+  // This function now correctly handles both localhost and production environments.
+  const isLocalhost = window.location.hostname === 'localhost';
+  return isLocalhost
+    ? 'http://localhost:9002/spotify-player'
+    : 'https://suggestionbox-khaki.vercel.app/spotify-player';
 };
 
 
@@ -293,5 +294,3 @@ const PlayerUI = () => {
     </Card>
   );
 };
-
-    
