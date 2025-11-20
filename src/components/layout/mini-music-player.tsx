@@ -10,11 +10,22 @@ import {
   SkipForward,
   SkipBack,
   Volume2,
-  VolumeX,
   Music,
 } from 'lucide-react';
 import { DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
+
+const SoundWave = () => (
+    <div className="flex items-center justify-center gap-0.5 w-4 h-4">
+        <span className="w-0.5 h-2 bg-primary/80 rounded-full animate-sound-wave [animation-delay:-0.3s]"></span>
+        <span className="w-0.5 h-3 bg-primary rounded-full animate-sound-wave [animation-delay:-0.15s]"></span>
+        <span className="w-0.5 h-4 bg-primary rounded-full animate-sound-wave"></span>
+        <span className="w-0.5 h-3 bg-primary rounded-full animate-sound-wave [animation-delay:-0.15s]"></span>
+        <span className="w-0.5 h-2 bg-primary/80 rounded-full animate-sound-wave [animation-delay:-0.3s]"></span>
+    </div>
+);
+
 
 export function MiniMusicPlayer() {
   const {
@@ -27,6 +38,7 @@ export function MiniMusicPlayer() {
     volume,
     tracklist,
     playTrack,
+    currentTrackIndex
   } = useAudio();
 
   if (!tracklist.length) {
@@ -38,28 +50,28 @@ export function MiniMusicPlayer() {
   }
 
   return (
-    <div className="p-2 space-y-4">
-      <DropdownMenuLabel>Arcade Mix</DropdownMenuLabel>
-      <div className="px-2">
+    <div className="p-2 space-y-3 w-80">
+      <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
+      <div className="px-2 space-y-3">
         {currentTrack && (
-          <div className="mb-4 text-center">
-            <p className="font-semibold truncate">{currentTrack.title}</p>
+          <div className="mb-2 text-center">
+            <p className="font-semibold truncate text-primary">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground">Now Playing</p>
           </div>
         )}
         <div className="flex items-center justify-center gap-2">
-          <Button variant="ghost" size="icon" onClick={playPrev}>
+          <Button variant="ghost" size="icon" onClick={playPrev} className="transition-transform active:scale-90">
             <SkipBack className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={playPause} className="w-12 h-12">
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+          <Button variant="outline" size="icon" onClick={playPause} className="w-12 h-12 rounded-full shadow-lg transition-transform active:scale-90">
+            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 pl-1" />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={playNext}>
+          <Button variant="ghost" size="icon" onClick={playNext} className="transition-transform active:scale-90">
             <SkipForward className="w-5 h-5" />
           </Button>
         </div>
-        <div className="flex items-center gap-2 mt-4">
-          <Volume2 className="w-5 h-5" />
+        <div className="flex items-center gap-2 pt-2">
+          <Volume2 className="w-5 h-5 text-muted-foreground" />
           <Slider
             defaultValue={[volume]}
             max={1}
@@ -69,21 +81,27 @@ export function MiniMusicPlayer() {
         </div>
       </div>
       <DropdownMenuSeparator />
-      <div className="max-h-64 overflow-y-auto px-2 space-y-1">
-        {tracklist.map((track, index) => (
-          <button
-            key={index}
-            onClick={() => playTrack(index)}
-            className={cn(
-                "w-full text-left p-2 rounded-md text-sm flex items-center gap-2",
-                currentTrack?.url === track.url ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-            )}
-          >
-            <Music className="w-4 h-4" />
-            <span className="truncate">{track.title}</span>
-          </button>
-        ))}
-      </div>
+      <ScrollArea className="h-64">
+        <div className="px-2 space-y-1">
+            {tracklist.map((track, index) => (
+            <button
+                key={index}
+                onClick={() => playTrack(index)}
+                className={cn(
+                    "w-full text-left p-2 rounded-md text-sm flex items-center gap-3 transition-all duration-200",
+                    currentTrackIndex === index ? "bg-primary/20 text-primary-foreground" : "hover:bg-accent/50"
+                )}
+            >
+                {currentTrackIndex === index && isPlaying ? (
+                    <SoundWave />
+                ) : (
+                    <Music className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className="flex-1 truncate">{track.title}</span>
+            </button>
+            ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

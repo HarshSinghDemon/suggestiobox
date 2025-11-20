@@ -22,6 +22,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
 import { MiniMusicPlayer } from './mini-music-player';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { useAudio } from './audio-provider';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
@@ -44,6 +46,7 @@ export function Header() {
   const { user } = useAuth();
   const firebaseAuth = useFirebaseAuth();
   const router = useRouter();
+  const { isPlaying } = useAudio();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
@@ -173,16 +176,16 @@ export function Header() {
                     </Button>
                 )}
                 <div className="relative group hidden md:flex items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="w-10 h-10">
-                            <Music />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                         <Button variant="ghost" size="icon" className="w-10 h-10">
+                            <Music className={isPlaying ? "text-primary animate-pulse" : ""} />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-80" align="end">
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
                         <MiniMusicPlayer />
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </PopoverContent>
+                    </Popover>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <UserAvatarButton />

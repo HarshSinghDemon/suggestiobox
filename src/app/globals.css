@@ -183,6 +183,15 @@
     .animate-bounce-in {
         animation: bounce-in 0.4s ease-out;
     }
+    
+    @keyframes sound-wave {
+        0%, 100% { transform: scaleY(0.4); }
+        50% { transform: scaleY(1); }
+    }
+
+    .animate-sound-wave {
+        animation: sound-wave 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    }
 
 
     .animation-delay-200 {
