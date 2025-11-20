@@ -54,7 +54,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = window.innerHeight * 0.75;
+            canvas.height = window.innerHeight * 0.8;
         }
     };
     
@@ -79,7 +79,7 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = 2.5;
+    const baseSpeed = 2;
     let speedMultiplier = 1;
     let dx = baseSpeed;
     let dy = -baseSpeed;
@@ -89,7 +89,7 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 6.4;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 12;
+    let brickRowCount = 15;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
@@ -119,32 +119,36 @@ export function BrickBreakerGame() {
         if(e.key == "Right" || e.key == "ArrowRight") rightPressed = false;
         else if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = false;
     }
-
-    const mouseMoveHandler = (e: MouseEvent) => {
+    
+    const updatePaddlePosition = (clientX: number) => {
         const rect = canvas.getBoundingClientRect();
-        const relativeX = e.clientX - rect.left;
+        const relativeX = clientX - rect.left;
         if(relativeX > 0 && relativeX < canvas.width) {
             paddleX = relativeX - paddleWidth / 2;
             if (paddleX < 0) paddleX = 0;
             if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
         }
     }
+
+    const mouseMoveHandler = (e: MouseEvent) => {
+        updatePaddlePosition(e.clientX);
+    }
     
     const touchMoveHandler = (e: TouchEvent) => {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const relativeX = e.touches[0].clientX - rect.left;
-        if(relativeX > 0 && relativeX < canvas.width) {
-            paddleX = relativeX - paddleWidth/2;
-            if (paddleX < 0) paddleX = 0;
-            if (paddleX + paddleWidth > canvas.width) paddleX = canvas.width - paddleWidth;
-        }
+        updatePaddlePosition(e.touches[0].clientX);
     }
+    
+    const touchStartHandler = (e: TouchEvent) => {
+        e.preventDefault();
+        updatePaddlePosition(e.touches[0].clientX);
+    };
 
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler, false);
-    canvas.addEventListener("touchmove", touchMoveHandler, false);
+    canvas.addEventListener("touchstart", touchStartHandler, { passive: false });
+    canvas.addEventListener("touchmove", touchMoveHandler, { passive: false });
 
     function collisionDetection() {
         for(let c=0; c<brickColumnCount; c++) {
@@ -205,7 +209,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 500); // Increase speed every 500 points
+        speedMultiplier = 1 + (localScore / 1000); // Increase speed every 1000 points
         const currentDx = Math.sign(dx) * baseSpeed * speedMultiplier;
         const currentDy = Math.sign(dy) * baseSpeed * speedMultiplier;
 
@@ -239,6 +243,7 @@ export function BrickBreakerGame() {
       document.removeEventListener("keydown", keyDownHandler);
       document.removeEventListener("keyup", keyUpHandler);
       document.removeEventListener("mousemove", mouseMoveHandler);
+      canvas.removeEventListener("touchstart", touchStartHandler);
       canvas.removeEventListener("touchmove", touchMoveHandler);
     };
   }, [gameState, submitScore]);
@@ -273,5 +278,3 @@ export function BrickBreakerGame() {
     </div>
   );
 }
-
-    
