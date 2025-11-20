@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -56,7 +57,7 @@ export function CommunityMembersList() {
     if (!users) return { adminUser: null, otherUsers: [] };
     const admin = users.find(u => u.role === 'admin' && u.email === 'harshroop100@gmail.com');
     if (admin) {
-        admin.photoURL = 'https://i.imgur.com/k9Q2Y9s.jpeg';
+        admin.photoURL = 'https://i.imgur.com/8QZJgQ9.jpeg';
     }
     const others = users.filter(u => u.id !== admin?.id);
     return { adminUser: admin, otherUsers: others };
