@@ -110,7 +110,7 @@ export default function AboutAdminPage() {
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"></div>
             <div className="relative inline-block p-1 bg-background rounded-full">
                 <Avatar className="w-24 h-24 md:w-28 md:h-28">
-                    <AvatarImage src={adminUser.photoURL ?? ''} alt={adminUser.displayName ?? 'Admin'} />
+                    <AvatarImage src='https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg' alt={adminUser.displayName ?? 'Admin'} />
                     <AvatarFallback>{getInitials(adminUser.displayName)}</AvatarFallback>
                 </Avatar>
             </div>
