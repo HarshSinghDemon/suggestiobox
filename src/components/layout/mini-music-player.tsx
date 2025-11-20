@@ -69,26 +69,28 @@ export function MiniMusicPlayer() {
   return (
     <div className="p-2 space-y-3 w-80">
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
-      <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
+      <div className="relative w-40 h-40 mx-auto rounded-lg shadow-lg group">
           <Image
             src={animationUrl}
             alt="Arcade animation"
             fill
-            className="object-cover"
+            className="object-cover rounded-lg"
             unoptimized
             priority
           />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            {isPlaying && (
-              <div className="flex items-center justify-center gap-1">
-                <span className="w-1 h-4 bg-white/80 rounded-full animate-sound-wave [animation-delay:-0.4s]"></span>
-                <span className="w-1 h-8 bg-white rounded-full animate-sound-wave [animation-delay:-0.2s]"></span>
-                <span className="w-1 h-6 bg-white/90 rounded-full animate-sound-wave"></span>
-                <span className="w-1 h-8 bg-white rounded-full animate-sound-wave [animation-delay:-0.2s]"></span>
-                <span className="w-1 h-4 bg-white/80 rounded-full animate-sound-wave [animation-delay:-0.4s]"></span>
+          <div className="absolute inset-0 bg-black/30 rounded-lg"></div>
+           {isPlaying && (
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-center h-8 bg-black/50 backdrop-blur-sm rounded-b-lg">
+                <div className="flex items-center justify-center gap-1">
+                    <span className="w-1 h-2 bg-white/70 rounded-full animate-sound-wave [animation-delay:-0.4s]"></span>
+                    <span className="w-1 h-4 bg-white/80 rounded-full animate-sound-wave [animation-delay:-0.3s]"></span>
+                    <span className="w-1 h-5 bg-white rounded-full animate-sound-wave [animation-delay:-0.2s]"></span>
+                    <span className="w-1 h-5 bg-white rounded-full animate-sound-wave [animation-delay:-0.1s]"></span>
+                    <span className="w-1 h-4 bg-white/80 rounded-full animate-sound-wave"></span>
+                    <span className="w-1 h-2 bg-white/70 rounded-full animate-sound-wave [animation-delay:-0.2s]"></span>
+                </div>
               </div>
             )}
-          </div>
       </div>
       <div className="px-2 space-y-3">
         {currentTrack && (
