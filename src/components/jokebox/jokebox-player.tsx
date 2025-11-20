@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import YouTubePlayer, { YouTubePlayer as YouTubePlayerType } from 'youtube-player';
 import type { Jukebox, FirebaseUser } from '@/lib/types';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
@@ -55,13 +55,6 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
                     onSongEnd();
                 }
             });
-    
-            player.on('ready', () => {
-                if (isPlaying) {
-                    player?.playVideo();
-                }
-            });
-    
         }
     
         // Cleanup function
@@ -71,7 +64,18 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
                 playerRef.current = null;
             }
         };
-    }, [song?.videoId]); // Only re-run when the video ID changes.
+    }, [song?.videoId, onSongEnd]);
+
+    useEffect(() => {
+        const player = playerRef.current;
+        if (player) {
+            if (isPlaying) {
+                player.playVideo();
+            } else {
+                player.pauseVideo();
+            }
+        }
+    }, [isPlaying]);
     
 
     if (!song) {
