@@ -38,7 +38,6 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
 
     useEffect(() => {
         if (!song?.videoId || !playerContainerRef.current) {
-            // If there's no song, ensure any existing player is destroyed.
             if (playerRef.current) {
                 playerRef.current.destroy();
                 playerRef.current = null;
@@ -51,7 +50,7 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
         player = YouTubePlayer(playerContainerRef.current, {
             videoId: song.videoId,
             playerVars: {
-                autoplay: 0, // We will control autoplay manually
+                autoplay: 0,
                 controls: 1,
                 modestbranding: 1,
                 rel: 0,
@@ -65,9 +64,7 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
                 const clientTime = Date.now();
                 const offset = (clientTime - serverTime) / 1000;
                 
-                if (offset > 0) {
-                    event.target.seekTo(offset, true);
-                }
+                event.target.seekTo(offset, true);
                 event.target.playVideo();
             }
         });
@@ -78,30 +75,13 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
             }
         });
     
-        // Cleanup function
         return () => {
             if (player) {
                 player.destroy();
                 playerRef.current = null;
             }
         };
-    }, [song?.videoId]); // Re-create player only when videoId changes
-
-    useEffect(() => {
-        const player = playerRef.current;
-        if (!player) return;
-
-        if (isPlaying) {
-             player.getPlayerState().then((state) => {
-                if(state !== 1) player.playVideo();
-             })
-        } else {
-             player.getPlayerState().then((state) => {
-                if(state === 1) player.pauseVideo();
-             })
-        }
-    }, [isPlaying]);
-    
+    }, [song?.videoId, isPlaying, timestamp, onSongEnd]);
 
     if (!song) {
         return (
@@ -133,4 +113,3 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
         </div>
     );
 }
-

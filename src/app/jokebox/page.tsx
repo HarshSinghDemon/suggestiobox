@@ -11,7 +11,7 @@ import { RequestForm, type SearchResult } from '@/components/jokebox/request-for
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
 import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking, useDoc } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc, addDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc, addDoc, getDoc, writeBatch } from 'firebase/firestore';
 import type { MusicRequest, Jukebox } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -42,34 +42,46 @@ const JokeboxPageContent = () => {
         if (!user || !firestore || !jukeboxStateRef) return;
         
         const newSong: MusicRequest = {
-            id: searchResult.id.videoId,
+            id: searchResult.id.videoId, // Use videoId for consistency
             videoId: searchResult.id.videoId,
             title: searchResult.snippet.title,
             thumbnail: searchResult.snippet.thumbnails.default.url,
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            createdAt: new Date() as any,
+            createdAt: new Date() as any, // This is temporary, serverTimestamp will overwrite
         };
 
-        await setDoc(jukeboxStateRef, {
+        const batch = writeBatch(firestore);
+
+        batch.set(jukeboxStateRef, {
             currentSong: newSong,
             isPlaying: true,
             timestamp: serverTimestamp(),
             requesterId: user.uid,
         });
 
+         batch.set(doc(collection(firestore, 'jukeboxMessages')), {
+            userId: 'system',
+            userName: 'Jokebox Bot',
+            text: `${user.displayName || 'A user'} is now playing "${newSong.title}"`,
+            isSystemMessage: true,
+            createdAt: serverTimestamp(),
+        });
+        
+        await batch.commit();
         toast({ title: 'Playing Now', description: newSong.title });
+
     }, [user, firestore, jukeboxStateRef, toast]);
 
     const handleAddToQueue = useCallback(async (video: SearchResult) => {
-        if (!user || !firestore) {
+        if (!user || !firestore || !jukeboxStateRef) {
           toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to request a song.' });
           return;
         }
 
         const userName = user.displayName || 'Anonymous';
-        const newRequest = {
+        const newRequestData = {
           userId: user.uid,
           userName: userName,
           songName: video.snippet.title,
@@ -79,18 +91,27 @@ const JokeboxPageContent = () => {
           createdAt: serverTimestamp(),
         };
 
-        const newRequestRef = await addDoc(collection(firestore, 'musicRequests'), newRequest);
+        const newRequestRef = await addDoc(collection(firestore, 'musicRequests'), newRequestData);
         
         // Check if nothing is playing, if so, play this song immediately
-        const currentState = await getDoc(jukeboxStateRef!);
+        const currentState = await getDoc(jukeboxStateRef);
         if (!currentState.exists() || !currentState.data()?.currentSong) {
-            await setDoc(jukeboxStateRef!, {
-                currentSong: { id: newRequestRef.id, ...newRequest },
+             const batch = writeBatch(firestore);
+             batch.set(jukeboxStateRef, {
+                currentSong: { id: newRequestRef.id, ...newRequestData },
                 isPlaying: true,
                 timestamp: serverTimestamp(),
                 requesterId: user.uid,
             });
-            await deleteDocumentNonBlocking(newRequestRef);
+             batch.delete(newRequestRef);
+             batch.set(doc(collection(firestore, 'jukeboxMessages')), {
+                userId: 'system',
+                userName: 'Jokebox Bot',
+                text: `${userName} started the party with "${video.snippet.title}"`,
+                isSystemMessage: true,
+                createdAt: serverTimestamp(),
+            });
+            await batch.commit();
         } else {
              await addDoc(collection(firestore, 'jukeboxMessages'), {
                 userId: 'system',
@@ -113,37 +134,48 @@ const JokeboxPageContent = () => {
         if (!firestore || !jukeboxStateRef) return;
         
         const nextSongInQueue = requests?.[0];
+        const batch = writeBatch(firestore);
 
         if (nextSongInQueue) {
             // Play the next song from the queue
-            await setDoc(jukeboxStateRef, {
+            batch.set(jukeboxStateRef, {
                 currentSong: nextSongInQueue,
                 isPlaying: true,
                 timestamp: serverTimestamp(),
                 requesterId: nextSongInQueue.userId,
             });
+             batch.set(doc(collection(firestore, 'jukeboxMessages')), {
+                userId: 'system',
+                userName: 'Jokebox Bot',
+                text: `Up next: "${nextSongInQueue.title}" requested by ${nextSongInQueue.userName}`,
+                isSystemMessage: true,
+                createdAt: serverTimestamp(),
+            });
             // Delete the song that is now playing from the queue
             const songToDeleteRef = doc(firestore, 'musicRequests', nextSongInQueue.id);
-            await deleteDocumentNonBlocking(songToDeleteRef);
+            batch.delete(songToDeleteRef);
         } else {
             // No more songs in queue, clear the player
-            await setDoc(jukeboxStateRef, {
+            batch.set(jukeboxStateRef, {
                 currentSong: null,
                 isPlaying: false,
                 timestamp: serverTimestamp(),
                 requesterId: null,
             });
         }
+        await batch.commit();
+
     }, [firestore, requests, jukeboxStateRef]);
     
     const handleNextSong = useCallback(async () => {
+        if (!user) return; // Must be logged in to skip
         toast({
             title: 'Skipped!',
-            description: `Skipping to the next song.`,
+            description: `Song skipped by ${user.displayName}.`,
         });
         // This will trigger the onSongEnd logic, which handles playing the next track
         await handleSongEnd();
-    }, [toast, handleSongEnd]);
+    }, [toast, handleSongEnd, user]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -154,6 +186,7 @@ const JokeboxPageContent = () => {
                     </CardHeader>
                     <CardContent>
                         <JokeboxPlayer 
+                            key={jukeboxState?.currentSong?.videoId || 'no-song'}
                             jukeboxState={jukeboxState}
                             onSongEnd={handleSongEnd}
                             onNextSong={handleNextSong}
