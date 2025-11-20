@@ -57,7 +57,7 @@ const fetchApi = async (endpoint: string, token: string) => {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) {
-        const errorBody = await response.json();
+        const errorBody = await response.json().catch(() => ({ error: { message: 'An unknown API error occurred.' } }));
         throw new Error(`Spotify API error: ${errorBody.error.message}`);
     }
     return response.json();
@@ -114,7 +114,7 @@ export const SpotifyProvider = ({ children }: { children: ReactNode }) => {
     };
     
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(window.location().search);
         const code = urlParams.get('code');
         const storedToken = localStorage.getItem('spotify_access_token');
 
