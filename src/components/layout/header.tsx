@@ -118,6 +118,10 @@ export function Header() {
                       <Gamepad2 className="w-4 h-4 mr-2" />
                       Community Games
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/jokebox')}>
+                        <Music className="w-4 h-4 mr-2" />
+                        Jokebox
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -263,6 +267,9 @@ export function Header() {
                             </NavLink>
                             <NavLink href="/community-game" onNavigate={() => setIsSheetOpen(false)}>
                                 <Gamepad2 className="w-5 h-5 mr-3" /> Games
+                            </NavLink>
+                            <NavLink href="/jokebox" onNavigate={() => setIsSheetOpen(false)}>
+                                <Music className="w-5 h-5 mr-3" /> Jokebox
                             </NavLink>
                             <NavLink href="/pookie-contributors" onNavigate={() => setIsSheetOpen(false)}>
                                 <Trophy className="w-5 h-5 mr-3" /> Contributors

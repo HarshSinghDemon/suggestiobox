@@ -40,6 +40,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.jamendo.com',
+      }
     ],
   },
   experimental: {
@@ -50,9 +54,8 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_YOUTUBE_API_KEY: process.env.NEXT_PUBLIC_YOUTUBE_API_KEY,
     NEXT_PUBLIC_SPOTIFY_CLIENT_ID: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
+    NEXT_PUBLIC_JAMENDO_CLIENT_ID: process.env.NEXT_PUBLIC_JAMENDO_CLIENT_ID,
   },
 };
 
 export default nextConfig;
-
-    
