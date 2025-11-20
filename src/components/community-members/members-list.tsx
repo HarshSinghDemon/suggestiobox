@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -20,6 +20,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
 import { ShieldCheck, Star } from 'lucide-react';
 import { Card } from '../ui/card';
+import { useMemo } from 'react';
 
 function MemberListSkeleton() {
   return (
@@ -51,16 +52,15 @@ export function CommunityMembersList() {
 
   const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
+  const { adminUser, otherUsers } = useMemo(() => {
+    if (!users) return { adminUser: null, otherUsers: [] };
+    const admin = users.find(u => u.role === 'admin' && u.email === 'harshroop100@gmail.com');
+    const others = users.filter(u => u.id !== admin?.id);
+    return { adminUser: admin, otherUsers: others };
+  }, [users]);
+
+
   const totalMembers = users?.length ?? 0;
-  
-  const adminUser: FirebaseUser = {
-      id: 'admin-harsh',
-      uid: 'admin-harsh',
-      displayName: 'Harsh Singh',
-      email: 'harshroop100@gmail.com',
-      photoURL: 'https://avatars.githubusercontent.com/u/108394287?v=4',
-      year: '3rd',
-  };
 
   if (isLoading) {
     return <MemberListSkeleton />;
@@ -80,31 +80,33 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        <div className="mb-12">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-purple-500/50 bg-gradient-to-tr from-purple-600/10 via-red-500/10 to-background hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2 animate-tilt">
-                         <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-red-500">Admin</div>
-                        <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-purple-400">
-                            <AvatarImage src={adminUser.photoURL} alt={adminUser.displayName ?? ''} />
-                            <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <h4 className="text-xl font-bold">{adminUser.displayName}</h4>
-                        <p className="text-sm text-muted-foreground">{adminUser.email}</p>
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-                            <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/20 text-emerald-400">3rd Year</Badge>
-                            <Badge className="border-transparent animate-super-senior-shine text-purple-200 transition-all hover:shadow-purple-400/30 hover:scale-105">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M12 2L9 9l-7 2.5 7 2.5 3 6.5 3-6.5 7-2.5-7-2.5L12 2z"/><path d="M18 9l-2.25 4.75L12 15l-3.75-1.25L6 9"/><path d="M12 15l3 6.5 3-6.5"/></svg>
-                                Super Senior
-                            </Badge>
-                        </div>
-                    </Card>
-                </PopoverTrigger>
-                 <PopoverContent className='w-80'>
-                    <UserProfilePopover user={adminUser} />
-                </PopoverContent>
-            </Popover>
-        </div>
+        {adminUser && (
+            <div className="mb-12">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-purple-500/50 bg-gradient-to-tr from-purple-600/10 via-red-500/10 to-background hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2 animate-tilt">
+                            <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-red-500">Admin</div>
+                            <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-purple-400">
+                                <AvatarImage src={adminUser.photoURL ?? ''} alt={adminUser.displayName ?? ''} />
+                                <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <h4 className="text-xl font-bold">{adminUser.displayName}</h4>
+                            <p className="text-sm text-muted-foreground">{adminUser.email}</p>
+                            <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                                <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/20 text-emerald-400">3rd Year</Badge>
+                                <Badge className="border-transparent animate-super-senior-shine text-purple-200 transition-all hover:shadow-purple-400/30 hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M12 2L9 9l-7 2.5 7 2.5 3 6.5 3-6.5 7-2.5-7-2.5L12 2z"/><path d="M18 9l-2.25 4.75L12 15l-3.75-1.25L6 9"/><path d="M12 15l3 6.5 3-6.5"/></svg>
+                                    Super Senior
+                                </Badge>
+                            </div>
+                        </Card>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-80'>
+                        <UserProfilePopover user={adminUser} />
+                    </PopoverContent>
+                </Popover>
+            </div>
+        )}
         
         <div className='my-8 text-center'>
             <div className="relative">
@@ -118,10 +120,9 @@ export function CommunityMembersList() {
         </div>
 
 
-        {users && users.length > 0 ? (
+        {otherUsers && otherUsers.length > 0 ? (
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {users.map((user, index) => {
-                    if (user.email === adminUser.email) return null;
+                {otherUsers.map((user, index) => {
                     return (
                         <Popover key={user.id}>
                             <PopoverTrigger asChild>
@@ -149,7 +150,7 @@ export function CommunityMembersList() {
             </div>
         ) : (
             <p className="py-12 text-center text-muted-foreground">
-                No community members found.
+                No other community members found.
             </p>
         )}
     </div>

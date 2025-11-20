@@ -68,7 +68,7 @@ export default function Home() {
 
             <div className="pt-4">
               <p className="text-sm text-foreground/60 font-arcade">
-                  Made with <span className='inline-block text-red-500 animate-heartbeat'>❤️</span> by <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse">Harsh</span>(5B)
+                  Made with <span className='inline-block text-red-500 animate-heartbeat'>❤️</span> by <Link href="/about-admin" className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse hover:underline">Harsh</Link>(5B)
               </p>
             </div>
           </div>
