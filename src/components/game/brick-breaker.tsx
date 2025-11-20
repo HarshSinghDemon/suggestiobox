@@ -99,7 +99,7 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 10;
+    let brickRowCount = 12;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
@@ -172,16 +172,16 @@ export function BrickBreakerGame() {
     canvas.addEventListener("touchstart", touchStartHandler, { passive: false });
     canvas.addEventListener("touchmove", touchMoveHandler, { passive: false });
     
-    const createParticles = (brick: {x:number, y:number, color: string}) => {
-        for (let i = 0; i < 15; i++) {
+    const createParticles = (brick: {x:number, y:number}) => {
+        for (let i = 0; i < 20; i++) { // More particles for a bigger blast
             particles.push({
                 x: brick.x + brickWidth / 2,
                 y: brick.y + brickHeight / 2,
-                radius: Math.random() * 2 + 1,
-                color: brick.color,
-                vx: (Math.random() - 0.5) * 3,
-                vy: (Math.random() - 0.5) * 3,
-                life: 30,
+                radius: Math.random() * 2.5 + 1.5, // Slightly larger particles
+                color: `hsl(0, 100%, ${Math.random() * 30 + 50}%)`, // Shades of red
+                vx: (Math.random() - 0.5) * 5, // Faster horizontal velocity
+                vy: (Math.random() - 0.5) * 5, // Faster vertical velocity
+                life: 40, // Longer life
             });
         }
     }
@@ -265,7 +265,7 @@ export function BrickBreakerGame() {
             p.life -= 1;
             ctx!.beginPath();
             ctx!.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx!.globalAlpha = p.life / 30;
+            ctx!.globalAlpha = p.life / 40;
             ctx!.fillStyle = p.color;
             ctx!.fill();
             ctx!.closePath();
@@ -281,7 +281,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 2000); 
+        speedMultiplier = 1 + (localScore / 5000); 
         const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
         const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
