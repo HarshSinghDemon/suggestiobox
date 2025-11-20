@@ -85,12 +85,12 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
     useEffect(() => {
         // Initialize the YouTube player
-        if (playerDivRef.current) {
+        if (playerDivRef.current && !playerRef.current) {
             const player = YouTubePlayer(playerDivRef.current, {
                 width: '0',
                 height: '0',
                 playerVars: {
-                    autoplay: 0,
+                    autoplay: 1, // Set autoplay to 1
                     controls: 0,
                 },
             });
@@ -99,7 +99,7 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
             player.on('stateChange', (event) => {
                 if (event.data === 1) { // Playing
                     setIsPlaying(true);
-                    setDuration(player.getDuration());
+                    player.getDuration().then(setDuration);
                 } else { // Paused, ended, etc.
                     setIsPlaying(false);
                 }
@@ -108,7 +108,8 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
         return () => {
             if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-            playerRef.current?.destroy();
+            // The player might be destroyed by other effects, so we don't destroy it here
+            // to avoid errors if the component re-renders quickly.
         };
     }, []);
     
@@ -136,7 +137,8 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
     const handleSelectTrack = (track: YouTubeSearchResult) => {
         setCurrentTrack(track);
-        playerRef.current?.loadVideoById(track.id.videoId);
+        // Using cueVideoById is sometimes more reliable for autoplay
+        playerRef.current?.cueVideoById(track.id.videoId);
         playerRef.current?.playVideo();
     };
 
@@ -149,9 +151,11 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
     };
     
     const handleSeek = (value: number[]) => {
-        const newTime = (value[0] / 100) * duration;
-        playerRef.current?.seekTo(newTime, true);
-        setProgress(value[0]);
+        if (duration > 0) {
+            const newTime = (value[0] / 100) * duration;
+            playerRef.current?.seekTo(newTime, true);
+            setProgress(value[0]);
+        }
     };
 
     const handleSearch = () => {
