@@ -21,7 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '../ui/separator';
+import { ForgotPasswordDialog } from './forgot-password-dialog';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -34,6 +34,7 @@ export function LoginForm() {
   const [unverifiedUser, setUnverifiedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const auth = useFirebaseAuth();
   const { isUserLoading } = useUser();
   const { toast } = useToast();
@@ -135,7 +136,18 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                 <div className="flex items-center justify-between">
+                    <FormLabel>Password</FormLabel>
+                     <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() => setIsForgotPasswordOpen(true)}
+                     >
+                        Forgot password?
+                    </Button>
+                </div>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -167,6 +179,7 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
+      <ForgotPasswordDialog isOpen={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen} />
     </div>
   );
 }
