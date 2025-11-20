@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -91,33 +90,45 @@ export function JokeboxChat() {
   
   useEffect(() => {
     const cleanupOldMessages = async () => {
-      if (!firestore) return;
-      const twoMinutesAgo = Timestamp.fromMillis(Date.now() - 2 * 60 * 1000);
-      const oldMessagesQuery = query(
-        collection(firestore, 'jukeboxMessages'),
-        where('isSystemMessage', '==', true),
-        where('createdAt', '<', twoMinutesAgo)
-      );
-      
-      try {
-        const querySnapshot = await getDocs(oldMessagesQuery);
-        if (!querySnapshot.empty) {
-          const batch = writeBatch(firestore);
-          querySnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-          });
-          await batch.commit();
+        if (!firestore) return;
+        const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+
+        // Query only for system messages
+        const systemMessagesQuery = query(
+            collection(firestore, 'jukeboxMessages'),
+            where('isSystemMessage', '==', true)
+        );
+
+        try {
+            const querySnapshot = await getDocs(systemMessagesQuery);
+            if (querySnapshot.empty) return;
+
+            const batch = writeBatch(firestore);
+            let deletedCount = 0;
+
+            querySnapshot.forEach(doc => {
+                const messageData = doc.data() as JokeboxMessage;
+                // Filter by date on the client
+                if (messageData.createdAt && messageData.createdAt.toMillis() < twoMinutesAgo) {
+                    batch.delete(doc.ref);
+                    deletedCount++;
+                }
+            });
+
+            if (deletedCount > 0) {
+                await batch.commit();
+            }
+        } catch (error) {
+            console.error("Failed to clean up old system messages:", error);
+            // This error is silent to the user as it's a background task.
         }
-      } catch (error) {
-        console.error("Failed to clean up old system messages:", error);
-      }
     };
 
     const intervalId = setInterval(cleanupOldMessages, 2 * 60 * 1000); // Run every 2 minutes
     cleanupOldMessages(); // Run once on mount
 
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [firestore]);
+}, [firestore]);
 
 
   useEffect(() => {
