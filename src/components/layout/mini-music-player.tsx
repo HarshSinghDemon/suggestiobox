@@ -76,6 +76,7 @@ export function MiniMusicPlayer() {
             fill
             className="object-cover"
             unoptimized
+            priority
           />
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             {isPlaying && (
