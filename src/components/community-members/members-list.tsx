@@ -111,8 +111,8 @@ export function CommunityMembersList() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='cursor-pointer'>
-                                    <h2 className="text-2xl font-bold md:text-3xl">Admin</h2>
-                                    <p className="text-lg text-white/90">Harsh</p>
+                                    <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Admin</h2>
+                                    <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Harsh</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -121,16 +121,16 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                         <div>
-                            <h2 className="text-2xl font-bold md:text-3xl">Admin</h2>
-                            <p className="text-lg text-white/90">Harsh</p>
+                            <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Admin</h2>
+                            <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Harsh</p>
                         </div>
                     )}
                     {coAdminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
-                                <div className='cursor-pointer'>
-                                    <h2 className="text-2xl font-bold md:text-3xl">Co-Admin</h2>
-                                    <p className="text-lg text-white/90">Atrik</p>
+                                <div className='text-right cursor-pointer'>
+                                    <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Co-Admin</h2>
+                                    <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Atrik</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -138,13 +138,13 @@ export function CommunityMembersList() {
                             </PopoverContent>
                         </Popover>
                     ) : (
-                         <div>
-                            <h2 className="text-2xl font-bold md:text-3xl">Co-Admin</h2>
-                            <p className="text-lg text-white/90">Atrik</p>
+                         <div className='text-right'>
+                            <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Co-Admin</h2>
+                            <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Atrik</p>
                         </div>
                     )}
                 </div>
-                <p className="mt-2 text-sm text-center text-white/80 md:text-base">The creators and maintainers of this platform.</p>
+                <p className="mt-2 text-sm text-center text-white/80 md:text-base" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.6)' }}>The creators and maintainers of this platform.</p>
             </div>
         </Card>
         
