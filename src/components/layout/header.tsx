@@ -173,9 +173,20 @@ export function Header() {
                     </Button>
                 )}
                 <div className="relative group hidden md:flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="w-10 h-10">
-                        <Music />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="w-10 h-10">
+                            <Music />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-64" align="end">
+                        <DropdownMenuLabel>Music Player</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <div className="p-2 text-sm text-center text-muted-foreground">
+                            <p>No music added yet.</p>
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <UserAvatarButton />
