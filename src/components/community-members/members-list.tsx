@@ -93,12 +93,12 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        <Card className="relative w-full max-w-4xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt">
-            <div className="aspect-w-16 aspect-h-9">
+        <Card className="relative w-full max-w-4xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt group">
+            <div className="aspect-video">
                 <Image 
                     src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
                     alt="Site Administrators"
-                    layout="fill"
+                    fill
                     objectFit="contain"
                     className="transition-transform duration-500 group-hover:scale-105"
                 />
