@@ -53,14 +53,33 @@ export function CommunityMembersList() {
 
   const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
-  const { adminUser, otherUsers } = useMemo(() => {
-    if (!users) return { adminUser: null, otherUsers: [] };
-    const admin = users.find(u => u.role === 'admin' && u.email === 'harshroop100@gmail.com');
-    if (admin) {
-        admin.photoURL = 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg';
+  const { adminUsers, otherUsers } = useMemo(() => {
+    if (!users) return { adminUsers: [], otherUsers: [] };
+    const harshAdmin = users.find(u => u.email === 'harshroop100@gmail.com');
+    const allAdmins: FirebaseUser[] = [];
+
+    if (harshAdmin) {
+        allAdmins.push({
+            ...harshAdmin,
+            photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
+        });
     }
-    const others = users.filter(u => u.id !== admin?.id);
-    return { adminUser: admin, otherUsers: others };
+
+    // Add the second, static admin
+    allAdmins.push({
+        id: 'co-admin-static',
+        uid: 'co-admin-static',
+        displayName: 'Co-Admin',
+        email: 'co-admin@example.com',
+        photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg',
+        year: '3rd',
+        role: 'admin',
+    });
+
+    const adminIds = new Set(allAdmins.map(a => a.id));
+    const others = users.filter(u => !adminIds.has(u.id));
+
+    return { adminUsers: allAdmins, otherUsers: others };
   }, [users]);
 
 
@@ -84,31 +103,33 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        {adminUser && (
-            <div className="mb-12">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-purple-500/50 bg-gradient-to-tr from-purple-600/10 via-red-500/10 to-background hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2 animate-tilt">
-                            <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-red-500">Admin</div>
-                            <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-purple-400">
-                                <AvatarImage src={adminUser.photoURL ?? ''} alt={adminUser.displayName ?? ''} />
-                                <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
-                            </Avatar>
-                            <h4 className="text-xl font-bold">{adminUser.displayName}</h4>
-                            <p className="text-sm text-muted-foreground">{adminUser.email}</p>
-                            <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-                                <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/20 text-emerald-400">3rd Year</Badge>
-                                <Badge className="border-transparent animate-super-senior-shine text-purple-200 transition-all hover:shadow-purple-400/30 hover:scale-105">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M12 2L9 9l-7 2.5 7 2.5 3 6.5 3-6.5 7-2.5-7-2.5L12 2z"/><path d="M18 9l-2.25 4.75L12 15l-3.75-1.25L6 9"/><path d="M12 15l3 6.5 3-6.5"/></svg>
-                                    Super Senior
-                                </Badge>
-                            </div>
-                        </Card>
-                    </PopoverTrigger>
-                    <PopoverContent className='w-80'>
-                        <UserProfilePopover user={adminUser} />
-                    </PopoverContent>
-                </Popover>
+        {adminUsers.length > 0 && (
+            <div className="grid grid-cols-1 gap-8 mb-12 md:grid-cols-2">
+                {adminUsers.map(adminUser => (
+                     <Popover key={adminUser.id}>
+                        <PopoverTrigger asChild>
+                            <Card className="relative p-6 overflow-hidden text-center transition-all duration-300 transform border-2 cursor-pointer border-purple-500/50 bg-gradient-to-tr from-purple-600/10 via-red-500/10 to-background hover:shadow-2xl hover:shadow-red-500/20 hover:-translate-y-2 animate-tilt">
+                                <div className="absolute top-0 right-0 px-4 py-1 text-xs font-bold tracking-widest text-white uppercase rounded-bl-lg bg-gradient-to-tr from-purple-600 to-red-500">Admin</div>
+                                <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-purple-400">
+                                    <AvatarImage src={adminUser.photoURL ?? ''} alt={adminUser.displayName ?? ''} />
+                                    <AvatarFallback className="text-4xl">{getInitials(adminUser.displayName)}</AvatarFallback>
+                                </Avatar>
+                                <h4 className="text-xl font-bold">{adminUser.displayName}</h4>
+                                <p className="text-sm text-muted-foreground">{adminUser.email}</p>
+                                <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                                    <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/20 text-emerald-400">3rd Year</Badge>
+                                    <Badge className="border-transparent animate-super-senior-shine text-purple-200 transition-all hover:shadow-purple-400/30 hover:scale-105">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M12 2L9 9l-7 2.5 7 2.5 3 6.5 3-6.5 7-2.5-7-2.5L12 2z"/><path d="M18 9l-2.25 4.75L12 15l-3.75-1.25L6 9"/><path d="M12 15l3 6.5 3-6.5"/></svg>
+                                        Super Senior
+                                    </Badge>
+                                </div>
+                            </Card>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-80'>
+                            <UserProfilePopover user={adminUser} />
+                        </PopoverContent>
+                    </Popover>
+                ))}
             </div>
         )}
         
