@@ -1,20 +1,32 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import type { JokeboxMessage } from '@/lib/types';
-import { collection, query, orderBy, limit, serverTimestamp, addDoc, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import type { JokeboxMessage, FirebaseUser } from '@/lib/types';
+import { collection, query, orderBy, limit, serverTimestamp, addDoc, where, getDocs, writeBatch, Timestamp, doc, deleteDoc } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useRef, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Bot, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Bot } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 function ChatSkeleton() {
   return (
@@ -37,8 +49,17 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map((n) => n[0]).join('').substring(0, 2);
 };
 
-const ChatMessage = ({ message }: { message: JokeboxMessage }) => {
+const ChatMessage = ({ message, currentUser, isAdmin }: { message: JokeboxMessage, currentUser: FirebaseUser | null, isAdmin: boolean }) => {
+    const firestore = useFirestore();
     const timeAgo = message.createdAt ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'just now';
+
+    const canDelete = currentUser && (currentUser.uid === message.userId || isAdmin);
+
+    const handleDelete = async () => {
+        if (!firestore) return;
+        const messageRef = doc(firestore, 'jukeboxMessages', message.id);
+        await deleteDoc(messageRef);
+    }
 
     if (message.isSystemMessage) {
         return (
@@ -53,18 +74,41 @@ const ChatMessage = ({ message }: { message: JokeboxMessage }) => {
     }
 
     return (
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-2 group">
             <Avatar className="w-8 h-8">
                 <AvatarImage src={message.userImage ?? undefined} />
                 <AvatarFallback>{getInitials(message.userName)}</AvatarFallback>
             </Avatar>
-            <div>
+            <div className='flex-1'>
                 <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold">{message.userName}</p>
                     <p className="text-xs text-muted-foreground">{timeAgo}</p>
                 </div>
                 <p className="text-sm">{message.text}</p>
             </div>
+            {canDelete && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 opacity-0 group-hover:opacity-100">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this message.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </div>
     )
 }
@@ -77,6 +121,13 @@ export function JokeboxChat() {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
+
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userData } = useDoc<FirebaseUser>(userDocRef);
+  const isAdmin = userData?.role === 'admin';
 
   const messagesQuery = useMemoFirebase(
     () =>
@@ -91,7 +142,6 @@ export function JokeboxChat() {
   useEffect(() => {
     const cleanupOldMessages = async () => {
         if (!firestore) return;
-        const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
 
         // Query only for system messages
         const systemMessagesQuery = query(
@@ -105,6 +155,7 @@ export function JokeboxChat() {
 
             const batch = writeBatch(firestore);
             let deletedCount = 0;
+            const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
 
             querySnapshot.forEach(doc => {
                 const messageData = doc.data() as JokeboxMessage;
@@ -169,7 +220,7 @@ export function JokeboxChat() {
                 {isLoading ? (
                     <ChatSkeleton />
                 ) : reversedMessages && reversedMessages.length > 0 ? (
-                    reversedMessages.map((msg) => <ChatMessage key={msg.id} message={msg} />)
+                    reversedMessages.map((msg) => <ChatMessage key={msg.id} message={msg} currentUser={user} isAdmin={isAdmin} />)
                 ) : (
                     <p className="text-sm text-center text-muted-foreground">No messages yet. Start the conversation!</p>
                 )}
