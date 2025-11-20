@@ -90,8 +90,11 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
                 width: '0',
                 height: '0',
                 playerVars: {
-                    autoplay: 1,
                     controls: 0,
+                    fs: 0,
+                    iv_load_policy: 3,
+                    modestbranding: 1,
+                    rel: 0,
                 },
             });
             playerRef.current = player;
@@ -135,8 +138,7 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
     const handleSelectTrack = (track: YouTubeSearchResult) => {
         setCurrentTrack(track);
-        playerRef.current?.cueVideoById(track.id.videoId);
-        playerRef.current?.playVideo();
+        playerRef.current?.loadVideoById(track.id.videoId);
     };
 
     const handlePlayPause = () => {
