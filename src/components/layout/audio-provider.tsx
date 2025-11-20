@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {
@@ -81,6 +80,9 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       } else {
         audioRef.current.pause();
       }
+    } else if (!currentTrack && audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
     }
   }, [currentTrack, isPlaying]);
 
@@ -88,7 +90,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     if (index >= 0 && index < musicTracks.length) {
       if (currentTrackIndex === index) {
         // If it's the same track, just toggle play/pause
-        playPause();
+        setIsPlaying(prev => !prev);
       } else {
         setCurrentTrackIndex(index);
         setIsPlaying(true);
@@ -97,37 +99,25 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   }, [currentTrackIndex]);
 
   const playPause = useCallback(() => {
-    if (!currentTrack) {
-        // If no track is selected, play the first one
-        setCurrentTrackIndex(0);
-        setIsPlaying(true);
-    } else {
-        setIsPlaying(!isPlaying);
-    }
-  }, [isPlaying, currentTrack]);
-
-  const playNext = useCallback(() => {
-    if (currentTrackIndex !== null) {
-      const nextIndex = (currentTrackIndex + 1) % musicTracks.length;
-      setCurrentTrackIndex(nextIndex);
+    if (currentTrackIndex === null) {
+      // If no track is selected, play the first one
+      setCurrentTrackIndex(0);
       setIsPlaying(true);
     } else {
-        // If no track is playing, start with the first one
-        setCurrentTrackIndex(0);
-        setIsPlaying(true);
+      setIsPlaying(prev => !prev);
     }
   }, [currentTrackIndex]);
 
+  const playNext = useCallback(() => {
+    const nextIndex = currentTrackIndex !== null ? (currentTrackIndex + 1) % musicTracks.length : 0;
+    setCurrentTrackIndex(nextIndex);
+    setIsPlaying(true);
+  }, [currentTrackIndex]);
+
   const playPrev = useCallback(() => {
-    if (currentTrackIndex !== null) {
-      const prevIndex = (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length;
-      setCurrentTrackIndex(prevIndex);
-      setIsPlaying(true);
-    } else {
-      // If no track is playing, start with the last one
-      setCurrentTrackIndex(musicTracks.length - 1);
-      setIsPlaying(true);
-    }
+    const prevIndex = currentTrackIndex !== null ? (currentTrackIndex - 1 + musicTracks.length) % musicTracks.length : musicTracks.length - 1;
+    setCurrentTrackIndex(prevIndex);
+    setIsPlaying(true);
   }, [currentTrackIndex]);
 
   const value = {

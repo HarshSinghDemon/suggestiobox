@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Music2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 
 function JokeboxSkeleton() {
     return (
@@ -52,15 +52,22 @@ export default function JokeboxPage() {
     return (
         <AuthWrapper>
             <div className="container py-8 mx-auto">
-                <Card className="w-full max-w-2xl mx-auto">
-                    <CardHeader className="text-center">
-                        <div className="flex justify-center mb-4">
-                            <Music2 className="w-16 h-16 text-primary" />
+                <Card className="w-full max-w-2xl mx-auto overflow-hidden">
+                    <div className="relative h-48 w-full">
+                        <Image
+                            src="https://picsum.photos/seed/jokebox-hero/600/400"
+                            alt="Jokebox hero image"
+                            fill
+                            className="object-cover"
+                            data-ai-hint="music abstract vibrant"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                        <div className="absolute bottom-0 left-0 p-6">
+                            <CardTitle className="text-3xl font-bold">Jokebox</CardTitle>
+                            <CardDescription>Search for and play tracks from Jamendo.</CardDescription>
                         </div>
-                        <CardTitle className="text-3xl font-bold">Jokebox</CardTitle>
-                        <CardDescription>Search for and play tracks from Jamendo.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                    </div>
+                    <CardContent className="p-6">
                         <Suspense fallback={<JokeboxSkeleton />}>
                             <JokeboxPlayer clientId={jamendoClientId} />
                         </Suspense>

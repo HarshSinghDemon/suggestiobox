@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -9,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { Slider } from '../ui/slider';
 import { cn } from '@/lib/utils';
+import { useAudio } from '../layout/audio-provider';
 
 interface Track {
     id: string;
@@ -43,6 +43,7 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [isMuted, setIsMuted] = useState(false);
+    const { playPause: globalPlayPause } = useAudio();
 
     const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -83,6 +84,7 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
     }, [volume, isMuted]);
 
     const handlePlayPause = (track: Track) => {
+        globalPlayPause(); // Pause the global player
         if (currentTrack?.id === track.id) {
             if (isPlaying) {
                 audioRef.current?.pause();
@@ -107,7 +109,7 @@ export function JokeboxPlayer({ clientId }: JokeboxPlayerProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex w-full max-w-sm mx-auto items-center space-x-2">
+            <div className="flex w-full items-center space-x-2">
                 <Input
                     type="text"
                     placeholder="Search for a track..."
