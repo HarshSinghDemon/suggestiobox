@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import YouTubePlayer from 'youtube-player';
 import type { MusicRequest } from '@/lib/types';
 import { Radio } from 'lucide-react';
@@ -9,13 +9,25 @@ import { useFirestore } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+type PlayerState = 'unstarted' | 'ended' | 'playing' | 'paused' | 'buffering' | 'cued';
+
 interface JokeboxPlayerProps {
     song?: MusicRequest;
     onSongEnd: () => void;
+    onPlayerStateChange: (state: PlayerState) => void;
     isQueueSong: boolean;
 }
 
-export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerProps) {
+const playerStateMap: Record<number, PlayerState> = {
+    [-1]: 'unstarted',
+    [0]: 'ended',
+    [1]: 'playing',
+    [2]: 'paused',
+    [3]: 'buffering',
+    [5]: 'cued',
+};
+
+export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSong }: JokeboxPlayerProps) {
     const playerRef = useRef<any>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const currentVideoIdRef = useRef<string | null>(null);
@@ -34,6 +46,11 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
         };
 
         const onPlayerStateChange = async (event: any) => {
+            const state = playerStateMap[event.data];
+            if (state) {
+                onPlayerStateChange(state);
+            }
+
             if (event.data === 0) { // Video ended
                 onSongEnd();
 
@@ -83,7 +100,7 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
             player.stopVideo();
             currentVideoIdRef.current = null;
         }
-    }, [song, isQueueSong, onSongEnd, firestore, toast]);
+    }, [song, isQueueSong, onSongEnd, firestore, toast, onPlayerStateChange]);
 
     if (!song) {
         return (

@@ -21,6 +21,7 @@ const JokeboxPageContent = () => {
     const { user } = useUser();
     const firestore = useFirestore();
     const [selectedSong, setSelectedSong] = useState<MusicRequest | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
     const { toast } = useToast();
 
     const requestsQuery = useMemoFirebase(
@@ -51,7 +52,7 @@ const JokeboxPageContent = () => {
         }
 
         const userName = user.displayName || 'Anonymous';
-        await addDocumentNonBlocking(collection(firestore, 'musicRequests'), {
+        const newRequest = {
           userId: user.uid,
           userName: userName,
           songName: video.snippet.title,
@@ -59,7 +60,9 @@ const JokeboxPageContent = () => {
           thumbnail: video.snippet.thumbnails.default.url,
           title: video.snippet.title,
           createdAt: serverTimestamp(),
-        });
+        };
+
+        const docRef = await addDocumentNonBlocking(collection(firestore, 'musicRequests'), newRequest);
         
         await addDocumentNonBlocking(collection(firestore, 'jukeboxMessages'), {
           userId: 'system',
@@ -76,6 +79,7 @@ const JokeboxPageContent = () => {
         if (selectedSong) {
             setSelectedSong(null);
         }
+        setIsPlaying(false);
     };
     
     const nowPlaying = selectedSong || (requests && requests.length > 0 ? requests[0] : undefined);
@@ -95,6 +99,7 @@ const JokeboxPageContent = () => {
                         <JokeboxPlayer 
                             song={nowPlaying} 
                             onSongEnd={handleSongEnd}
+                            onPlayerStateChange={(state) => setIsPlaying(state === 'playing')}
                             isQueueSong={!selectedSong && !!(requests && requests.length > 0)}
                         />
                     </CardContent>
@@ -105,7 +110,7 @@ const JokeboxPageContent = () => {
                         <CardDescription>Search for a song on YouTube to play it directly or add it to the queue.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RequestForm onPlaySong={handlePlayNow} onAddToQueue={handleAddToQueue} />
+                        <RequestForm onPlaySong={handlePlayNow} onAddToQueue={handleAddToQueue} isSongPlaying={isPlaying} />
                     </CardContent>
                 </Card>
             </div>
