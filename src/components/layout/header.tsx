@@ -163,62 +163,52 @@ export function Header() {
             </nav>
 
               {user ? (
-                <>
-                {isAdmin && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="hidden md:flex"
-                        onClick={() => router.push('/admin')}
-                    >
-                        <Shield className="w-4 h-4 mr-2" />
-                        Admin
-                    </Button>
-                )}
-                <div className="relative group hidden md:flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                         <Button variant="ghost" size="icon" className="w-10 h-10">
-                            <Music className={isPlaying ? "animate-music-glow" : ""} />
+                <div className="flex items-center gap-2">
+                    {isAdmin && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="hidden md:flex"
+                            onClick={() => router.push('/admin')}
+                        >
+                            <Shield className="w-4 h-4 mr-2" />
+                            Admin
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="end">
-                        <MiniMusicPlayer />
-                      </PopoverContent>
-                    </Popover>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <UserAvatarButton />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">
-                              {user.displayName}
-                            </p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setIsAvatarModalOpen(true)}><Users className="w-4 h-4 mr-2" /><span>Change Avatar</span></DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {isAdmin && (<DropdownMenuItem onClick={() => router.push('/admin')}><Shield className="w-4 h-4 mr-2" /><span>Admin Panel</span></DropdownMenuItem>)}
-                        <DropdownMenuItem onClick={() => router.push('/about-site')}><Info className="w-4 h-4 mr-2" /><span>About This Site</span></DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/about-admin')}><Users className="w-4 h-4 mr-2" /><span>About Admin</span></DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
-                          <LogOut className="w-4 h-4 mr-2" />
-                          <span>Log out</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    )}
+                    <div className="hidden md:flex">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <UserAvatarButton />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-56" align="end" forceMount>
+                            <DropdownMenuLabel className="font-normal">
+                              <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">
+                                  {user.displayName}
+                                </p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                  {user.email}
+                                </p>
+                              </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setIsAvatarModalOpen(true)}><Users className="w-4 h-4 mr-2" /><span>Change Avatar</span></DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {isAdmin && (<DropdownMenuItem onClick={() => router.push('/admin')}><Shield className="w-4 h-4 mr-2" /><span>Admin Panel</span></DropdownMenuItem>)}
+                            <DropdownMenuItem onClick={() => router.push('/about-site')}><Info className="w-4 h-4 mr-2" /><span>About This Site</span></DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/about-admin')}><Users className="w-4 h-4 mr-2" /><span>About Admin</span></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleSignOut} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                              <LogOut className="w-4 h-4 mr-2" />
+                              <span>Log out</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
-                </>
               ) : (
                 <Button asChild className="hidden md:flex ml-2">
                   <Link href="/login">
@@ -227,6 +217,19 @@ export function Header() {
                 </Button>
               )}
             <ProfileAvatarModal isOpen={isAvatarModalOpen} onOpenChange={setIsAvatarModalOpen} />
+          
+            {/* Common controls for both mobile and desktop */}
+            <Popover>
+              <PopoverTrigger asChild>
+                 <Button variant="ghost" size="icon">
+                    <Music className={isPlaying ? "animate-music-glow" : ""} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <MiniMusicPlayer />
+              </PopoverContent>
+            </Popover>
+
           {/* Mobile Navigation Trigger */}
           <div className="md:hidden">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
