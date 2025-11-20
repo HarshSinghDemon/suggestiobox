@@ -6,7 +6,7 @@ import type { JokeboxMessage } from '@/lib/types';
 import { collection, query, orderBy, limit, serverTimestamp, addDoc } from 'firebase/firestore';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
