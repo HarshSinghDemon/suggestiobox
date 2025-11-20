@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
-import YouTubePlayer from 'youtube-player';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import YouTubePlayer, { YouTubePlayer as YouTubePlayerType } from 'youtube-player';
 import type { Jukebox, FirebaseUser } from '@/lib/types';
 import { Radio, SkipForward } from 'lucide-react';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
@@ -16,14 +16,13 @@ interface JokeboxPlayerProps {
 }
 
 export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPlayerProps) {
-    const playerRef = useRef<any>(null);
+    const playerRef = useRef<YouTubePlayerType | null>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const { user } = useUser();
     const firestore = useFirestore();
 
     const song = jukeboxState?.currentSong;
     const isPlaying = jukeboxState?.isPlaying;
-    const timestamp = jukeboxState?.timestamp;
     const requesterId = jukeboxState?.requesterId;
     
     const userDocRef = useMemoFirebase(() => {
@@ -36,63 +35,61 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
     const canSkip = song && user && (isAdmin || user.uid === requesterId);
 
     useEffect(() => {
-        if (!playerContainerRef.current) return;
+        if (!playerContainerRef.current || playerRef.current) return;
 
-        const onPlayerStateChangeCallback = async (event: any) => {
-            // state 0 means the video has ended
-            if (event.data === 0) { 
+        const player = YouTubePlayer(playerContainerRef.current, {
+            playerVars: {
+                autoplay: 1,
+                controls: 1,
+                modestbranding: 1,
+                rel: 0,
+            },
+        });
+
+        player.on('stateChange', (event: any) => {
+            if (event.data === 0) { // Ended
                 onSongEnd();
             }
-        };
+        });
 
-        if (!playerRef.current) {
-            const player = YouTubePlayer(playerContainerRef.current!, {
-                playerVars: {
-                    autoplay: 1, // Autoplay when a new video is loaded
-                    controls: 1,
-                    modestbranding: 1,
-                    rel: 0,
-                },
-            });
-            playerRef.current = player;
-            player.on('stateChange', onPlayerStateChangeCallback);
+        playerRef.current = player;
+        
+        return () => {
+            player.destroy();
+            playerRef.current = null;
         }
+    }, [onSongEnd]);
 
+    useEffect(() => {
         const player = playerRef.current;
+        if (!player) return;
 
-        const syncPlayer = async () => {
+        const syncPlayerState = async () => {
             const videoIdOnPlayer = await player.getVideoData()?.video_id;
-            
+
             if (song?.videoId) {
+                // If the song is different, load the new one.
                 if (videoIdOnPlayer !== song.videoId) {
                     player.loadVideoById(song.videoId);
                 }
-
-                if (isPlaying) {
-                     const serverTime = timestamp?.toDate().getTime() ?? Date.now();
-                     // A more robust solution would involve a server-side time sync, but this is good for client-side
-                     const clientTime = Date.now();
-                     const elapsedTime = (clientTime - serverTime) / 1000;
-                     
-                     // Only seek if there's a significant difference to avoid jarring jumps
-                     const currentTime = await player.getCurrentTime();
-                     if (Math.abs(currentTime - elapsedTime) > 5) {
-                        player.seekTo(elapsedTime, true);
-                     }
-                     
-                     player.playVideo();
-                } else {
+                
+                // Sync play/pause state
+                const playerState = await player.getPlayerState();
+                if (isPlaying && playerState !== 1) {
+                    player.playVideo();
+                } else if (!isPlaying && playerState === 1) {
                     player.pauseVideo();
                 }
 
             } else {
+                // If there's no song, stop the player.
                 player.stopVideo();
             }
         };
 
-        syncPlayer();
+        syncPlayerState();
+    }, [song, isPlaying]);
 
-    }, [song, isPlaying, timestamp, onSongEnd]);
 
     if (!song) {
         return (

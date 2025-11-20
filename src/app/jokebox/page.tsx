@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,7 +38,7 @@ const JokeboxPageContent = () => {
     const isSongInProgress = !!jukeboxState?.currentSong;
 
 
-    const handlePlayNow = async (searchResult: SearchResult) => {
+    const handlePlayNow = useCallback(async (searchResult: SearchResult) => {
         if (!user || !firestore) return;
         
         const newSong: MusicRequest = {
@@ -49,7 +49,6 @@ const JokeboxPageContent = () => {
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            // Firestore timestamps are handled server-side, so use a local date for sorting if needed, but rely on serverTimestamp()
             createdAt: new Date() as any,
         };
 
@@ -61,9 +60,9 @@ const JokeboxPageContent = () => {
         });
 
         toast({ title: 'Playing Now', description: newSong.title });
-    };
+    }, [user, firestore, jukeboxStateRef, toast]);
 
-    const handleAddToQueue = async (video: SearchResult) => {
+    const handleAddToQueue = useCallback(async (video: SearchResult) => {
         if (!user || !firestore) {
           toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to request a song.' });
           return;
@@ -91,7 +90,7 @@ const JokeboxPageContent = () => {
         });
   
         toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
-    };
+    }, [user, firestore, toast]);
 
     const upNext = useMemo(() => {
         if (!requests) return [];
@@ -99,28 +98,21 @@ const JokeboxPageContent = () => {
     }, [requests]);
 
 
-    const handleSongEnd = async () => {
+    const handleSongEnd = useCallback(async () => {
         if (!firestore) return;
 
-        // Check if the song that just ended was from the queue
-        const endedSong = jukeboxState?.currentSong;
-        
-        // Find the next song in the queue
         const nextSong = requests?.[0];
         
         if (nextSong) {
-            // Play the next song
             await setDoc(jukeboxStateRef!, {
                 currentSong: nextSong,
                 isPlaying: true,
                 timestamp: serverTimestamp(),
                 requesterId: nextSong.userId,
             });
-            // Delete the song that just started playing from the queue
             const songRef = doc(firestore, 'musicRequests', nextSong.id);
             await deleteDocumentNonBlocking(songRef);
         } else {
-             // If there's no next song, clear the player
             await setDoc(jukeboxStateRef!, {
                 currentSong: null,
                 isPlaying: false,
@@ -128,24 +120,15 @@ const JokeboxPageContent = () => {
                 requesterId: null,
             });
         }
-        
-        // Check if the song that ended was in the queue and delete it, if it wasn't the one we just promoted
-        if (endedSong && endedSong.id !== nextSong?.id) {
-            const endedSongInQueue = requests?.find(req => req.id === endedSong.id);
-            if (endedSongInQueue) {
-                const songRef = doc(firestore, 'musicRequests', endedSongInQueue.id);
-                await deleteDocumentNonBlocking(songRef);
-            }
-        }
-    };
+    }, [firestore, requests, jukeboxStateRef]);
     
-    const handleNextSong = async () => {
+    const handleNextSong = useCallback(async () => {
         toast({
             title: 'Skipped!',
             description: `Skipping to the next song.`,
         });
         await handleSongEnd();
-    };
+    }, [toast, handleSongEnd]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -230,4 +213,3 @@ export default function JokeboxPage() {
         </AuthWrapper>
     );
 }
-
