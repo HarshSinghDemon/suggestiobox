@@ -3,17 +3,19 @@
 
 import React, { useRef, useEffect } from 'react';
 import YouTubePlayer from 'youtube-player';
-import type { MusicRequest } from '@/lib/types';
-import { Radio } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import type { MusicRequest, FirebaseUser } from '@/lib/types';
+import { Radio, SkipForward } from 'lucide-react';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '../ui/button';
 
 type PlayerState = 'unstarted' | 'ended' | 'playing' | 'paused' | 'buffering' | 'cued';
 
 interface JokeboxPlayerProps {
     song?: MusicRequest | null;
     onSongEnd: () => void;
+    onNextSong: () => void;
     onPlayerStateChange: (state: PlayerState) => void;
     autoPlay: boolean;
 }
@@ -27,13 +29,23 @@ const playerStateMap: Record<number, PlayerState> = {
     [5]: 'cued',
 };
 
-export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, autoPlay }: JokeboxPlayerProps) {
+export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange, autoPlay }: JokeboxPlayerProps) {
     const playerRef = useRef<any>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const currentVideoIdRef = useRef<string | null>(null);
     const isQueueSongRef = useRef(autoPlay);
+    const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+
+    const userDocRef = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [user, firestore]);
+    const { data: userData } = useDoc<FirebaseUser>(userDocRef);
+    const isAdmin = userData?.role === 'admin';
+
+    const canSkip = song && user && (isAdmin || user.uid === song.userId);
 
     useEffect(() => {
         isQueueSongRef.current = autoPlay;
@@ -58,29 +70,13 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, autoPlay }
 
             if (event.data === 0) { // Video ended
                 onSongEnd();
-                
-                if (isQueueSongRef.current && firestore && song?.id && song.videoId) {
-                     try {
-                        // The ID of a musicRequest from the queue is its firestore doc ID.
-                        // A manually played song's ID is its videoId. They won't match.
-                        const songRef = doc(firestore, 'musicRequests', song.id);
-                        await deleteDoc(songRef);
-                        toast({
-                            title: 'Song Finished',
-                            description: `${song.title} has been removed from the queue.`,
-                        });
-                    } catch (error) {
-                        // This might fail if it's not a queue song, which is okay.
-                        console.log('Could not remove song from queue (it may not have been a queue song):', error);
-                    }
-                }
             }
         };
 
         if (!playerRef.current) {
             player = YouTubePlayer(playerContainerRef.current, {
                 playerVars: {
-                    autoplay: 0, // We control autoplay manually
+                    autoplay: 0,
                     controls: 1,
                     modestbranding: 1,
                     rel: 0,
@@ -96,14 +92,14 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, autoPlay }
         if (song) {
             if (currentVideoIdRef.current !== song.videoId) {
                 player.loadVideoById(song.videoId);
-                player.playVideo();
                 currentVideoIdRef.current = song.videoId;
             }
+             player.playVideo();
         } else {
             player.stopVideo();
             currentVideoIdRef.current = null;
         }
-    }, [song, onSongEnd, firestore, toast, onPlayerStateChange, autoPlay]);
+    }, [song, onSongEnd, onPlayerStateChange, autoPlay]);
 
     if (!song) {
         return (
@@ -120,9 +116,17 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, autoPlay }
             <div className="overflow-hidden rounded-lg aspect-video bg-black">
                 <div ref={playerContainerRef} className='w-full h-full' />
             </div>
-            <div>
-                <h3 className="text-xl font-bold">{song.title}</h3>
-                <p className="text-sm text-muted-foreground">Requested by {song.userName}</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-xl font-bold">{song.title}</h3>
+                    <p className="text-sm text-muted-foreground">Requested by {song.userName}</p>
+                </div>
+                 {canSkip && (
+                    <Button onClick={onNextSong} variant="outline" size="sm">
+                        <SkipForward className="w-4 h-4 mr-2" />
+                        Next
+                    </Button>
+                )}
             </div>
         </div>
     );

@@ -10,8 +10,8 @@ import { AlertCircle, Radio } from 'lucide-react';
 import { RequestForm, type SearchResult } from '@/components/jokebox/request-form';
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
-import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, limit, serverTimestamp, Timestamp, doc } from 'firebase/firestore';
 import type { MusicRequest } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -75,14 +75,20 @@ const JokeboxPageContent = () => {
   
         toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
     };
-    
+
     const nowPlaying = useMemo(() => {
         if (selectedSong) return selectedSong;
-        if (!isPlaying && requests && requests.length > 0) {
+        if (isPlaying && requests && requests.length > 0) {
             return requests[0];
         }
         return null;
     }, [selectedSong, requests, isPlaying]);
+
+    useEffect(() => {
+        if (!selectedSong && !isPlaying && requests && requests.length > 0) {
+            setIsPlaying(true);
+        }
+    }, [requests, selectedSong, isPlaying]);
 
     const upNext = useMemo(() => {
         if (!requests) return [];
@@ -95,8 +101,22 @@ const JokeboxPageContent = () => {
     }, [selectedSong, requests, isPlaying]);
 
     const handleSongEnd = () => {
+        if (nowPlaying?.id && nowPlaying.videoId !== nowPlaying.id) { // This means it's a queue song
+             if (firestore) {
+                const songRef = doc(firestore, 'musicRequests', nowPlaying.id);
+                deleteDocumentNonBlocking(songRef);
+             }
+        }
         setSelectedSong(null);
-        setIsPlaying(false);
+        setIsPlaying(false); // This will trigger the useEffect to play the next song
+    };
+    
+    const handleNextSong = () => {
+        toast({
+            title: 'Skipped!',
+            description: `Skipping to the next song.`,
+        });
+        handleSongEnd();
     };
 
     return (
@@ -110,8 +130,12 @@ const JokeboxPageContent = () => {
                         <JokeboxPlayer 
                             song={nowPlaying} 
                             onSongEnd={handleSongEnd}
+                            onNextSong={handleNextSong}
                             onPlayerStateChange={(state) => {
-                                setIsPlaying(state === 'playing');
+                                const currentlyPlaying = state === 'playing' || state === 'buffering';
+                                if(currentlyPlaying !== isPlaying) {
+                                    setIsPlaying(currentlyPlaying);
+                                }
                             }}
                             autoPlay={!selectedSong && !!(requests && requests.length > 0)}
                         />
