@@ -43,9 +43,10 @@ interface YouTubeSearchResult {
 
 interface YoutubePlayerProps {
     apiKey: string;
+    className?: string;
 }
 
-export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
+export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     const { toast } = useToast();
 
     // Search State
@@ -58,13 +59,12 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(180); // Default duration
+    const [duration, setDuration] = useState(180);
     const [volume, setVolume] = useState(0.5);
 
     // Playlist State
     const [playlist, setPlaylist] = useState<YouTubeTrack[]>([]);
     
-    // Refs
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
     
@@ -139,13 +139,19 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
         if (isPlaying) {
             if (iframeRef.current) iframeRef.current.src = 'about:blank';
             if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-            setIsPlaying(false);
         } else if (currentTrack) {
             playSong(currentTrack);
         }
+        setIsPlaying(!isPlaying);
     };
 
     const toggleMute = () => setIsMuted(!isMuted);
+
+    useEffect(() => {
+        if (iframeRef.current) {
+            iframeRef.current.style.filter = isMuted ? 'grayscale(100%)' : 'none';
+        }
+    }, [isMuted]);
 
     const loadPlaylist = useCallback(() => {
         try {
@@ -197,8 +203,10 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
                 {isLoading ? (
                     Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="w-full h-20 rounded-md" />)
                 ) : searchResults.length > 0 ? (
-                    searchResults.map(track => (
-                        <div key={track.id} className="flex items-center gap-3 p-2 rounded-md group hover:bg-accent">
+                    searchResults.map((track, index) => (
+                        <div key={track.id} 
+                             className="flex items-center gap-3 p-2 rounded-md group hover:bg-accent animate-fade-in-up"
+                             style={{ animationDelay: `${index * 50}ms` }}>
                             <div className='relative overflow-hidden rounded-md shrink-0 w-14 h-14'>
                                 <Image src={track.thumbnail} alt={track.title} layout='fill' className="object-cover transition-transform duration-300 group-hover:scale-110" />
                             </div>
@@ -206,15 +214,15 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
                                 <p className="font-semibold truncate">{track.title}</p>
                                 <p className="text-sm truncate text-muted-foreground">{track.channel}</p>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)} className='opacity-0 group-hover:opacity-100'><Plus className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)} className='transition-opacity opacity-0 group-hover:opacity-100'><Plus className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className={cn("w-4 h-4", isPlaying && currentTrack?.id === track.id ? "animate-music-glow" : "")}/></Button>
                         </div>
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-24">
-                        <Music2 className="w-12 h-12 mb-4" />
-                        <h3 className='text-lg font-semibold'>Find Your Sound</h3>
-                        <p className='text-sm'>Search for songs, artists, or albums to start listening.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-24 animate-fade-in-scale">
+                        <Music2 className="w-16 h-16 mb-4 text-primary/50" />
+                        <h3 className='text-xl font-semibold'>Find Your Sound</h3>
+                        <p className='max-w-xs text-sm'>Search for songs, artists, or albums to start building your playlist.</p>
                     </div>
                 )}
             </div>
@@ -223,23 +231,30 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
     
     const Playlist = () => (
         <div className="flex flex-col h-full bg-background/50">
-            <h3 className="p-4 text-lg font-semibold tracking-tight border-b">Playlist</h3>
+            <h3 className="p-4 text-lg font-semibold tracking-tight border-b">
+                <ListMusic className="inline w-5 h-5 mr-2" />
+                My Playlist
+            </h3>
             <ScrollArea className='flex-1'>
                 <div className="p-2 space-y-1">
                     {playlist.length > 0 ? (
-                        playlist.map(track => (
-                            <div key={track.id} className={cn("flex items-center gap-2 p-2 rounded-md cursor-pointer group hover:bg-accent", currentTrack?.id === track.id && "bg-primary/20")}>
+                        playlist.map((track, index) => (
+                            <div key={track.id} 
+                                 className={cn("flex items-center gap-2 p-2 rounded-md cursor-pointer group hover:bg-accent animate-fade-in-up", currentTrack?.id === track.id && "bg-primary/20")}
+                                 style={{ animationDelay: `${index * 50}ms` }}
+                                 >
                                 <div className="flex-1 min-w-0" onClick={() => playSong(track)}>
-                                    <p className="text-sm font-semibold truncate">{track.title}</p>
+                                    <p className={cn("text-sm font-semibold truncate", currentTrack?.id === track.id && "text-amber-300")}>{track.title}</p>
                                     <p className="text-xs truncate text-muted-foreground">{track.channel}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="w-6 h-6 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => removeFromPlaylist(track.id)}><Trash2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" className="w-6 h-6 transition-opacity shrink-0 opacity-0 group-hover:opacity-100" onClick={() => removeFromPlaylist(track.id)}><Trash2 className="w-4 h-4" /></Button>
                             </div>
                         ))
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-12">
+                        <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground pt-12 animate-fade-in-scale">
                             <ListMusic className="w-10 h-10 mb-2" />
                             <p className="text-sm">Your playlist is empty.</p>
+                            <p className="text-xs">Add songs from search results.</p>
                         </div>
                     )}
                 </div>
@@ -254,7 +269,7 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className={cn("flex flex-col h-full", className)}>
             <iframe
                 ref={iframeRef}
                 title="YouTube Audio Player"
@@ -266,18 +281,17 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
             <div className="flex-1 min-h-0 md:grid md:grid-cols-3">
                 <div className="flex flex-col h-full md:col-span-2">
                     <div className="p-4 border-b">
-                        <div className="flex gap-2">
+                        <form onSubmit={(e) => { e.preventDefault(); searchSongs(); }} className="flex gap-2">
                             <Input
                                 placeholder="Search songs, artists, albums..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && searchSongs()}
                                 className='text-base'
                             />
-                            <Button onClick={searchSongs} disabled={isLoading} className='shrink-0'>
+                            <Button type="submit" disabled={isLoading} className='shrink-0'>
                                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                             </Button>
-                        </div>
+                        </form>
                     </div>
                     <div className="flex-1 min-h-0">
                       <SearchResults />
@@ -288,23 +302,23 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
                 </div>
             </div>
 
-            <div className="p-3 border-t bg-background">
+            <div className="p-3 border-t bg-background/80 backdrop-blur-sm">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center flex-1 gap-3 min-w-0">
                         {currentTrack ? (
-                            <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className="rounded-md" />
+                            <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className={cn("rounded-md shadow-lg", isPlaying && "animate-pulse-slow")} />
                         ) : (
                             <div className="flex items-center justify-center w-14 h-14 bg-muted rounded-md shrink-0"><Music2 className='w-6 h-6 text-muted-foreground' /></div>
                         )}
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold truncate">{currentTrack?.title || 'No song selected'}</p>
+                            <p className={cn("font-semibold truncate", isPlaying && "text-amber-300")}>{currentTrack?.title || 'No song selected'}</p>
                             <p className="text-sm truncate text-muted-foreground">{currentTrack?.channel || '---'}</p>
                         </div>
                     </div>
                     <div className="flex flex-col items-center justify-center flex-grow gap-2 max-w-xs">
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={playPrevious} disabled={playlist.length < 2}><SkipBack /></Button>
-                            <Button variant="default" size="icon" className="w-12 h-12 rounded-full" onClick={togglePause} disabled={!currentTrack}>
+                            <Button variant="default" size="icon" className="w-12 h-12 rounded-full shadow-lg bg-gradient-to-br from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500" onClick={togglePause} disabled={!currentTrack}>
                                 {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 pl-0.5 fill-current" />}
                             </Button>
                             <Button variant="ghost" size="icon" onClick={playNext} disabled={playlist.length < 2}><SkipForward /></Button>
@@ -315,8 +329,8 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
                                 value={[progress]}
                                 max={100}
                                 step={1}
-                                className="w-full"
-                                onValueChange={([value]) => { /* Seeking is not possible with this method */ }}
+                                className="w-full [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-amber-400 [&>span:first-child>span]:to-amber-600"
+                                onValueChange={([value]) => { /* Seeking not possible */ }}
                                 disabled={!currentTrack}
                             />
                             <span className="text-xs font-mono text-muted-foreground">{formatTime(duration)}</span>
@@ -330,7 +344,7 @@ export function YoutubePlayer({ apiKey }: YoutubePlayerProps) {
                             value={[isMuted ? 0 : volume]}
                             max={1}
                             step={0.05}
-                            className="w-24"
+                            className="w-24 [&>span:first-child>span]:bg-foreground/50"
                             onValueChange={([value]) => {
                                 setVolume(value);
                                 if (value > 0 && isMuted) setIsMuted(false);
