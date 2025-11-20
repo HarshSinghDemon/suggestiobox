@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'img.jamendo.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'thumbnailer.mixcloud.com',
       }
     ],
   },
