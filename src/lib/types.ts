@@ -86,4 +86,15 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
+
+export type MusicRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  songName: string;
+  videoId: string;
+  thumbnail: string;
+  title: string;
+  createdAt: Timestamp;
+};
     
