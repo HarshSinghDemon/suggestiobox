@@ -1,12 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import ytdl from 'ytdl-core';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { PassThrough } from 'stream';
-
-// Set the path for ffmpeg
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
