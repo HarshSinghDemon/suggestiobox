@@ -51,7 +51,7 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const isCreator = user?.email === 'harshroop100@gmail.com';
+  const isCreator = user?.email === 'harshroop100@gmail.com' || user?.uid === 'E30r8h5Kr9XvTldaX0jnumcaXup2';
   const isAdmin = userData?.role === 'admin';
 
   if (!isCreator && !isAdmin) {
