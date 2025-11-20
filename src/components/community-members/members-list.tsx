@@ -57,7 +57,7 @@ export function CommunityMembersList() {
     if (!users) return { adminUser: null, otherUsers: [] };
     const admin = users.find(u => u.role === 'admin' && u.email === 'harshroop100@gmail.com');
     if (admin) {
-        admin.photoURL = 'https://i.imgur.com/8QZJgQ9.jpeg';
+        admin.photoURL = 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg';
     }
     const others = users.filter(u => u.id !== admin?.id);
     return { adminUser: admin, otherUsers: others };
