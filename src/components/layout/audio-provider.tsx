@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {
@@ -46,23 +47,40 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
   const currentTrack = currentTrackIndex !== null ? musicTracks[currentTrackIndex] : null;
 
+  const playNext = useCallback(() => {
+    setCurrentTrackIndex(prevIndex => {
+      const nextIndex = prevIndex !== null ? (prevIndex + 1) % musicTracks.length : 0;
+      return nextIndex;
+    });
+    setIsPlaying(true);
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (!audioRef.current) {
         audioRef.current = new Audio();
-        audioRef.current.addEventListener('ended', () => playNext());
-        audioRef.current.addEventListener('play', () => setIsPlaying(true));
-        audioRef.current.addEventListener('pause', () => setIsPlaying(false));
       }
     }
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', () => playNext());
-        audioRef.current.removeEventListener('play', () => setIsPlaying(true));
-        audioRef.current.removeEventListener('pause', () => setIsPlaying(false));
-      }
-    };
   }, []);
+  
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      const handleEnded = () => playNext();
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
+      
+      audio.addEventListener('ended', handleEnded);
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+      
+      return () => {
+        audio.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+      }
+    }
+  }, [playNext]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -89,7 +107,6 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const playTrack = useCallback((index: number) => {
     if (index >= 0 && index < musicTracks.length) {
       if (currentTrackIndex === index) {
-        // If it's the same track, just toggle play/pause
         setIsPlaying(prev => !prev);
       } else {
         setCurrentTrackIndex(index);
@@ -100,18 +117,11 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
   const playPause = useCallback(() => {
     if (currentTrackIndex === null) {
-      // If no track is selected, play the first one
       setCurrentTrackIndex(0);
       setIsPlaying(true);
     } else {
       setIsPlaying(prev => !prev);
     }
-  }, [currentTrackIndex]);
-
-  const playNext = useCallback(() => {
-    const nextIndex = currentTrackIndex !== null ? (currentTrackIndex + 1) % musicTracks.length : 0;
-    setCurrentTrackIndex(nextIndex);
-    setIsPlaying(true);
   }, [currentTrackIndex]);
 
   const playPrev = useCallback(() => {
