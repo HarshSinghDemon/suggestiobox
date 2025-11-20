@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Analytics } from '@vercel/analytics/react';
+import { AudioProvider } from '@/components/layout/audio-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const pressStart2P = Press_Start_2P({
@@ -38,11 +39,13 @@ export default function RootLayout({
       >
         <TooltipProvider>
           <FirebaseClientProvider>
+            <AudioProvider>
               <div className="relative flex min-h-dvh flex-col">
                 <Header />
                 <main className="flex-1 pb-24">{children}</main>
               </div>
               <Toaster />
+            </AudioProvider>
           </FirebaseClientProvider>
         </TooltipProvider>
         <Analytics />

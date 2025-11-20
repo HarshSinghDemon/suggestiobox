@@ -12,16 +12,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music, Radio } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth } from '@/firebase';
-import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
+import { MiniMusicPlayer } from './mini-music-player';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
@@ -179,12 +179,8 @@ export function Header() {
                             <Music />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-64" align="end">
-                        <DropdownMenuLabel>Music Player</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <div className="p-2 text-sm text-center text-muted-foreground">
-                            <p>No music added yet.</p>
-                        </div>
+                      <DropdownMenuContent className="w-80" align="end">
+                        <MiniMusicPlayer />
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <DropdownMenu>
