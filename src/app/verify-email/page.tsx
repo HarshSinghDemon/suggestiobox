@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -21,9 +22,14 @@ export default function VerifyEmailPage() {
     // This page is only for users who have just signed up and are not yet verified.
     // If a verified user lands here, we can redirect them.
     if (!isUserLoading && user?.emailVerified) {
+      toast({
+        title: 'Email Verified!',
+        description: 'Your account is now active. Welcome aboard!',
+        className: 'bg-green-500 text-white',
+      });
       router.push('/');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, toast]);
   
   const handleResendVerification = async () => {
     if (user) {
