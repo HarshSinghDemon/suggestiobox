@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Send } from 'lucide-react';
+import { Loader2, Search, Send, Play } from 'lucide-react';
 import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -18,7 +18,7 @@ const formSchema = z.object({
   query: z.string().min(2, 'Search query must be at least 2 characters.'),
 });
 
-type SearchResult = {
+export type SearchResult = {
   id: { videoId: string };
   snippet: {
     title: string;
@@ -26,7 +26,11 @@ type SearchResult = {
   };
 };
 
-export function RequestForm() {
+interface RequestFormProps {
+    onPlaySong: (song: SearchResult) => void;
+}
+
+export function RequestForm({ onPlaySong }: RequestFormProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +61,7 @@ export function RequestForm() {
     }
   };
 
-  const handleRequest = async (video: SearchResult) => {
+  const handleAddToQueue = async (video: SearchResult) => {
     if (!user || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to request a song.' });
       return;
@@ -74,13 +78,17 @@ export function RequestForm() {
         createdAt: serverTimestamp(),
       });
       toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
-      setSearchResults([]);
-      form.reset();
+      // Do not clear search results after adding to queue
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Request Failed', description: error.message });
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handlePlayNow = (video: SearchResult) => {
+    onPlaySong(video);
+    toast({ title: 'Playing Now', description: video.snippet.title });
   };
 
   return (
@@ -96,12 +104,17 @@ export function RequestForm() {
         <ScrollArea className="h-64">
           <div className="space-y-2">
             {searchResults.map((result) => (
-              <div key={result.id.videoId} className="flex items-center gap-4 p-2 rounded-md bg-muted">
+              <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
                 <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md" />
                 <p className="flex-1 text-sm font-medium truncate">{result.snippet.title}</p>
-                <Button size="sm" onClick={() => handleRequest(result)} disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="icon" variant="outline" onClick={() => handlePlayNow(result)} disabled={isSubmitting} aria-label="Play Now">
+                    <Play className="w-4 h-4" />
+                  </Button>
+                  <Button size="icon" onClick={() => handleAddToQueue(result)} disabled={isSubmitting} aria-label="Add to Queue">
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : <Send className="w-4 h-4" />}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
