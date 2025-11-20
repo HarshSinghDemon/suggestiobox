@@ -65,7 +65,7 @@ export default function JokeboxPage() {
                 </div>
                 <div className="flex-1 overflow-hidden border rounded-lg bg-card text-card-foreground">
                     <Suspense fallback={<JokeboxSkeleton />}>
-                        <YoutubePlayer apiKey={youtubeApiKey} />
+                        <YoutubePlayer apiKey={youtubeApiKey} className="h-full" />
                     </Suspense>
                 </div>
             </div>
