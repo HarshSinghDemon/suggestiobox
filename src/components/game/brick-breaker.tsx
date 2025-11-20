@@ -86,7 +86,7 @@ export function BrickBreakerGame() {
 
 
     let paddleHeight = 10;
-    let paddleWidth = canvas.width / 6.4;
+    let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
     let brickRowCount = 15;
@@ -209,7 +209,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 1000); // Increase speed every 1000 points
+        speedMultiplier = 1 + (localScore / 2000); // Increase speed every 2000 points
         const currentDx = Math.sign(dx) * baseSpeed * speedMultiplier;
         const currentDy = Math.sign(dy) * baseSpeed * speedMultiplier;
 
