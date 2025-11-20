@@ -78,37 +78,25 @@ const JokeboxPageContent = () => {
 
     const nowPlaying = useMemo(() => {
         if (selectedSong) return selectedSong;
-        if (isPlaying && requests && requests.length > 0) {
+        if (requests && requests.length > 0) {
             return requests[0];
         }
         return null;
-    }, [selectedSong, requests, isPlaying]);
-
-    useEffect(() => {
-        if (!selectedSong && !isPlaying && requests && requests.length > 0) {
-            setIsPlaying(true);
-        }
-    }, [requests, selectedSong, isPlaying]);
+    }, [selectedSong, requests]);
 
     const upNext = useMemo(() => {
         if (!requests) return [];
-        // If a song was manually selected, show the whole queue as up next
-        if (selectedSong) return requests;
-        // If playing from the queue, show the rest of the queue
-        if (isPlaying && requests.length > 0) return requests.slice(1);
-        // If nothing is playing, show the whole queue
-        return requests;
-    }, [selectedSong, requests, isPlaying]);
+        return requests.slice(1);
+    }, [requests]);
 
     const handleSongEnd = () => {
-        if (nowPlaying?.id && nowPlaying.videoId !== nowPlaying.id) { // This means it's a queue song
-             if (firestore) {
-                const songRef = doc(firestore, 'musicRequests', nowPlaying.id);
-                deleteDocumentNonBlocking(songRef);
-             }
+        // Only remove from queue if it was a queue song (i.e. not a manually selected one)
+        if (nowPlaying && !selectedSong && firestore) {
+            const songRef = doc(firestore, 'musicRequests', nowPlaying.id);
+            deleteDocumentNonBlocking(songRef);
         }
-        setSelectedSong(null);
-        setIsPlaying(false); // This will trigger the useEffect to play the next song
+        setSelectedSong(null); // Clear any manually selected song
+        setIsPlaying(false); // Allow next song in queue to start
     };
     
     const handleNextSong = () => {
@@ -137,7 +125,7 @@ const JokeboxPageContent = () => {
                                     setIsPlaying(currentlyPlaying);
                                 }
                             }}
-                            autoPlay={!selectedSong && !!(requests && requests.length > 0)}
+                            autoPlay={!!(requests && requests.length > 0 && !selectedSong)}
                         />
                     </CardContent>
                 </Card>

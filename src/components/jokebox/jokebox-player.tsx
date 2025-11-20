@@ -6,8 +6,7 @@ import YouTubePlayer from 'youtube-player';
 import type { MusicRequest, FirebaseUser } from '@/lib/types';
 import { Radio, SkipForward } from 'lucide-react';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 
 type PlayerState = 'unstarted' | 'ended' | 'playing' | 'paused' | 'buffering' | 'cued';
@@ -33,10 +32,8 @@ export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange
     const playerRef = useRef<any>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const currentVideoIdRef = useRef<string | null>(null);
-    const isQueueSongRef = useRef(autoPlay);
     const { user } = useUser();
     const firestore = useFirestore();
-    const { toast } = useToast();
 
     const userDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -46,10 +43,6 @@ export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange
     const isAdmin = userData?.role === 'admin';
 
     const canSkip = song && user && (isAdmin || user.uid === song.userId);
-
-    useEffect(() => {
-        isQueueSongRef.current = autoPlay;
-    }, [autoPlay]);
 
     useEffect(() => {
         if (!playerContainerRef.current) return;
@@ -93,8 +86,16 @@ export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange
             if (currentVideoIdRef.current !== song.videoId) {
                 player.loadVideoById(song.videoId);
                 currentVideoIdRef.current = song.videoId;
+                if (autoPlay) {
+                    player.playVideo();
+                }
+            } else {
+                 player.getPlayerState().then((state: number) => {
+                    if (state !== 1) { // If not playing, play
+                       player.playVideo();
+                    }
+                });
             }
-             player.playVideo();
         } else {
             player.stopVideo();
             currentVideoIdRef.current = null;
