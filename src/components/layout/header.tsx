@@ -173,7 +173,7 @@ export function Header() {
                     </Button>
                 )}
                 <div className="relative group hidden md:flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="w-10 h-10" onClick={() => router.push('/jokebox')}>
+                    <Button variant="ghost" size="icon" className="w-10 h-10">
                         <Music />
                     </Button>
                     <DropdownMenu>
