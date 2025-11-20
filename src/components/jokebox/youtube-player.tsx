@@ -78,6 +78,7 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
     const playerDivRef = useRef<HTMLDivElement>(null);
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
     
+    const { toast } = useToast();
     const { results, isLoading, search } = useYouTubeSearch(apiKey);
 
     useEffect(() => {
@@ -146,7 +147,6 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
 
         setCurrentTrack(track);
         player.loadVideoById(track.id.videoId);
-        // Autoplay is handled by browser policy, requires mute
         player.mute(); 
         setIsMuted(true);
         player.playVideo();
@@ -285,4 +285,3 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
         </div>
     );
 }
-
