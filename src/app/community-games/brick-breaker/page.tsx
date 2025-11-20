@@ -9,7 +9,7 @@ export default function BrickBreakerPage() {
   return (
     <AuthWrapper>
       <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl">
+          <Card className="w-full max-w-6xl">
               <CardHeader>
                   <CardTitle>Brick Breaker</CardTitle>
                   <CardDescription>Use your mouse or finger to move the paddle. Clear all the bricks!</CardDescription>
