@@ -42,6 +42,7 @@ const JokeboxPageContent = () => {
             createdAt: Timestamp.now(),
         };
         setSelectedSong(songToPlay);
+        setIsPlaying(true);
         toast({ title: 'Playing Now', description: songToPlay.title });
     };
 
@@ -74,19 +75,29 @@ const JokeboxPageContent = () => {
   
         toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
     };
+    
+    const nowPlaying = useMemo(() => {
+        if (selectedSong) return selectedSong;
+        if (!isPlaying && requests && requests.length > 0) {
+            return requests[0];
+        }
+        return null;
+    }, [selectedSong, requests, isPlaying]);
+
+    const upNext = useMemo(() => {
+        if (!requests) return [];
+        // If a song was manually selected, show the whole queue as up next
+        if (selectedSong) return requests;
+        // If playing from the queue, show the rest of the queue
+        if (isPlaying && requests.length > 0) return requests.slice(1);
+        // If nothing is playing, show the whole queue
+        return requests;
+    }, [selectedSong, requests, isPlaying]);
 
     const handleSongEnd = () => {
-        if (selectedSong) {
-            setSelectedSong(null);
-        }
+        setSelectedSong(null);
         setIsPlaying(false);
     };
-    
-    const nowPlaying = selectedSong;
-    const upNext = useMemo(() => {
-        if (selectedSong) return requests ?? [];
-        return requests ?? [];
-    }, [selectedSong, requests]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -99,8 +110,10 @@ const JokeboxPageContent = () => {
                         <JokeboxPlayer 
                             song={nowPlaying} 
                             onSongEnd={handleSongEnd}
-                            onPlayerStateChange={(state) => setIsPlaying(state === 'playing')}
-                            isQueueSong={!selectedSong && !!(requests && requests.length > 0)}
+                            onPlayerStateChange={(state) => {
+                                setIsPlaying(state === 'playing');
+                            }}
+                            autoPlay={!selectedSong && !!(requests && requests.length > 0)}
                         />
                     </CardContent>
                 </Card>

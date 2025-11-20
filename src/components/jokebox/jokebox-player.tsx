@@ -12,10 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 type PlayerState = 'unstarted' | 'ended' | 'playing' | 'paused' | 'buffering' | 'cued';
 
 interface JokeboxPlayerProps {
-    song?: MusicRequest;
+    song?: MusicRequest | null;
     onSongEnd: () => void;
     onPlayerStateChange: (state: PlayerState) => void;
-    isQueueSong: boolean;
+    autoPlay: boolean;
 }
 
 const playerStateMap: Record<number, PlayerState> = {
@@ -27,12 +27,17 @@ const playerStateMap: Record<number, PlayerState> = {
     [5]: 'cued',
 };
 
-export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSong }: JokeboxPlayerProps) {
+export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, autoPlay }: JokeboxPlayerProps) {
     const playerRef = useRef<any>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
     const currentVideoIdRef = useRef<string | null>(null);
+    const isQueueSongRef = useRef(autoPlay);
     const firestore = useFirestore();
     const { toast } = useToast();
+
+    useEffect(() => {
+        isQueueSongRef.current = autoPlay;
+    }, [autoPlay]);
 
     useEffect(() => {
         if (!playerContainerRef.current) return;
@@ -40,12 +45,12 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
         let player: any;
 
         const onPlayerReady = (event: any) => {
-            if (song?.videoId) {
+            if (song?.videoId && autoPlay) {
                 event.target.playVideo();
             }
         };
 
-        const onPlayerStateChange = async (event: any) => {
+        const onPlayerStateChangeCallback = async (event: any) => {
             const state = playerStateMap[event.data];
             if (state) {
                 onPlayerStateChange(state);
@@ -53,9 +58,11 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
 
             if (event.data === 0) { // Video ended
                 onSongEnd();
-
-                if (isQueueSong && firestore && song?.id) {
-                    try {
+                
+                if (isQueueSongRef.current && firestore && song?.id && song.videoId) {
+                     try {
+                        // The ID of a musicRequest from the queue is its firestore doc ID.
+                        // A manually played song's ID is its videoId. They won't match.
                         const songRef = doc(firestore, 'musicRequests', song.id);
                         await deleteDoc(songRef);
                         toast({
@@ -63,12 +70,8 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
                             description: `${song.title} has been removed from the queue.`,
                         });
                     } catch (error) {
-                        console.error('Error removing song from queue:', error);
-                        toast({
-                            variant: 'destructive',
-                            title: 'Error',
-                            description: 'Could not remove the song from the queue.',
-                        });
+                        // This might fail if it's not a queue song, which is okay.
+                        console.log('Could not remove song from queue (it may not have been a queue song):', error);
                     }
                 }
             }
@@ -77,7 +80,7 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
         if (!playerRef.current) {
             player = YouTubePlayer(playerContainerRef.current, {
                 playerVars: {
-                    autoplay: 1,
+                    autoplay: 0, // We control autoplay manually
                     controls: 1,
                     modestbranding: 1,
                     rel: 0,
@@ -85,7 +88,7 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
             });
             playerRef.current = player;
             player.on('ready', onPlayerReady);
-            player.on('stateChange', onPlayerStateChange);
+            player.on('stateChange', onPlayerStateChangeCallback);
         } else {
             player = playerRef.current;
         }
@@ -100,7 +103,7 @@ export function JokeboxPlayer({ song, onSongEnd, onPlayerStateChange, isQueueSon
             player.stopVideo();
             currentVideoIdRef.current = null;
         }
-    }, [song, isQueueSong, onSongEnd, firestore, toast, onPlayerStateChange]);
+    }, [song, onSongEnd, firestore, toast, onPlayerStateChange, autoPlay]);
 
     if (!song) {
         return (
