@@ -57,9 +57,8 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     // Player State
     const [currentTrack, setCurrentTrack] = useState<YouTubeTrack | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(180);
+    const [duration, setDuration] = useState(180); // Simulated duration
     const [volume, setVolume] = useState(0.5);
 
     // Playlist State
@@ -67,11 +66,13 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
     
     const searchSongs = useCallback(async () => {
         if (!query.trim()) return;
         setIsLoading(true);
-        setSearchResults([]);
+        // Do not clear search results here to prevent flickering
+        // setSearchResults([]);
 
         const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=20&videoCategoryId=10&key=${apiKey}`;
         
@@ -85,6 +86,7 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
 
             if (!data.items || data.items.length === 0) {
                 toast({ title: 'No songs found', description: `Your search for "${query}" returned no results.` });
+                setSearchResults([]);
                 return;
             }
             
@@ -109,50 +111,81 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
         }
     }, [query, toast, apiKey]);
 
-    const playSong = useCallback((track: YouTubeTrack) => {
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+     const playSong = useCallback((track: YouTubeTrack) => {
+        if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+        }
         
-        const embedUrl = `https://www.youtube.com/embed/${track.id}?autoplay=1&controls=0&playsinline=1&modestbranding=1&fs=0&iv_load_policy=3&rel=0`;
-        if (iframeRef.current) {
-            iframeRef.current.src = embedUrl;
+        if (audioRef.current) {
+            const audioSrc = `/api/audio?id=${track.id}`;
+            if (audioRef.current.src !== audioSrc) {
+                audioRef.current.src = audioSrc;
+            }
+            audioRef.current.play().catch(e => {
+                console.error("Audio playback error:", e);
+                toast({
+                    variant: "destructive",
+                    title: "Playback Error",
+                    description: "Could not play the selected audio."
+                });
+            });
+            setIsPlaying(true);
         }
 
         setCurrentTrack(track);
-        setIsPlaying(true);
         setProgress(0);
-        
-        const estimatedDuration = 180;
-        setDuration(estimatedDuration);
-        
-        progressIntervalRef.current = setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 100) {
-                    playNext();
-                    return 0;
+    }, [toast]);
+    
+    useEffect(() => {
+        if (!audioRef.current) {
+            audioRef.current = new Audio();
+            audioRef.current.volume = volume;
+
+            const handleTimeUpdate = () => {
+                if (audioRef.current) {
+                    const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+                    setProgress(isNaN(progress) ? 0 : progress);
                 }
-                return prev + (100 / estimatedDuration);
-            });
-        }, 1000);
+            };
+
+            const handleEnded = () => playNext();
+            
+            const handleCanPlay = () => {
+              if (audioRef.current) setDuration(audioRef.current.duration);
+            };
+
+            audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+            audioRef.current.addEventListener('ended', handleEnded);
+            audioRef.current.addEventListener('canplay', handleCanPlay);
+
+            return () => {
+                if (audioRef.current) {
+                    audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+                    audioRef.current.removeEventListener('ended', handleEnded);
+                    audioRef.current.removeEventListener('canplay', handleCanPlay);
+                }
+            };
+        }
     }, []);
 
     const togglePause = () => {
+        if (!currentTrack) return;
         if (isPlaying) {
-            if (iframeRef.current) iframeRef.current.src = 'about:blank';
-            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-        } else if (currentTrack) {
-            playSong(currentTrack);
+            audioRef.current?.pause();
+        } else {
+            audioRef.current?.play();
         }
         setIsPlaying(!isPlaying);
     };
 
-    const toggleMute = () => setIsMuted(!isMuted);
-
-    useEffect(() => {
-        if (iframeRef.current) {
-            iframeRef.current.style.filter = isMuted ? 'grayscale(100%)' : 'none';
-        }
-    }, [isMuted]);
-
+    const handleVolumeChange = (value: number[]) => {
+      const newVolume = value[0];
+      setVolume(newVolume);
+      if (audioRef.current) {
+        audioRef.current.volume = newVolume;
+      }
+    };
+    
     const loadPlaylist = useCallback(() => {
         try {
             const savedPlaylist = localStorage.getItem('ytAudioPlaylist');
@@ -200,7 +233,7 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     const SearchResults = () => (
         <ScrollArea className='h-full'>
             <div className="p-1 sm:p-4 space-y-2">
-                {isLoading ? (
+                {isLoading && searchResults.length === 0 ? (
                     Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="w-full h-20 rounded-md" />)
                 ) : searchResults.length > 0 ? (
                     searchResults.map((track, index) => (
@@ -263,6 +296,9 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     );
     
     const formatTime = (seconds: number): string => {
+        if (isNaN(seconds) || seconds === Infinity) {
+          return '00:00';
+        }
         const minutes = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
@@ -270,9 +306,9 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
 
     return (
         <div className={cn("flex flex-col h-full", className)}>
-            <iframe
+             <iframe
                 ref={iframeRef}
-                title="YouTube Audio Player"
+                title="YouTube Iframe Player"
                 allow="autoplay"
                 style={{ width: '1px', height: '1px', opacity: 0, position: 'absolute', top: '-100px' }}
                 onError={() => toast({ variant: 'destructive', title: 'Playback Error', description: 'Failed to load video.'})}
@@ -324,31 +360,32 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                             <Button variant="ghost" size="icon" onClick={playNext} disabled={playlist.length < 2}><SkipForward /></Button>
                         </div>
                         <div className="flex items-center w-full gap-2">
-                            <span className="text-xs font-mono text-muted-foreground">{formatTime(progress / 100 * duration)}</span>
+                            <span className="text-xs font-mono text-muted-foreground">{formatTime(audioRef.current?.currentTime ?? 0)}</span>
                             <Slider
                                 value={[progress]}
                                 max={100}
                                 step={1}
                                 className="w-full [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-amber-400 [&>span:first-child>span]:to-amber-600"
-                                onValueChange={([value]) => { /* Seeking not possible */ }}
+                                onValueChange={([value]) => { 
+                                  if (audioRef.current) {
+                                    audioRef.current.currentTime = (value / 100) * duration;
+                                  }
+                                }}
                                 disabled={!currentTrack}
                             />
                             <span className="text-xs font-mono text-muted-foreground">{formatTime(duration)}</span>
                         </div>
                     </div>
                     <div className="items-center hidden gap-2 md:flex">
-                        <Button variant="ghost" size="icon" onClick={toggleMute}>
-                            {isMuted || volume === 0 ? <VolumeX className='text-muted-foreground' /> : <Volume2 className='text-muted-foreground' />}
+                        <Button variant="ghost" size="icon" onClick={() => { if(audioRef.current) audioRef.current.muted = !audioRef.current.muted; }}>
+                            {volume === 0 || (audioRef.current && audioRef.current.muted) ? <VolumeX className='text-muted-foreground' /> : <Volume2 className='text-muted-foreground' />}
                         </Button>
                         <Slider
-                            value={[isMuted ? 0 : volume]}
+                            value={[volume]}
                             max={1}
                             step={0.05}
                             className="w-24 [&>span:first-child>span]:bg-foreground/50"
-                            onValueChange={([value]) => {
-                                setVolume(value);
-                                if (value > 0 && isMuted) setIsMuted(false);
-                            }}
+                            onValueChange={handleVolumeChange}
                         />
                     </div>
                 </div>
