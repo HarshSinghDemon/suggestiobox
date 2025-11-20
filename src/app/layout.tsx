@@ -5,8 +5,6 @@ import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
-import { MusicProvider } from '@/context/music-context';
-import { SiteWidePlayer } from '@/components/site-wide-player';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -39,14 +37,11 @@ export default function RootLayout({
       >
         <TooltipProvider>
           <FirebaseClientProvider>
-            <MusicProvider>
               <div className="relative flex min-h-dvh flex-col">
                 <Header />
                 <main className="flex-1">{children}</main>
               </div>
               <Toaster />
-              <SiteWidePlayer />
-            </MusicProvider>
           </FirebaseClientProvider>
         </TooltipProvider>
         <Analytics />

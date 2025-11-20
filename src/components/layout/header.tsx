@@ -22,7 +22,6 @@ import { useAuth as useFirebaseAuth } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
-import { JukeboxControls } from '../jukebox-controls';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
@@ -120,10 +119,6 @@ export function Header() {
                       <Gamepad2 className="w-4 h-4 mr-2" />
                       Community Games
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/request-music')}>
-                      <Music className="w-4 h-4 mr-2" />
-                      Request Music
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -140,6 +135,13 @@ export function Header() {
                     prefetch={false}
                 >
                     Upload
+                </Link>
+                 <Link
+                    href="/spotify-player"
+                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
+                    prefetch={false}
+                >
+                    Spotify Player
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -161,7 +163,6 @@ export function Header() {
                 </DropdownMenu>
             </nav>
 
-            <JukeboxControls />
               {user ? (
                 <>
                 {isAdmin && (
@@ -271,8 +272,8 @@ export function Header() {
                             <NavLink href="/community-game" onNavigate={() => setIsSheetOpen(false)}>
                                 <Gamepad2 className="w-5 h-5 mr-3" /> Games
                             </NavLink>
-                            <NavLink href="/request-music" onNavigate={() => setIsSheetOpen(false)}>
-                                <Music className="w-5 h-5 mr-3" /> Request Music
+                            <NavLink href="/spotify-player" onNavigate={() => setIsSheetOpen(false)}>
+                                <Music className="w-5 h-5 mr-3" /> Spotify Player
                             </NavLink>
                             <NavLink href="/pookie-contributors" onNavigate={() => setIsSheetOpen(false)}>
                                 <Trophy className="w-5 h-5 mr-3" /> Contributors
