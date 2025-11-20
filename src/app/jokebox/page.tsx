@@ -31,7 +31,7 @@ const JokeboxPageContent = () => {
 
     const handlePlayNow = (searchResult: SearchResult) => {
         const songToPlay: MusicRequest = {
-            id: searchResult.id.videoId, 
+            id: searchResult.id.videoId,
             videoId: searchResult.id.videoId,
             title: searchResult.snippet.title,
             thumbnail: searchResult.snippet.thumbnails.default.url,

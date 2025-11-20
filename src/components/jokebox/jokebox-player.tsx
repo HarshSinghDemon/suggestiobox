@@ -25,6 +25,8 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
     useEffect(() => {
         if (!playerContainerRef.current) return;
 
+        let player: any;
+
         const onPlayerReady = (event: any) => {
             if (song?.videoId) {
                 event.target.playVideo();
@@ -56,7 +58,7 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
         };
 
         if (!playerRef.current) {
-            const player = YouTubePlayer(playerContainerRef.current, {
+            player = YouTubePlayer(playerContainerRef.current, {
                 playerVars: {
                     autoplay: 1,
                     controls: 1,
@@ -67,9 +69,10 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
             playerRef.current = player;
             player.on('ready', onPlayerReady);
             player.on('stateChange', onPlayerStateChange);
+        } else {
+            player = playerRef.current;
         }
-
-        const player = playerRef.current;
+        
         if (song) {
             if (currentVideoIdRef.current !== song.videoId) {
                 player.loadVideoById(song.videoId);
@@ -80,15 +83,6 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
             player.stopVideo();
             currentVideoIdRef.current = null;
         }
-
-        // Cleanup function
-        return () => {
-             // We don't want to destroy the player, just remove listeners if needed,
-             // but the youtube-player library has issues with `off` if handlers are not memoized.
-             // Given the component structure, it's safer to just let the player instance persist
-             // and manage its state via `loadVideoById` and `stopVideo`.
-             // A full destroy/re-init would be needed if playerVars had to change.
-        };
     }, [song, isQueueSong, onSongEnd, firestore, toast]);
 
     if (!song) {
