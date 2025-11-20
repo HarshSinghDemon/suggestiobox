@@ -86,14 +86,7 @@ export function RequestsList({ requests, isLoading }: RequestsListProps) {
                 {requests.map((req) => {
                     const canDelete = user && (user.uid === req.userId || isAdmin);
                     return (
-                        <div key={req.id} className="flex items-center justify-between gap-4">
-                            <div className="flex items-center flex-1 gap-4 min-w-0">
-                                <Image src={req.thumbnail} alt={req.title} width={64} height={48} className="rounded-md" />
-                                <div className="flex-1 truncate">
-                                    <p className="text-sm font-semibold truncate">{req.title}</p>
-                                    <p className="text-xs text-muted-foreground">by {req.userName}</p>
-                                </div>
-                            </div>
+                        <div key={req.id} className="flex items-center gap-4">
                             {canDelete && (
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
@@ -117,6 +110,11 @@ export function RequestsList({ requests, isLoading }: RequestsListProps) {
                                     </AlertDialogContent>
                                 </AlertDialog>
                             )}
+                            <Image src={req.thumbnail} alt={req.title} width={64} height={48} className="rounded-md" />
+                            <div className="flex-1 truncate">
+                                <p className="text-sm font-semibold truncate">{req.title}</p>
+                                <p className="text-xs text-muted-foreground">by {req.userName}</p>
+                            </div>
                         </div>
                     );
                 })}
