@@ -2,9 +2,12 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import YouTubePlayer from 'youtube-player';
+import type { YouTubePlayer as YouTubePlayerType } from 'youtube-player/dist/types';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, Play, Pause } from 'lucide-react';
+import { Search, Loader2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +23,6 @@ interface YouTubeSearchResult {
         thumbnails: {
             default: { url: string };
             medium: { url: string };
-            high: { url: string };
         };
     };
 }
@@ -67,74 +69,125 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentTrack, setCurrentTrack] = useState<YouTubeSearchResult | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+
+    const playerRef = useRef<YouTubePlayerType | null>(null);
+    const playerDivRef = useRef<HTMLDivElement>(null);
+    const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
     
-    const audioRef = useRef<HTMLAudioElement | null>(null);
     const { results, isLoading, search } = useYouTubeSearch(apiKey);
 
     useEffect(() => {
-        // Create audio element on mount
-        if (!audioRef.current) {
-            audioRef.current = new Audio();
-        }
-        const audio = audioRef.current;
+        if (!playerDivRef.current) return;
 
-        const handleTimeUpdate = () => {
-            setCurrentTime(audio.currentTime);
-            setDuration(audio.duration);
-            setProgress(audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0);
-        };
-        const handlePlay = () => setIsPlaying(true);
-        const handlePause = () => setIsPlaying(false);
-        const handleEnded = () => setIsPlaying(false);
+        const player = YouTubePlayer(playerDivRef.current, {
+            playerVars: {
+                autoplay: 1,
+                controls: 0,
+                fs: 0,
+                iv_load_policy: 3,
+                loop: 0,
+                modestbranding: 1,
+                playsinline: 1,
+            },
+        });
+        
+        playerRef.current = player;
 
-        audio.addEventListener('timeupdate', handleTimeUpdate);
-        audio.addEventListener('play', handlePlay);
-        audio.addEventListener('pause', handlePause);
-        audio.addEventListener('ended', handleEnded);
+        player.on('stateChange', (event) => {
+            if (event.data === 1) { // Playing
+                setIsPlaying(true);
+            } else if (event.data === 2 || event.data === 0) { // Paused or Ended
+                setIsPlaying(false);
+            }
+        });
+
+        player.on('error', (event) => {
+            console.error("YouTube Player Error", event.data);
+            toast({
+                variant: 'destructive',
+                title: 'Playback Error',
+                description: 'Could not play the selected track. It may be restricted.'
+            });
+        });
 
         return () => {
-            audio.removeEventListener('timeupdate', handleTimeUpdate);
-            audio.removeEventListener('play', handlePlay);
-            audio.removeEventListener('pause', handlePause);
-            audio.removeEventListener('ended', handleEnded);
+            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+            player.destroy();
         };
-    }, []);
+    }, [toast]);
+    
+    useEffect(() => {
+        if (isPlaying) {
+            progressIntervalRef.current = setInterval(async () => {
+                const elapsed = await playerRef.current?.getCurrentTime();
+                const totalDuration = await playerRef.current?.getDuration();
+                if (elapsed !== undefined && totalDuration !== undefined && totalDuration > 0) {
+                    setCurrentTime(elapsed);
+                    setDuration(totalDuration);
+                    setProgress((elapsed / totalDuration) * 100);
+                }
+            }, 1000);
+        } else {
+            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        }
+        return () => {
+            if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        };
+    }, [isPlaying]);
+
 
     const handleSelectTrack = (track: YouTubeSearchResult) => {
+        const player = playerRef.current;
+        if (!player) return;
+
         setCurrentTrack(track);
-        if (audioRef.current) {
-            // Set the source to our backend endpoint
-            audioRef.current.src = `/api/audio?id=${track.id.videoId}`;
-            audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
-        }
+        player.loadVideoById(track.id.videoId);
+        // Autoplay is handled by browser policy, requires mute
+        player.mute(); 
+        setIsMuted(true);
+        player.playVideo();
     };
 
     const handlePlayPause = () => {
-        if (!audioRef.current) return;
+        const player = playerRef.current;
+        if (!player) return;
+
         if (isPlaying) {
-            audioRef.current.pause();
+            player.pauseVideo();
         } else {
-            if (audioRef.current.src) {
-                audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
-            } else if (results.length > 0) {
-                handleSelectTrack(results[0]); // Play first track if none is selected
-            }
+            player.playVideo();
+        }
+    };
+    
+    const handleToggleMute = () => {
+        const player = playerRef.current;
+        if (!player) return;
+
+        if (isMuted) {
+            player.unMute();
+            setIsMuted(false);
+        } else {
+            player.mute();
+            setIsMuted(true);
         }
     };
     
     const handleSeek = (value: number[]) => {
-        if (audioRef.current && duration > 0) {
+        const player = playerRef.current;
+        if (player && duration > 0) {
             const newTime = (value[0] / 100) * duration;
-            audioRef.current.currentTime = newTime;
+            player.seekTo(newTime, true);
         }
     };
 
     const handleSearch = () => {
         search(searchTerm);
     };
+
 
     const formatTime = (seconds: number) => {
         if (isNaN(seconds) || seconds === Infinity) return '00:00';
@@ -169,6 +222,9 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
                 </Button>
             </div>
 
+            {/* Hidden Player */}
+            <div ref={playerDivRef} style={{ position: 'absolute', top: -9999, left: -9999, width: 1, height: 1, opacity: 0 }}></div>
+
             {currentTrack && (
                 <div className="p-4 space-y-3 rounded-lg bg-muted">
                     <div className="flex items-center gap-4">
@@ -178,10 +234,13 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
                             <p className="text-sm truncate text-muted-foreground">{currentTrack.snippet.channelTitle}</p>
                         </div>
                         <Button variant="ghost" size="icon" onClick={handlePlayPause} className="w-12 h-12 rounded-full">
-                            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 pl-1" />}
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleToggleMute} className="w-8 h-8 rounded-full">
+                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                        </Button>
                         <span className="text-xs font-mono">{formatTime(currentTime)}</span>
                         <Slider
                             value={[progress]}
@@ -219,10 +278,11 @@ export function YoutubePlayer({ apiKey }: { apiKey: string }) {
                         ))}
                     </div>
                  ) : (
-                    <p className="py-8 text-center text-muted-foreground">Search for tracks to get started.</p>
+                    <p className="py-8 text-center text-muted-foreground">Search for music to get started.</p>
                  )
                 }
             </div>
         </div>
     );
 }
+
