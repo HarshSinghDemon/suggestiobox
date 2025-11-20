@@ -93,15 +93,18 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        <Card className="relative w-full h-48 mb-12 overflow-hidden md:h-64 animate-tilt">
-            <Image 
-                src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
-                alt="Site Administrators"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-            />
+        <Card className="relative w-full max-w-4xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt">
+            <div className="aspect-w-16 aspect-h-9">
+                <Image 
+                    src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
+                    alt="Site Administrators"
+                    layout="fill"
+                    objectFit="contain"
+                    className="transition-transform duration-500 group-hover:scale-105"
+                />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 p-6">
+            <div className="absolute bottom-0 left-0 p-4 md:p-6">
                 <h2 className="text-2xl font-bold text-white md:text-3xl">Admin & Co-Admin</h2>
                 <p className="text-sm text-white/80 md:text-base">The creators and maintainers of this platform.</p>
             </div>
