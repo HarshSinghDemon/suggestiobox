@@ -15,6 +15,8 @@ import { DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import Image from 'next/image';
+import LottiePlayer from 'react-lottie-player';
+import { useState, useEffect } from 'react';
 
 const SoundWave = () => (
     <div className="flex items-center justify-center gap-0.5 w-4 h-4">
@@ -40,6 +42,13 @@ export function MiniMusicPlayer() {
     playTrack,
     currentTrackIndex
   } = useAudio();
+  const [animationData, setAnimationData] = useState(null);
+
+  useEffect(() => {
+    fetch('https://lottie.host/da3f1f88-45d3-459e-8e36-45dddcf61bb5/n9RT8mZSLQ.lottie')
+      .then(response => response.json())
+      .then(data => setAnimationData(data));
+  }, []);
 
   if (!tracklist.length) {
     return (
@@ -53,14 +62,16 @@ export function MiniMusicPlayer() {
     <div className="p-2 space-y-3 w-80">
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
       <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
-          <Image 
-            src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3pob2lxdno3ZTIxZGE1Z3c0YWJ2bmdmZTF6ZGNmMG5qa3M2Z2U1ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/r51h07eZ25w62n3fve/giphy.gif"
-            alt="Arcade animation"
-            width={160}
-            height={160}
-            className="w-full h-full object-cover"
-            unoptimized
-          />
+          {animationData ? (
+            <LottiePlayer
+                loop
+                animationData={animationData}
+                play
+                className="w-full h-full object-cover"
+            />
+          ) : (
+             <div className="w-full h-full bg-muted animate-pulse" />
+          )}
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             {isPlaying && (
               <div className="flex items-center justify-center gap-1">
