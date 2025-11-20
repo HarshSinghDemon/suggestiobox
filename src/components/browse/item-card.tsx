@@ -41,6 +41,14 @@ export function ItemCard({ item, type, variant = 'default', author }: ItemCardPr
   const description = type === 'suggestion' ? item.description : `An assignment for the subject: ${subject}`;
   const detailsUrl = `/${type}s/${id}`;
 
+  const userForPopover: FirebaseUser | undefined = author || (item.userId ? {
+    id: item.userId,
+    uid: item.userId,
+    displayName: item.userName,
+    email: null, // email is not on the item, so it will be blank
+    photoURL: item.userImage,
+  } : undefined);
+
   return (
     <Card className={cn(
       "flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1.5 group",
@@ -65,19 +73,19 @@ export function ItemCard({ item, type, variant = 'default', author }: ItemCardPr
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-4 pt-4 mt-auto border-t">
         <div className="flex items-center justify-between w-full">
-            {author ? (
+            {userForPopover ? (
               <Popover>
                   <PopoverTrigger asChild>
                       <div className="flex items-center gap-2 cursor-pointer group/author">
                           <Avatar className="w-8 h-8 transition-transform group-hover/author:scale-110">
-                              <AvatarImage src={author.photoURL ?? undefined} />
-                              <AvatarFallback>{getInitials(author.displayName)}</AvatarFallback>
+                              <AvatarImage src={userForPopover.photoURL ?? undefined} />
+                              <AvatarFallback>{getInitials(userForPopover.displayName)}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium transition-colors group-hover/author:text-primary">{author.displayName || 'Anonymous'}</span>
+                          <span className="text-sm font-medium transition-colors group-hover/author:text-primary">{userForPopover.displayName || 'Anonymous'}</span>
                       </div>
                   </PopoverTrigger>
                   <PopoverContent className='w-80'>
-                      <UserProfilePopover user={author} />
+                      <UserProfilePopover user={userForPopover} />
                   </PopoverContent>
               </Popover>
             ) : (
