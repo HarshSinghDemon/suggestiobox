@@ -249,6 +249,10 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                         <div key={track.id} 
                              className="flex items-center gap-3 p-2 rounded-md group hover:bg-accent animate-fade-in-up"
                              style={{ animationDelay: `${index * 50}ms` }}>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)}><Plus className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className={cn("w-4 h-4", isPlaying && currentTrack?.id === track.id ? "text-amber-400" : "")}/></Button>
+                            </div>
                             <div className='relative overflow-hidden rounded-md shrink-0 w-14 h-14'>
                                 <Image src={track.thumbnail} alt={track.title} layout='fill' className="object-cover transition-transform duration-300 group-hover:scale-110" />
                             </div>
@@ -256,8 +260,6 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                                 <p className="font-semibold truncate">{track.title}</p>
                                 <p className="text-sm truncate text-muted-foreground">{track.channel}</p>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)} className='transition-opacity opacity-0 group-hover:opacity-100'><Plus className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className={cn("w-4 h-4", isPlaying && currentTrack?.id === track.id ? "text-amber-400" : "")}/></Button>
                         </div>
                     ))
                 ) : (
