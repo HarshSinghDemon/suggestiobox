@@ -54,12 +54,12 @@ export function MiniMusicPlayer() {
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
       <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
           <Image 
-            src="https://picsum.photos/seed/jokebox/200/200"
+            src="https://picsum.photos/seed/arcade-vibe/200/200"
             alt="Album Art"
             width={160}
             height={160}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            data-ai-hint="music album abstract"
+            data-ai-hint="retro arcade"
           />
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             {isPlaying && (
