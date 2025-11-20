@@ -125,8 +125,8 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (isAuthLoading) {
-      toast({ variant: 'destructive', title: 'Please wait', description: 'Authentication is still loading.' });
+    if (isAuthLoading || !user) {
+      toast({ variant: 'destructive', title: 'Please wait', description: 'You must be logged in to submit an assignment.' });
       return;
     }
 
@@ -162,9 +162,9 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
         title: formData.get('title') as string,
         subject: formData.get('subject') as string,
         semester: formData.get('semester') as string,
-        userId: user?.uid || 'anonymous',
-        userName: user?.displayName || 'Anonymous',
-        userImage: user?.photoURL || null,
+        userId: user.uid,
+        userName: user.displayName,
+        userImage: user.photoURL,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,
