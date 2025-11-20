@@ -84,8 +84,7 @@ export function RequestForm({ onPlaySong, onAddToQueue }: RequestFormProps) {
         <ScrollArea className="h-64">
           <div className="space-y-2">
             {searchResults.map((result) => (
-              <div key={result.id.videoId}>
-                <div className="flex items-center gap-2 p-2 rounded-md bg-muted">
+                <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
                     <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md shrink-0" />
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{result.snippet.title}</p>
@@ -99,7 +98,6 @@ export function RequestForm({ onPlaySong, onAddToQueue }: RequestFormProps) {
                         </Button>
                     </div>
                 </div>
-              </div>
             ))}
           </div>
         </ScrollArea>
@@ -107,3 +105,4 @@ export function RequestForm({ onPlaySong, onAddToQueue }: RequestFormProps) {
     </div>
   );
 }
+
