@@ -24,6 +24,7 @@ import {
     Music2
 } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
+import createYouTubePlayer, { YouTubePlayer } from 'youtube-player';
 
 interface YouTubeTrack {
     id: string;
@@ -55,24 +56,22 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
     const [searchResults, setSearchResults] = useState<YouTubeTrack[]>([]);
 
     // Player State
+    const [player, setPlayer] = useState<YouTubePlayer | null>(null);
     const [currentTrack, setCurrentTrack] = useState<YouTubeTrack | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
-    const [duration, setDuration] = useState(180); // Simulated duration
-    const [volume, setVolume] = useState(0.5);
+    const [duration, setDuration] = useState(0);
+    const [volume, setVolume] = useState(50);
 
     // Playlist State
     const [playlist, setPlaylist] = useState<YouTubeTrack[]>([]);
     
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const playerRef = useRef<HTMLDivElement>(null);
     const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
-    
+
     const searchSongs = useCallback(async () => {
         if (!query.trim()) return;
         setIsLoading(true);
-        // Do not clear search results here to prevent flickering
-        // setSearchResults([]);
 
         const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=20&videoCategoryId=10&key=${apiKey}`;
         
@@ -111,80 +110,90 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
         }
     }, [query, toast, apiKey]);
 
-     const playSong = useCallback((track: YouTubeTrack) => {
-        if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-        }
-        
-        if (audioRef.current) {
-            const audioSrc = `/api/audio?id=${track.id}`;
-            if (audioRef.current.src !== audioSrc) {
-                audioRef.current.src = audioSrc;
-            }
-            audioRef.current.play().catch(e => {
-                console.error("Audio playback error:", e);
-                toast({
-                    variant: "destructive",
-                    title: "Playback Error",
-                    description: "Could not play the selected audio."
-                });
+    useEffect(() => {
+        if (playerRef.current) {
+            const ytPlayer = createYouTubePlayer(playerRef.current, {
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                },
             });
-            setIsPlaying(true);
-        }
+            setPlayer(ytPlayer);
 
-        setCurrentTrack(track);
-        setProgress(0);
+            ytPlayer.on('stateChange', async (event) => {
+                setIsPlaying(event.data === 1);
+                if(event.data === 1) { // Playing
+                    const videoDuration = await ytPlayer.getDuration();
+                    setDuration(videoDuration);
+                }
+                if (event.data === 0) { // Ended
+                    playNext();
+                }
+            });
+
+            ytPlayer.on('error', (event) => {
+                console.error("YouTube Player Error", event);
+                toast({ variant: 'destructive', title: 'Playback Error', description: 'This video could not be played.' });
+                playNext();
+            });
+
+            return () => {
+                ytPlayer.destroy();
+            };
+        }
     }, [toast]);
     
     useEffect(() => {
-        if (!audioRef.current) {
-            audioRef.current = new Audio();
-            audioRef.current.volume = volume;
-
-            const handleTimeUpdate = () => {
-                if (audioRef.current) {
-                    const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-                    setProgress(isNaN(progress) ? 0 : progress);
-                }
-            };
-
-            const handleEnded = () => playNext();
-            
-            const handleCanPlay = () => {
-              if (audioRef.current) setDuration(audioRef.current.duration);
-            };
-
-            audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
-            audioRef.current.addEventListener('ended', handleEnded);
-            audioRef.current.addEventListener('canplay', handleCanPlay);
-
-            return () => {
-                if (audioRef.current) {
-                    audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
-                    audioRef.current.removeEventListener('ended', handleEnded);
-                    audioRef.current.removeEventListener('canplay', handleCanPlay);
-                }
-            };
+        if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
         }
-    }, []);
+        if (isPlaying) {
+            progressIntervalRef.current = setInterval(async () => {
+                const currentTime = await player?.getCurrentTime();
+                const videoDuration = await player?.getDuration();
+                if (currentTime && videoDuration) {
+                    setProgress((currentTime / videoDuration) * 100);
+                }
+            }, 1000);
+        }
+        return () => {
+            if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+            }
+        };
+    }, [isPlaying, player]);
+
+    const playSong = useCallback((track: YouTubeTrack) => {
+        if (player) {
+            player.mute();
+            player.loadVideoById(track.id);
+            player.playVideo();
+            setCurrentTrack(track);
+        }
+    }, [player]);
 
     const togglePause = () => {
-        if (!currentTrack) return;
+        if (!currentTrack || !player) return;
         if (isPlaying) {
-            audioRef.current?.pause();
+            player.pauseVideo();
         } else {
-            audioRef.current?.play();
+            player.playVideo();
         }
-        setIsPlaying(!isPlaying);
     };
 
     const handleVolumeChange = (value: number[]) => {
       const newVolume = value[0];
       setVolume(newVolume);
-      if (audioRef.current) {
-        audioRef.current.volume = newVolume;
-      }
+      player?.setVolume(newVolume);
     };
+
+    const handleMuteToggle = () => {
+        if (player?.isMuted()) {
+            player.unMute();
+        } else {
+            player?.mute();
+        }
+    }
     
     const loadPlaylist = useCallback(() => {
         try {
@@ -248,7 +257,7 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                                 <p className="text-sm truncate text-muted-foreground">{track.channel}</p>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => addToPlaylist(track)} className='transition-opacity opacity-0 group-hover:opacity-100'><Plus className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className={cn("w-4 h-4", isPlaying && currentTrack?.id === track.id ? "animate-music-glow" : "")}/></Button>
+                            <Button variant="ghost" size="icon" onClick={() => playSong(track)}><Play className={cn("w-4 h-4", isPlaying && currentTrack?.id === track.id ? "text-amber-400" : "")}/></Button>
                         </div>
                     ))
                 ) : (
@@ -306,14 +315,8 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
 
     return (
         <div className={cn("flex flex-col h-full", className)}>
-             <iframe
-                ref={iframeRef}
-                title="YouTube Iframe Player"
-                allow="autoplay"
-                style={{ width: '1px', height: '1px', opacity: 0, position: 'absolute', top: '-100px' }}
-                onError={() => toast({ variant: 'destructive', title: 'Playback Error', description: 'Failed to load video.'})}
-            ></iframe>
-            
+             <div ref={playerRef} style={{ width: '1px', height: '1px', opacity: 0, position: 'absolute', top: '-100px' }}></div>
+
             <div className="flex-1 min-h-0 md:grid md:grid-cols-3">
                 <div className="flex flex-col h-full md:col-span-2">
                     <div className="p-4 border-b">
@@ -333,7 +336,7 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                       <SearchResults />
                     </div>
                 </div>
-                <div className="hidden border-l md:block">
+                <div className="hidden h-full border-l md:block">
                   <Playlist />
                 </div>
             </div>
@@ -342,7 +345,7 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                 <div className="flex items-center gap-4">
                     <div className="flex items-center flex-1 gap-3 min-w-0">
                         {currentTrack ? (
-                            <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className={cn("rounded-md shadow-lg", isPlaying && "animate-pulse-slow")} />
+                            <Image src={currentTrack.thumbnail} alt={currentTrack.title} width={56} height={56} className={cn("rounded-md shadow-lg")} />
                         ) : (
                             <div className="flex items-center justify-center w-14 h-14 bg-muted rounded-md shrink-0"><Music2 className='w-6 h-6 text-muted-foreground' /></div>
                         )}
@@ -360,15 +363,15 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                             <Button variant="ghost" size="icon" onClick={playNext} disabled={playlist.length < 2}><SkipForward /></Button>
                         </div>
                         <div className="flex items-center w-full gap-2">
-                            <span className="text-xs font-mono text-muted-foreground">{formatTime(audioRef.current?.currentTime ?? 0)}</span>
+                            <span className="text-xs font-mono text-muted-foreground">{formatTime(progress / 100 * duration)}</span>
                             <Slider
                                 value={[progress]}
                                 max={100}
                                 step={1}
-                                className="w-full [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-amber-400 [&>span:first-child>span]:to-amber-600"
+                                className="w-full"
                                 onValueChange={([value]) => { 
-                                  if (audioRef.current) {
-                                    audioRef.current.currentTime = (value / 100) * duration;
+                                  if (player) {
+                                    player.seekTo((value / 100) * duration, true);
                                   }
                                 }}
                                 disabled={!currentTrack}
@@ -377,14 +380,14 @@ export function YoutubePlayer({ apiKey, className }: YoutubePlayerProps) {
                         </div>
                     </div>
                     <div className="items-center hidden gap-2 md:flex">
-                        <Button variant="ghost" size="icon" onClick={() => { if(audioRef.current) audioRef.current.muted = !audioRef.current.muted; }}>
-                            {volume === 0 || (audioRef.current && audioRef.current.muted) ? <VolumeX className='text-muted-foreground' /> : <Volume2 className='text-muted-foreground' />}
+                        <Button variant="ghost" size="icon" onClick={handleMuteToggle}>
+                            {(volume === 0 || player?.isMuted()) ? <VolumeX className='text-muted-foreground' /> : <Volume2 className='text-muted-foreground' />}
                         </Button>
                         <Slider
                             value={[volume]}
-                            max={1}
-                            step={0.05}
-                            className="w-24 [&>span:first-child>span]:bg-foreground/50"
+                            max={100}
+                            step={1}
+                            className="w-24"
                             onValueChange={handleVolumeChange}
                         />
                     </div>
