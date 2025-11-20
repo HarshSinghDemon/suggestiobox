@@ -91,7 +91,7 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = difficulty === 'fast' ? 4 : 2;
+    const baseSpeed = difficulty === 'fast' ? 3 : 2;
     const pointsPerBrick = difficulty === 'fast' ? 20 : 10;
     
     let speedMultiplier = 1;
