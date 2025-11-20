@@ -101,6 +101,12 @@ export default function AboutAdminPage() {
             </div>
         )
     }
+    
+    const finalAdminUser = {
+        ...adminUser,
+        photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
+    }
+
 
   return (
     <div className="container py-8 mx-auto md:py-12">
@@ -110,12 +116,12 @@ export default function AboutAdminPage() {
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"></div>
             <div className="relative inline-block p-1 bg-background rounded-full">
                 <Avatar className="w-24 h-24 md:w-28 md:h-28">
-                    <AvatarImage src={adminUser.photoURL ?? ''} alt={adminUser.displayName ?? 'Admin'} />
-                    <AvatarFallback>{getInitials(adminUser.displayName)}</AvatarFallback>
+                    <AvatarImage src={finalAdminUser.photoURL ?? ''} alt={finalAdminUser.displayName ?? 'Admin'} />
+                    <AvatarFallback>{getInitials(finalAdminUser.displayName)}</AvatarFallback>
                 </Avatar>
             </div>
           </div>
-          <CardTitle className="text-2xl md:text-3xl">{adminUser.displayName}</CardTitle>
+          <CardTitle className="text-2xl md:text-3xl">{finalAdminUser.displayName}</CardTitle>
           <CardDescription className="text-base md:text-lg text-muted-foreground">
             Site Administrator & Creator
           </CardDescription>
@@ -128,8 +134,8 @@ export default function AboutAdminPage() {
             <h3 className="text-lg font-semibold text-center md:text-xl">Contact Information</h3>
             <div className="flex items-center justify-center gap-2 md:gap-4">
               <Mail className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
-              <a href={`mailto:${adminUser.email}`} className="text-sm font-medium md:text-base hover:underline">
-                {adminUser.email}
+              <a href={`mailto:${finalAdminUser.email}`} className="text-sm font-medium md:text-base hover:underline">
+                {finalAdminUser.email}
               </a>
             </div>
             <div className="flex items-center justify-center gap-2 md:gap-4">
