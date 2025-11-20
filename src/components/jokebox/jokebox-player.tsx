@@ -32,6 +32,7 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
         }
 
         const container = playerContainerRef.current;
+        let localPlayer: any;
 
         const onReady = (event: any) => {
             event.target.playVideo();
@@ -41,7 +42,6 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
             if (event.data === 0) { // Video ended
                 onSongEnd(); // Notify parent component that the song has ended
                 
-                // Only delete from Firestore if it was a song from the queue
                 if (isQueueSong && firestore && song?.id) {
                     try {
                         const songRef = doc(firestore, 'musicRequests', song.id);
@@ -64,6 +64,7 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
 
         if (playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
             playerRef.current.loadVideoById(song.videoId);
+            localPlayer = playerRef.current; // Keep a local reference
         } else {
             playerRef.current = YouTubePlayer(container, {
                 videoId: song.videoId,
@@ -74,15 +75,17 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
                     rel: 0,
                 },
             });
+            localPlayer = playerRef.current; // Keep a local reference
             
-            playerRef.current.on('ready', onReady);
-            playerRef.current.on('stateChange', onStateChange);
+            localPlayer.on('ready', onReady);
+            localPlayer.on('stateChange', onStateChange);
         }
 
         return () => {
-            if (playerRef.current && typeof playerRef.current.off === 'function') {
-                playerRef.current.off('ready', onReady);
-                playerRef.current.off('stateChange', onStateChange);
+            // Use the local reference for cleanup
+            if (localPlayer && typeof localPlayer.off === 'function') {
+                localPlayer.off('ready', onReady);
+                localPlayer.off('stateChange', onStateChange);
             }
         };
     }, [song, firestore, toast, isQueueSong, onSongEnd]);
