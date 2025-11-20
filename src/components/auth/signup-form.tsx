@@ -24,7 +24,6 @@ import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { moderateText } from '@/ai/flows/moderate-text';
-import { SocialLogins } from './social-logins';
 import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
@@ -91,17 +90,6 @@ export function SignUpForm() {
 
   return (
     <>
-      <SocialLogins />
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="px-2 bg-background text-muted-foreground">
-            Or continue with email
-          </span>
-        </div>
-      </div>
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />

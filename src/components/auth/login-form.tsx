@@ -20,7 +20,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth as useFirebaseAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { SocialLogins } from './social-logins';
 import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
@@ -148,19 +147,6 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-
-       <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="px-2 bg-background text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-      
-      <SocialLogins />
     </div>
   );
 }

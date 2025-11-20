@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,10 +17,11 @@ import { SEMESTER_ASSIGNMENT_SUBJECTS, SEMESTERS, type Semester } from '@/lib/co
 import { CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
 import { uploadFileToSupabase } from '@/lib/supabase/storage';
+import type { FirebaseUser } from '@/lib/types';
 
 type FileUploadState = {
   progress: number;
@@ -54,6 +55,14 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const { data: userData } = useDoc<FirebaseUser>(userDocRef);
+
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileUpload, setFileUpload] =
@@ -163,8 +172,8 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
         subject: formData.get('subject') as string,
         semester: formData.get('semester') as string,
         userId: user.uid,
-        userName: user.displayName,
-        userImage: user.photoURL,
+        userName: userData?.displayName || user.displayName || 'Anonymous',
+        userImage: userData?.photoURL || user.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url,
         fileName: fileUpload.name,

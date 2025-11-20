@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,11 @@ import { SEMESTERS, SEMESTER_SUBJECTS, type Semester } from '@/lib/constants';
 import { AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
 import { uploadFileToSupabase } from '@/lib/supabase/storage';
+import type { FirebaseUser } from '@/lib/types';
 
 const initialState: SuggestionFormState = {
   message: '',
@@ -62,6 +63,13 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const userDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+
+  const { data: userData } = useDoc<FirebaseUser>(userDocRef);
 
   const [formState, setFormState] = useState<SuggestionFormState>(initialState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,8 +176,8 @@ export function SuggestionForm({ supabaseUrl, supabaseAnonKey }: SuggestionFormP
         subject: formData.get('subject') as string,
         semester: formData.get('semester') as string,
         userId: user?.uid || 'anonymous',
-        userName: user?.displayName || (formData.get('name') as string) || 'Anonymous',
-        userImage: user?.photoURL || null,
+        userName: userData?.displayName || user?.displayName || (formData.get('name') as string) || 'Anonymous',
+        userImage: userData?.photoURL || user?.photoURL || null,
         createdAt: serverTimestamp(),
         fileUrl: fileUpload.url || null,
         fileName: fileUpload.name || null,

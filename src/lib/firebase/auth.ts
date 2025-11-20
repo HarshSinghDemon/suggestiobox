@@ -16,6 +16,7 @@ import {
   linkWithCredential,
   OAuthProvider,
   EmailAuthProvider,
+  unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -100,58 +101,18 @@ export const signOut = async (auth: Auth) => {
   }
 };
 
-async function handleSocialSignIn(auth: Auth, provider: GoogleAuthProvider | GithubAuthProvider) {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const isNewUser = await handleNewUser(result.user);
-    return { user: result.user, isNewUser };
-  } catch (error: any) {
-    if (error.code === 'auth/account-exists-with-different-credential' && error.customData?.email) {
-      const email = error.customData.email;
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      const existingProviderId = methods[0];
-
-      let pendingCredential;
-      if (provider.providerId === 'google.com') {
-        pendingCredential = GoogleAuthProvider.credentialFromError(error);
-      } else if (provider.providerId === 'github.com') {
-        pendingCredential = GithubAuthProvider.credentialFromError(error);
-      }
-
-      if (!pendingCredential) {
-        throw new Error("Could not retrieve credential from social sign-in error.");
-      }
-
-      // If the user originally signed up with a password, we can't automatically link.
-      if (existingProviderId === 'password') {
-        throw new Error(`You already have an account with this email. Please sign in with your password to link your ${provider.providerId} account.`);
-      }
-
-      // Prompt user to sign in with their original social provider to link accounts.
-      const existingProvider = new (existingProviderId === 'google.com' ? GoogleAuthProvider : GithubAuthProvider)();
-      
-      try {
-        const result = await signInWithPopup(auth, existingProvider);
-        await linkWithCredential(result.user, pendingCredential);
-        const isNewUser = await handleNewUser(result.user);
-        return { user: result.user, isNewUser };
-      } catch (linkError) {
-        console.error("Error during account linking:", linkError);
-        throw new Error("Could not link accounts. Please try signing in with your original method.");
-      }
+export const delinkProvider = async (auth: Auth, providerId: string) => {
+    if (auth.currentUser) {
+        if (auth.currentUser.providerData.length <= 1) {
+            throw new Error("You cannot unlink your only sign-in method.");
+        }
+        try {
+            await unlink(auth.currentUser, providerId);
+        } catch (error) {
+            console.error(`Error unlinking ${providerId}:`, error);
+            throw error;
+        }
+    } else {
+        throw new Error("No user is currently signed in.");
     }
-    console.error(`Error signing in with ${provider.providerId}: `, error);
-    throw error;
-  }
-}
-
-
-export const signInWithGoogle = async (auth: Auth) => {
-  const provider = new GoogleAuthProvider();
-  return handleSocialSignIn(auth, provider);
-}
-
-export const signInWithGitHub = async (auth: Auth) => {
-    const provider = new GithubAuthProvider();
-    return handleSocialSignIn(auth, provider);
-}
+};
