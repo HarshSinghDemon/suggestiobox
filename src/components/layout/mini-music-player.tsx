@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAudio } from './audio-provider';
@@ -55,12 +54,12 @@ export function MiniMusicPlayer() {
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
       <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
           <Image 
-            src="https://picsum.photos/seed/pixel-art/200/200"
-            alt="Album Art"
+            src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3pob2lxdno3ZTIxZGE1Z3c0YWJ2bmdmZTF6ZGNmMG5qa3M2Z2U1ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/r51h07eZ25w62n3fve/giphy.gif"
+            alt="Arcade animation"
             width={160}
             height={160}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            data-ai-hint="pixel art arcade"
+            className="w-full h-full object-cover"
+            unoptimized
           />
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             {isPlaying && (
