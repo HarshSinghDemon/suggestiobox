@@ -111,8 +111,8 @@ export function CommunityMembersList() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='cursor-pointer'>
-                                    <h2 className="text-3xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
-                                    <p className="text-xl font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
+                                    <h2 className="text-2xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
+                                    <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -121,16 +121,16 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                         <div>
-                            <h2 className="text-3xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
-                            <p className="text-xl font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
+                            <h2 className="text-2xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine">Admin</h2>
+                            <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
                         </div>
                     )}
                     {coAdminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='text-right cursor-pointer'>
-                                    <h2 className="text-3xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                                    <p className="text-xl font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
+                                    <h2 className="text-2xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
+                                    <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -139,8 +139,8 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                          <div className='text-right'>
-                            <h2 className="text-3xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                            <p className="text-xl font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
+                            <h2 className="text-2xl font-bold md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
+                            <p className="text-lg font-bold md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
                         </div>
                     )}
                 </div>
