@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -78,7 +79,7 @@ export function AdminMessagesTable() {
   }
 
   return (
-    <div className="w-full overflow-x-auto border rounded-md">
+    <div className="w-full overflow-x-auto border-y md:border md:rounded-md">
       <Table>
         <TableHeader>
           <TableRow>

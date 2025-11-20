@@ -119,7 +119,7 @@ export function AdminAssignmentsTable({ supabaseUrl, supabaseAnonKey }: AdminAss
   }
 
   return (
-    <div className="w-full overflow-x-auto border rounded-md">
+    <div className="w-full overflow-x-auto border-y md:border md:rounded-md">
       <Table>
         <TableHeader>
           <TableRow>

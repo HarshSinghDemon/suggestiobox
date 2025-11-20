@@ -15,26 +15,28 @@ type AdminDashboardProps = {
 export function AdminDashboard({ supabaseUrl, supabaseAnonKey }: AdminDashboardProps) {
   return (
     <Tabs defaultValue="suggestions" className="w-full">
-      <div className="overflow-x-auto">
-        <TabsList className="inline-flex items-center justify-start w-full min-w-max md:grid md:grid-cols-4">
+      <div className="px-4 md:px-0 overflow-x-auto">
+        <TabsList className="inline-flex w-full min-w-max md:grid md:grid-cols-4">
           <TabsTrigger value="suggestions" className="flex-1">Suggestions</TabsTrigger>
           <TabsTrigger value="assignments" className="flex-1">Assignments</TabsTrigger>
           <TabsTrigger value="messages" className="flex-1">Messages</TabsTrigger>
           <TabsTrigger value="users" className="flex-1">Users</TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent value="suggestions">
-        <AdminSuggestionsTable supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
-      </TabsContent>
-      <TabsContent value="assignments">
-        <AdminAssignmentsTable supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
-      </TabsContent>
-      <TabsContent value="messages">
-        <AdminMessagesTable />
-      </TabsContent>
-      <TabsContent value="users">
-        <AdminUsersTable />
-      </TabsContent>
+      <div className="mt-4">
+        <TabsContent value="suggestions" className='mt-0'>
+            <AdminSuggestionsTable supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+        </TabsContent>
+        <TabsContent value="assignments" className='mt-0'>
+            <AdminAssignmentsTable supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+        </TabsContent>
+        <TabsContent value="messages" className='mt-0'>
+            <AdminMessagesTable />
+        </TabsContent>
+        <TabsContent value="users" className='mt-0'>
+            <AdminUsersTable />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 }
