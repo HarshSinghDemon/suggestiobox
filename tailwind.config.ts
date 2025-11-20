@@ -108,6 +108,10 @@ export default {
         'shine': {
           'to': { 'background-position': '200% center' },
         },
+        'text-shine': {
+          '0%': { 'background-position': '0% 50%' },
+          '100%': { 'background-position': '200% 50%' },
+        },
         'wave': {
           '0%': { 'background-position': '0% 50%' },
           '50%': { 'background-position': '100% 50%' },
@@ -134,6 +138,7 @@ export default {
         'pulse-scale': 'pulse-scale 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'shine': 'shine 1.5s linear infinite',
+        'text-shine': 'text-shine 2.5s linear infinite',
         'wave': 'wave 20s ease-in-out infinite',
         'spin-slow': 'spin-slow 4s linear infinite',
         'tilt': 'tilt 8s linear infinite',

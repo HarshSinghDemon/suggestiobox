@@ -111,8 +111,8 @@ export function CommunityMembersList() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='cursor-pointer'>
-                                    <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Admin</h2>
-                                    <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Harsh</p>
+                                    <h2 className="text-2xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine" style={{ textShadow: '2px 2px 8px rgba(252, 165, 165, 0.5)' }}>Admin</h2>
+                                    <p className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]" style={{ textShadow: '1px 1px 4px rgba(216, 180, 254, 0.4)' }}>Harsh</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -121,16 +121,16 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                         <div>
-                            <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Admin</h2>
-                            <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Harsh</p>
+                            <h2 className="text-2xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 animate-text-shine" style={{ textShadow: '2px 2px 8px rgba(252, 165, 165, 0.5)' }}>Admin</h2>
+                            <p className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-pink-400 to-indigo-400 animate-text-shine [animation-delay:0.5s]" style={{ textShadow: '1px 1px 4px rgba(216, 180, 254, 0.4)' }}>Harsh</p>
                         </div>
                     )}
                     {coAdminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='text-right cursor-pointer'>
-                                    <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Co-Admin</h2>
-                                    <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Atrik</p>
+                                    <h2 className="text-2xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]" style={{ textShadow: '2px 2px 8px rgba(125, 211, 252, 0.5)' }}>Co-Admin</h2>
+                                    <p className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]" style={{ textShadow: '1px 1px 4px rgba(134, 239, 172, 0.4)' }}>Atrik</p>
                                 </div>
                             </PopoverTrigger>
                             <PopoverContent className='w-80'>
@@ -139,8 +139,8 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                          <div className='text-right'>
-                            <h2 className="text-2xl font-bold md:text-3xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>Co-Admin</h2>
-                            <p className="text-lg font-semibold text-primary-foreground/90" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>Atrik</p>
+                            <h2 className="text-2xl font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-teal-400 to-cyan-500 animate-text-shine [animation-delay:0.2s]" style={{ textShadow: '2px 2px 8px rgba(125, 211, 252, 0.5)' }}>Co-Admin</h2>
+                            <p className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-green-300 via-lime-400 to-emerald-400 animate-text-shine [animation-delay:0.7s]" style={{ textShadow: '1px 1px 4px rgba(134, 239, 172, 0.4)' }}>Atrik</p>
                         </div>
                     )}
                 </div>
