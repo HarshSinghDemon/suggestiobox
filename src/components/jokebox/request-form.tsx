@@ -85,20 +85,20 @@ export function RequestForm({ onPlaySong, onAddToQueue, isSongPlaying }: Request
         <ScrollArea className="h-64">
           <div className="space-y-2">
             {searchResults.map((result) => (
-              <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
-                <div className="flex gap-2 shrink-0">
-                    <Button size="icon" variant="outline" onClick={() => handlePlayClick(result)} disabled={isSongPlaying || !!submittingSongId} aria-label="Play Now">
-                        <Play className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" onClick={() => handleQueueClick(result)} disabled={!!submittingSongId} aria-label="Add to Queue">
-                        {submittingSongId === result.id.videoId ? <Loader2 className="animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
+                <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
+                    <div className="flex gap-2 shrink-0">
+                        <Button size="icon" variant="outline" onClick={() => handlePlayClick(result)} disabled={isSongPlaying || !!submittingSongId} aria-label="Play Now">
+                            <Play className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" onClick={() => handleQueueClick(result)} disabled={!!submittingSongId} aria-label="Add to Queue">
+                            {submittingSongId === result.id.videoId ? <Loader2 className="animate-spin" /> : <Send className="w-4 h-4" />}
+                        </Button>
+                    </div>
+                    <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{result.snippet.title}</p>
+                    </div>
                 </div>
-                <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md shrink-0" />
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{result.snippet.title}</p>
-                </div>
-              </div>
             ))}
           </div>
         </ScrollArea>
