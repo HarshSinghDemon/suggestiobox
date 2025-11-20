@@ -8,6 +8,7 @@ import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import { Radio, SkipForward } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 
 interface JokeboxPlayerProps {
     jukeboxState?: Jukebox | null;
@@ -24,6 +25,7 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
     const song = jukeboxState?.currentSong;
     const isPlaying = jukeboxState?.isPlaying;
     const requesterId = jukeboxState?.requesterId;
+    const timestamp = jukeboxState?.timestamp;
     
     const userDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -35,27 +37,46 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
     const canSkip = song && user && (isAdmin || user.uid === requesterId);
 
     useEffect(() => {
-        let player: YouTubePlayerType | null = null;
-    
-        if (playerContainerRef.current && song?.videoId) {
-            player = YouTubePlayer(playerContainerRef.current, {
-                videoId: song.videoId,
-                playerVars: {
-                    autoplay: 1,
-                    controls: 1,
-                    modestbranding: 1,
-                    rel: 0,
-                },
-            });
-            playerRef.current = player;
-    
-            player.on('stateChange', (event) => {
-                // state 0 is 'ended'
-                if (event.data === 0) {
-                    onSongEnd();
-                }
-            });
+        if (!song?.videoId || !playerContainerRef.current) {
+            // If there's no song, ensure any existing player is destroyed.
+            if (playerRef.current) {
+                playerRef.current.destroy();
+                playerRef.current = null;
+            }
+            return;
         }
+
+        let player: YouTubePlayerType | null = null;
+        
+        player = YouTubePlayer(playerContainerRef.current, {
+            videoId: song.videoId,
+            playerVars: {
+                autoplay: 0, // We will control autoplay manually
+                controls: 1,
+                modestbranding: 1,
+                rel: 0,
+            },
+        });
+        playerRef.current = player;
+    
+        player.on('ready', (event) => {
+            if (isPlaying && timestamp) {
+                const serverTime = (timestamp as Timestamp).toMillis();
+                const clientTime = Date.now();
+                const offset = (clientTime - serverTime) / 1000;
+                
+                if (offset > 0) {
+                    event.target.seekTo(offset, true);
+                }
+                event.target.playVideo();
+            }
+        });
+
+        player.on('stateChange', (event) => {
+            if (event.data === 0) { // 0 = ended
+                onSongEnd();
+            }
+        });
     
         // Cleanup function
         return () => {
@@ -64,16 +85,20 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
                 playerRef.current = null;
             }
         };
-    }, [song?.videoId, onSongEnd]);
+    }, [song?.videoId]); // Re-create player only when videoId changes
 
     useEffect(() => {
         const player = playerRef.current;
-        if (player) {
-            if (isPlaying) {
-                player.playVideo();
-            } else {
-                player.pauseVideo();
-            }
+        if (!player) return;
+
+        if (isPlaying) {
+             player.getPlayerState().then((state) => {
+                if(state !== 1) player.playVideo();
+             })
+        } else {
+             player.getPlayerState().then((state) => {
+                if(state === 1) player.pauseVideo();
+             })
         }
     }, [isPlaying]);
     
@@ -108,3 +133,4 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
         </div>
     );
 }
+
