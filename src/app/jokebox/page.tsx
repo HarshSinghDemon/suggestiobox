@@ -82,10 +82,10 @@ const JokeboxPageContent = () => {
         setIsPlaying(false);
     };
     
-    const nowPlaying = selectedSong || (requests && requests.length > 0 ? requests[0] : undefined);
+    const nowPlaying = selectedSong;
     const upNext = useMemo(() => {
         if (selectedSong) return requests ?? [];
-        return requests?.slice(1) ?? [];
+        return requests ?? [];
     }, [selectedSong, requests]);
 
     return (
