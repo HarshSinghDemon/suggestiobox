@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAudio } from './audio-provider';
@@ -40,6 +41,12 @@ export function MiniMusicPlayer() {
     playTrack,
     currentTrackIndex
   } = useAudio();
+  
+  const isBen10Playing = currentTrack?.title === 'Ben 10 Theme';
+  const animationUrl = isBen10Playing 
+    ? "https://media1.tenor.com/m/9gRzxTY_MegAAAAC/ben10-four-arms.gif" 
+    : "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
+
 
   if (!tracklist.length) {
     return (
@@ -54,7 +61,7 @@ export function MiniMusicPlayer() {
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
       <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
           <Image
-            src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif"
+            src={animationUrl}
             alt="Arcade animation"
             fill
             className="object-cover"
