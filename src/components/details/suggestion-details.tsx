@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
 import type { Suggestion } from '@/lib/types';
 import {
   Card,
@@ -14,10 +15,24 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2 } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 
 function SuggestionDetailsSkeleton() {
   return (
@@ -43,8 +58,17 @@ function SuggestionDetailsSkeleton() {
   );
 }
 
-export function SuggestionDetails({ suggestionId }: { suggestionId: string }) {
+type SuggestionDetailsProps = {
+  suggestionId: string;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }: SuggestionDetailsProps) {
   const firestore = useFirestore();
+  const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const suggestionRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'suggestions', suggestionId) : null),
@@ -52,6 +76,30 @@ export function SuggestionDetails({ suggestionId }: { suggestionId: string }) {
   );
   
   const { data: suggestion, isLoading } = useDoc<Suggestion>(suggestionRef);
+  const isOwner = user && suggestion && user.uid === suggestion.userId;
+
+  const handleDelete = async () => {
+    if (!firestore || !suggestion) return;
+    
+    try {
+      if(suggestion.path) {
+        await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
+      }
+      await deleteDoc(suggestionRef!);
+      toast({
+        title: 'Success!',
+        description: 'Suggestion deleted successfully.'
+      });
+      router.push('/browse?tab=suggestions');
+    } catch (error) {
+      console.error("Deletion failed:", error);
+      toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to delete the suggestion. Please try again.',
+      });
+    }
+  };
 
   if (isLoading) {
     return <SuggestionDetailsSkeleton />;
@@ -80,7 +128,33 @@ export function SuggestionDetails({ suggestionId }: { suggestionId: string }) {
               Back to Suggestions
             </Link>
           </Button>
-          <Badge variant="secondary">{suggestion.subject}</Badge>
+           <div className="flex items-center gap-2">
+            {isOwner && (
+              <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                      </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                      <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your suggestion and its associated file if it exists.
+                          </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Confirm Deletion
+                          </AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Badge variant="secondary">{suggestion.subject}</Badge>
+          </div>
         </div>
         <div className="flex items-start gap-4">
           <SubjectIcon subject={suggestion.subject} className="w-10 h-10 mt-1 text-primary" />
