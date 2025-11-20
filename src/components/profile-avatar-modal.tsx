@@ -34,6 +34,8 @@ const AVATAR_STYLES = {
     'adventurer': 'Adventurer',
     'avataaars': 'Character',
     'pixel-art': 'Pixel Art',
+    'pixel-art-neutral': 'Games',
+    'micah': 'Anime',
     'lorelei': 'Illustrative',
     'miniavs': 'Minimalist',
 };
