@@ -54,7 +54,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = container.clientWidth * 0.9;
+            canvas.height = window.innerHeight * 0.7;
         }
     };
     
@@ -78,14 +78,14 @@ export function BrickBreakerGame() {
     let ballRadius = 8;
     let x = canvas.width / 2;
     let y = canvas.height - 30;
-    let dx = 3;
-    let dy = -3;
+    let dx = 4;
+    let dy = -4;
 
     let paddleHeight = 10;
     let paddleWidth = canvas.width / 6.4;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 9;
+    let brickRowCount = 12;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
