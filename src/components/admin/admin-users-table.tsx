@@ -144,8 +144,7 @@ export function AdminUsersTable() {
     toast({ title: 'Copied!', description: 'User ID copied to clipboard.' });
   }
   
-  const CREATOR_EMAIL = 'harshroop100@gmail.com';
-  const CO_ADMIN_EMAIL = '15mondalatrik@gmail.com';
+  const PROTECTED_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -205,7 +204,7 @@ export function AdminUsersTable() {
                     <Select
                         defaultValue={user.role || 'user'}
                         onValueChange={(value: 'user' | 'admin') => handleRoleChange(user.id, value)}
-                        disabled={updatingId === user.id || user.email === CREATOR_EMAIL || user.email === CO_ADMIN_EMAIL}
+                        disabled={updatingId === user.id || (user.email && PROTECTED_EMAILS.includes(user.email))}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Role" />
@@ -228,7 +227,7 @@ export function AdminUsersTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={user.email === CREATOR_EMAIL || user.email === CO_ADMIN_EMAIL}>
+                      <Button variant="ghost" size="icon" disabled={user.email && PROTECTED_EMAILS.includes(user.email)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
