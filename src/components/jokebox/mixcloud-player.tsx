@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -107,8 +108,9 @@ export function MixcloudPlayer() {
                     <iframe
                         width="100%"
                         height="120"
-                        src={`https://www.mixcloud.com/widget/iframe/?feed=${selectedMixKey}&hide_cover=1&mini=1`}
+                        src={`https://www.mixcloud.com/widget/iframe/?feed=${selectedMixKey}&hide_cover=1&mini=1&autoplay=1`}
                         frameBorder="0"
+                        allow="autoplay"
                         title="Mixcloud Player"
                         className="rounded-lg shadow-lg"
                     ></iframe>
