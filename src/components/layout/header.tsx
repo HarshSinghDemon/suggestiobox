@@ -172,7 +172,10 @@ export function Header() {
                         Admin
                     </Button>
                 )}
-                <div className="relative group hidden md:block">
+                <div className="relative group hidden md:flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="w-10 h-10" onClick={() => router.push('/jokebox')}>
+                        <Music />
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <UserAvatarButton />
