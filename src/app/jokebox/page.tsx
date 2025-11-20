@@ -35,6 +35,23 @@ function JokeboxSkeleton() {
 export default function JokeboxPage() {
     const jamendoClientId = process.env.NEXT_PUBLIC_JAMENDO_CLIENT_ID;
 
+    if (!jamendoClientId) {
+      return (
+          <AuthWrapper>
+              <div className="container py-8 mx-auto">
+                  <Alert variant="destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <AlertTitle>Configuration Error</AlertTitle>
+                      <AlertDescription>
+                          The Jamendo Client ID is not configured. Please set NEXT_PUBLIC_JAMENDO_CLIENT_ID in your environment variables.
+                      </AlertDescription>
+                  </Alert>
+              </div>
+          </AuthWrapper>
+      );
+    }
+
+
     return (
         <AuthWrapper>
             <div className="container py-8 mx-auto">
@@ -50,22 +67,12 @@ export default function JokeboxPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
                         <div className="absolute bottom-0 left-0 p-6">
                             <CardTitle className="text-3xl font-bold">Jamendo Jukebox</CardTitle>
-                            <CardDescription>Search and play music from Jamendo.</CardDescription>
+                            <CardDescription>Search for tracks or artists on Jamendo.</CardDescription>
                         </div>
                     </div>
                     <CardContent className="p-6">
                         <Suspense fallback={<JokeboxSkeleton />}>
-                           {jamendoClientId ? (
-                                <JamendoPlayer clientId={jamendoClientId} />
-                           ) : (
-                            <Alert variant="destructive">
-                                <AlertCircle className="w-4 h-4" />
-                                <AlertTitle>Configuration Error</AlertTitle>
-                                <AlertDescription>
-                                    The Jamendo Client ID is not configured. Please set NEXT_PUBLIC_JAMENDO_CLIENT_ID in your environment variables.
-                                </AlertDescription>
-                            </Alert>
-                           )}
+                           <JamendoPlayer clientId={jamendoClientId} />
                         </Suspense>
                     </CardContent>
                 </Card>
