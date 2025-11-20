@@ -1,40 +1,31 @@
 
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import YouTubePlayer from 'youtube-player';
-import type { MusicRequest, FirebaseUser } from '@/lib/types';
+import type { Jukebox, FirebaseUser } from '@/lib/types';
 import { Radio, SkipForward } from 'lucide-react';
 import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 
-type PlayerState = 'unstarted' | 'ended' | 'playing' | 'paused' | 'buffering' | 'cued';
-
 interface JokeboxPlayerProps {
-    song?: MusicRequest | null;
+    jukeboxState?: Jukebox | null;
     onSongEnd: () => void;
     onNextSong: () => void;
-    onPlayerStateChange: (state: PlayerState) => void;
-    autoPlay: boolean;
 }
 
-const playerStateMap: Record<number, PlayerState> = {
-    [-1]: 'unstarted',
-    [0]: 'ended',
-    [1]: 'playing',
-    [2]: 'paused',
-    [3]: 'buffering',
-    [5]: 'cued',
-};
-
-export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange, autoPlay }: JokeboxPlayerProps) {
+export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPlayerProps) {
     const playerRef = useRef<any>(null);
     const playerContainerRef = useRef<HTMLDivElement>(null);
-    const currentVideoIdRef = useRef<string | null>(null);
     const { user } = useUser();
     const firestore = useFirestore();
 
+    const song = jukeboxState?.currentSong;
+    const isPlaying = jukeboxState?.isPlaying;
+    const timestamp = jukeboxState?.timestamp;
+    const requesterId = jukeboxState?.requesterId;
+    
     const userDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
         return doc(firestore, 'users', user.uid);
@@ -42,32 +33,19 @@ export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange
     const { data: userData } = useDoc<FirebaseUser>(userDocRef);
     const isAdmin = userData?.role === 'admin';
 
-    const canSkip = song && user && (isAdmin || user.uid === song.userId);
+    const canSkip = song && user && (isAdmin || user.uid === requesterId);
 
     useEffect(() => {
         if (!playerContainerRef.current) return;
 
-        let player: any;
-
-        const onPlayerReady = (event: any) => {
-            if (song?.videoId && autoPlay) {
-                event.target.playVideo();
-            }
-        };
-
         const onPlayerStateChangeCallback = async (event: any) => {
-            const state = playerStateMap[event.data];
-            if (state) {
-                onPlayerStateChange(state);
-            }
-
             if (event.data === 0) { // Video ended
                 onSongEnd();
             }
         };
 
         if (!playerRef.current) {
-            player = YouTubePlayer(playerContainerRef.current, {
+            const player = YouTubePlayer(playerContainerRef.current, {
                 playerVars: {
                     autoplay: 0,
                     controls: 1,
@@ -76,31 +54,38 @@ export function JokeboxPlayer({ song, onSongEnd, onNextSong, onPlayerStateChange
                 },
             });
             playerRef.current = player;
-            player.on('ready', onPlayerReady);
             player.on('stateChange', onPlayerStateChangeCallback);
-        } else {
-            player = playerRef.current;
         }
-        
-        if (song) {
-            if (currentVideoIdRef.current !== song.videoId) {
-                player.loadVideoById(song.videoId);
-                currentVideoIdRef.current = song.videoId;
-                if (autoPlay) {
-                    player.playVideo();
+
+        const player = playerRef.current;
+
+        const syncPlayer = async () => {
+            const videoIdOnPlayer = await player.getVideoData()?.video_id;
+            
+            if (song && song.videoId) {
+                if (videoIdOnPlayer !== song.videoId) {
+                    player.loadVideoById(song.videoId);
                 }
+
+                if (isPlaying) {
+                     const serverTimeOffset = 0; // Ideally, calculate this offset
+                     const songStartTime = timestamp?.toDate().getTime() ?? Date.now();
+                     const elapsedTime = (Date.now() - songStartTime + serverTimeOffset) / 1000;
+                     
+                     player.seekTo(elapsedTime, true);
+                     player.playVideo();
+                } else {
+                    player.pauseVideo();
+                }
+
             } else {
-                 player.getPlayerState().then((state: number) => {
-                    if (state !== 1) { // If not playing, play
-                       player.playVideo();
-                    }
-                });
+                player.stopVideo();
             }
-        } else {
-            player.stopVideo();
-            currentVideoIdRef.current = null;
-        }
-    }, [song, onSongEnd, onPlayerStateChange, autoPlay]);
+        };
+
+        syncPlayer();
+
+    }, [song, isPlaying, timestamp, onSongEnd]);
 
     if (!song) {
         return (

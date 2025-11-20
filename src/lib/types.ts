@@ -106,4 +106,12 @@ export type JokeboxMessage = {
   userImage?: string | null;
   isSystemMessage?: boolean;
 };
+
+export type Jukebox = {
+    id: string;
+    currentSong: MusicRequest | null;
+    isPlaying: boolean;
+    timestamp: Timestamp;
+    requesterId: string | null;
+}
     

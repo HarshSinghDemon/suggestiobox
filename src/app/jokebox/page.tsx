@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useMemo, useEffect } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,28 +10,40 @@ import { AlertCircle, Radio } from 'lucide-react';
 import { RequestForm, type SearchResult } from '@/components/jokebox/request-form';
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
-import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp, Timestamp, doc } from 'firebase/firestore';
-import type { MusicRequest } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, deleteDocumentNonBlocking, useDoc } from '@/firebase';
+import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import type { MusicRequest, Jukebox } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
-
 
 const JokeboxPageContent = () => {
     const { user } = useUser();
     const firestore = useFirestore();
-    const [selectedSong, setSelectedSong] = useState<MusicRequest | null>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
     const { toast } = useToast();
 
+    // Subscribe to the shared jukebox state
+    const jukeboxStateRef = useMemoFirebase(() => firestore ? doc(firestore, 'jukebox', 'now-playing') : null, [firestore]);
+    const { data: jukeboxState, isLoading: isLoadingJukebox } = useDoc<Jukebox>(jukeboxStateRef);
+
+    // Subscribe to the song request queue
     const requestsQuery = useMemoFirebase(
         () => (firestore ? query(collection(firestore, 'musicRequests'), orderBy('createdAt', 'asc'), limit(50)) : null),
         [firestore]
     );
-    const { data: requests, isLoading } = useCollection<MusicRequest>(requestsQuery);
+    const { data: requests, isLoading: isLoadingRequests } = useCollection<MusicRequest>(requestsQuery);
 
-    const handlePlayNow = (searchResult: SearchResult) => {
-        const songToPlay: MusicRequest = {
+    const isLoading = isLoadingJukebox || isLoadingRequests;
+    const nowPlaying = jukeboxState?.currentSong;
+    const isPlaying = jukeboxState?.isPlaying ?? false;
+
+    // A song is considered "in progress" if there's a current song object in the state
+    const isSongInProgress = !!jukeboxState?.currentSong;
+
+
+    const handlePlayNow = async (searchResult: SearchResult) => {
+        if (!user || !firestore) return;
+        
+        const newSong: MusicRequest = {
             id: searchResult.id.videoId,
             videoId: searchResult.id.videoId,
             title: searchResult.snippet.title,
@@ -39,11 +51,17 @@ const JokeboxPageContent = () => {
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            createdAt: Timestamp.now(),
+            createdAt: serverTimestamp(),
         };
-        setSelectedSong(songToPlay);
-        setIsPlaying(true);
-        toast({ title: 'Playing Now', description: songToPlay.title });
+
+        await setDoc(jukeboxStateRef!, {
+            currentSong: newSong,
+            isPlaying: true,
+            timestamp: serverTimestamp(),
+            requesterId: user.uid,
+        });
+
+        toast({ title: 'Playing Now', description: newSong.title });
     };
 
     const handleAddToQueue = async (video: SearchResult) => {
@@ -76,35 +94,50 @@ const JokeboxPageContent = () => {
         toast({ title: 'Song Requested!', description: `${video.snippet.title} has been added to the queue.` });
     };
 
-    const nowPlaying = useMemo(() => {
-        if (selectedSong) return selectedSong;
-        if (requests && requests.length > 0) {
-            return requests[0];
-        }
-        return null;
-    }, [selectedSong, requests]);
-
     const upNext = useMemo(() => {
         if (!requests) return [];
-        return requests.slice(1);
+        return requests;
     }, [requests]);
 
-    const handleSongEnd = () => {
-        // Only remove from queue if it was a queue song (i.e. not a manually selected one)
-        if (nowPlaying && !selectedSong && firestore) {
-            const songRef = doc(firestore, 'musicRequests', nowPlaying.id);
-            deleteDocumentNonBlocking(songRef);
+
+    const handleSongEnd = async () => {
+        if (!firestore) return;
+
+        // Check if the song that just ended was from the queue
+        const endedSongId = nowPlaying?.id;
+        const songFromQueue = requests?.find(req => req.id === endedSongId);
+
+        if (songFromQueue) {
+            const songRef = doc(firestore, 'musicRequests', songFromQueue.id);
+            await deleteDocumentNonBlocking(songRef);
         }
-        setSelectedSong(null); // Clear any manually selected song
-        setIsPlaying(false); // Allow next song in queue to start
+
+        // Play the next song from the queue or clear the player
+        const nextSong = requests?.find(req => req.id !== endedSongId);
+        
+        if (nextSong) {
+            await setDoc(jukeboxStateRef!, {
+                currentSong: nextSong,
+                isPlaying: true,
+                timestamp: serverTimestamp(),
+                requesterId: nextSong.userId,
+            });
+        } else {
+            await setDoc(jukeboxStateRef!, {
+                currentSong: null,
+                isPlaying: false,
+                timestamp: serverTimestamp(),
+                requesterId: null,
+            });
+        }
     };
     
-    const handleNextSong = () => {
+    const handleNextSong = async () => {
         toast({
             title: 'Skipped!',
             description: `Skipping to the next song.`,
         });
-        handleSongEnd();
+        await handleSongEnd();
     };
 
     return (
@@ -116,16 +149,9 @@ const JokeboxPageContent = () => {
                     </CardHeader>
                     <CardContent>
                         <JokeboxPlayer 
-                            song={nowPlaying} 
+                            jukeboxState={jukeboxState}
                             onSongEnd={handleSongEnd}
                             onNextSong={handleNextSong}
-                            onPlayerStateChange={(state) => {
-                                const currentlyPlaying = state === 'playing' || state === 'buffering';
-                                if(currentlyPlaying !== isPlaying) {
-                                    setIsPlaying(currentlyPlaying);
-                                }
-                            }}
-                            autoPlay={!!(requests && requests.length > 0 && !selectedSong)}
                         />
                     </CardContent>
                 </Card>
@@ -135,7 +161,11 @@ const JokeboxPageContent = () => {
                         <CardDescription>Search for a song on YouTube to play it directly or add it to the queue.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RequestForm onPlaySong={handlePlayNow} onAddToQueue={handleAddToQueue} isSongPlaying={isPlaying} />
+                        <RequestForm 
+                            onPlaySong={handlePlayNow} 
+                            onAddToQueue={handleAddToQueue} 
+                            isSongPlaying={isSongInProgress} 
+                        />
                     </CardContent>
                 </Card>
             </div>

@@ -279,6 +279,37 @@
         }
       },
       "required": ["id", "userId", "text", "createdAt"]
+    },
+    "Jukebox": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Jukebox",
+        "type": "object",
+        "description": "Represents the shared state of the community jukebox.",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique identifier for the Jukebox state document (e.g., 'now-playing')."
+            },
+            "currentSong": {
+                "type": ["object", "null"],
+                "$ref": "#/backend/entities/MusicRequest",
+                "description": "The song that is currently playing. Null if nothing is playing."
+            },
+            "isPlaying": {
+                "type": "boolean",
+                "description": "Whether the song is currently playing or paused."
+            },
+            "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The server timestamp when the current state was set."
+            },
+            "requesterId": {
+                "type": ["string", "null"],
+                "description": "The ID of the user who requested the current song."
+            }
+        },
+        "required": ["id", "isPlaying", "timestamp"]
     }
   },
   "auth": {
@@ -404,6 +435,22 @@
               "description": "The unique identifier for the jukebox message."
             }
           ]
+        }
+      },
+      {
+        "path": "/jukebox/{jukeboxId}",
+        "definition": {
+            "entityName": "Jukebox",
+            "schema": {
+                "$ref": "#/backend/entities/Jukebox"
+            },
+            "description": "Stores the shared state of the community jukebox. Should only contain one document, e.g., 'now-playing'.",
+            "params": [
+                {
+                    "name": "jukeboxId",
+                    "description": "The unique identifier for the state document, typically 'now-playing'."
+                }
+            ]
         }
       }
     ],
