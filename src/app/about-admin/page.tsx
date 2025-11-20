@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Mail, Phone } from 'lucide-react';
@@ -30,7 +31,7 @@ export default function AboutAdminPage() {
             <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 via-yellow-500 to-primary opacity-75 blur-sm transition duration-500 group-hover:opacity-100 group-hover:duration-200 animate-tilt"></div>
             <div className="relative inline-block p-1 bg-background rounded-full">
                 <Avatar className="w-24 h-24 md:w-28 md:h-28">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="Harsh Singh" />
+                    <AvatarImage src="https://avatars.githubusercontent.com/u/108394287?v=4" alt="Harsh Singh" />
                     <AvatarFallback>HS</AvatarFallback>
                 </Avatar>
             </div>

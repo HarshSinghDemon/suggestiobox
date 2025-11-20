@@ -58,7 +58,7 @@ export function CommunityMembersList() {
       uid: 'admin-harsh',
       displayName: 'Harsh Singh',
       email: 'harshroop100@gmail.com',
-      photoURL: 'https://github.com/shadcn.png',
+      photoURL: 'https://avatars.githubusercontent.com/u/108394287?v=4',
       year: '3rd',
   };
 
