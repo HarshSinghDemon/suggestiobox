@@ -11,7 +11,7 @@ import { RequestForm, type SearchResult } from '@/components/jokebox/request-for
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
 import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, serverTimestamp, Timestamp } from 'firebase/firestore';
 import type { MusicRequest } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,7 @@ const JokeboxPageContent = () => {
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            createdAt: new Date() as any,
+            createdAt: Timestamp.now(),
         };
         setSelectedSong(songToPlay);
         toast({ title: 'Playing Now', description: songToPlay.title });

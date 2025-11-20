@@ -27,7 +27,6 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
         const container = playerContainerRef.current;
         let player: any;
     
-        // Define handlers inside useEffect
         const onPlayerReady = (event: any) => {
           if (song?.videoId) {
             event.target.loadVideoById(song.videoId);
@@ -41,6 +40,7 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
     
             if (isQueueSong && firestore && song?.id) {
               try {
+                // Ensure song.id is not the same as videoId if they can be different
                 const songRef = doc(firestore, 'musicRequests', song.id);
                 await deleteDoc(songRef);
                 toast({
@@ -59,7 +59,6 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
           }
         };
     
-        // Initialize player
         if (!playerRef.current) {
           player = YouTubePlayer(container, {
             playerVars: {
@@ -73,12 +72,12 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
           player.on('ready', onPlayerReady);
           player.on('stateChange', onPlayerStateChange);
         } else {
-          // If player exists, just load the new video if it's different
           player = playerRef.current;
           if (song) {
             player.getVideoData().then((data: {video_id: string}) => {
               if (data.video_id !== song.videoId) {
                 player.loadVideoById(song.videoId);
+                player.playVideo();
               }
             });
           } else {
@@ -87,11 +86,14 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
         }
     
         return () => {
-          // Cleanup listeners if the component unmounts or dependencies change
-          if (player && typeof player.off === 'function') {
-            player.off('ready', onPlayerReady);
-            player.off('stateChange', onPlayerStateChange);
-          }
+           if (player && typeof player.off === 'function') {
+                try {
+                    player.off('ready', onPlayerReady);
+                    player.off('stateChange', onPlayerStateChange);
+                } catch (e) {
+                    console.warn("Failed to unregister event listeners from youtube player", e);
+                }
+           }
         };
       }, [song, firestore, toast, isQueueSong, onSongEnd]);
 
