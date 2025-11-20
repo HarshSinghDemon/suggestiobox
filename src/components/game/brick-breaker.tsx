@@ -54,7 +54,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = window.innerHeight * 0.8;
+            canvas.height = window.innerHeight * 0.75;
         }
     };
     
