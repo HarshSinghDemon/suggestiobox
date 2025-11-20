@@ -4,7 +4,6 @@
 import React, { useRef, useEffect } from 'react';
 import YouTubePlayer from 'youtube-player';
 import type { MusicRequest } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Radio } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc, deleteDoc } from 'firebase/firestore';
@@ -23,72 +22,78 @@ export function JokeboxPlayer({ song, onSongEnd, isQueueSong }: JokeboxPlayerPro
     const { toast } = useToast();
 
     useEffect(() => {
-        if (!song || !playerContainerRef.current) {
-            if (playerRef.current) {
-                playerRef.current.destroy();
-                playerRef.current = null;
-            }
-            return;
-        }
-
+        if (!playerContainerRef.current) return;
+    
         const container = playerContainerRef.current;
-        let localPlayer: any;
-
-        const onReady = (event: any) => {
+        let player: any;
+    
+        // Define handlers inside useEffect
+        const onPlayerReady = (event: any) => {
+          if (song?.videoId) {
+            event.target.loadVideoById(song.videoId);
             event.target.playVideo();
+          }
         };
-
-        const onStateChange = async (event: any) => {
-            if (event.data === 0) { // Video ended
-                onSongEnd(); // Notify parent component that the song has ended
-                
-                if (isQueueSong && firestore && song?.id) {
-                    try {
-                        const songRef = doc(firestore, 'musicRequests', song.id);
-                        await deleteDoc(songRef);
-                        toast({
-                            title: 'Song Finished',
-                            description: `${song.title} has been removed from the queue.`,
-                        });
-                    } catch (error) {
-                        console.error('Error removing song from queue:', error);
-                        toast({
-                            variant: 'destructive',
-                            title: 'Error',
-                            description: 'Could not remove the song from the queue.',
-                        });
-                    }
-                }
+    
+        const onPlayerStateChange = async (event: any) => {
+          if (event.data === 0) { // Video ended
+            onSongEnd();
+    
+            if (isQueueSong && firestore && song?.id) {
+              try {
+                const songRef = doc(firestore, 'musicRequests', song.id);
+                await deleteDoc(songRef);
+                toast({
+                  title: 'Song Finished',
+                  description: `${song.title} has been removed from the queue.`,
+                });
+              } catch (error) {
+                console.error('Error removing song from queue:', error);
+                toast({
+                  variant: 'destructive',
+                  title: 'Error',
+                  description: 'Could not remove the song from the queue.',
+                });
+              }
             }
+          }
         };
-
-        if (playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
-            playerRef.current.loadVideoById(song.videoId);
-            localPlayer = playerRef.current; // Keep a local reference
+    
+        // Initialize player
+        if (!playerRef.current) {
+          player = YouTubePlayer(container, {
+            playerVars: {
+              autoplay: 1,
+              controls: 1,
+              modestbranding: 1,
+              rel: 0,
+            },
+          });
+          playerRef.current = player;
+          player.on('ready', onPlayerReady);
+          player.on('stateChange', onPlayerStateChange);
         } else {
-            playerRef.current = YouTubePlayer(container, {
-                videoId: song.videoId,
-                playerVars: {
-                    autoplay: 1,
-                    controls: 1,
-                    modestbranding: 1,
-                    rel: 0,
-                },
+          // If player exists, just load the new video if it's different
+          player = playerRef.current;
+          if (song) {
+            player.getVideoData().then((data: {video_id: string}) => {
+              if (data.video_id !== song.videoId) {
+                player.loadVideoById(song.videoId);
+              }
             });
-            localPlayer = playerRef.current; // Keep a local reference
-            
-            localPlayer.on('ready', onReady);
-            localPlayer.on('stateChange', onStateChange);
+          } else {
+            player.stopVideo();
+          }
         }
-
+    
         return () => {
-            // Use the local reference for cleanup
-            if (localPlayer && typeof localPlayer.off === 'function') {
-                localPlayer.off('ready', onReady);
-                localPlayer.off('stateChange', onStateChange);
-            }
+          // Cleanup listeners if the component unmounts or dependencies change
+          if (player && typeof player.off === 'function') {
+            player.off('ready', onPlayerReady);
+            player.off('stateChange', onPlayerStateChange);
+          }
         };
-    }, [song, firestore, toast, isQueueSong, onSongEnd]);
+      }, [song, firestore, toast, isQueueSong, onSongEnd]);
 
     if (!song) {
         return (
