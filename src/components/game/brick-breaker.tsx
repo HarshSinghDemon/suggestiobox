@@ -91,7 +91,8 @@ export function BrickBreakerGame() {
     
     const baseSpeed = 2;
     let speedMultiplier = 1;
-    let dx = baseSpeed;
+    let dx = (Math.random() - 0.5) * baseSpeed * 1.5;
+    if (Math.abs(dx) < 0.5) dx = dx > 0 ? 0.5 : -0.5;
     let dy = -baseSpeed;
 
 
@@ -342,3 +343,5 @@ export function BrickBreakerGame() {
     </div>
   );
 }
+
+    
