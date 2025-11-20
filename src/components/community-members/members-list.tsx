@@ -57,7 +57,7 @@ export function CommunityMembersList() {
   const { adminUser, coAdminUser, otherUsers } = useMemo(() => {
     if (!users) return { adminUser: null, coAdminUser: null, otherUsers: [] };
     const harshAdmin = users.find(u => u.email === 'harshroop100@gmail.com');
-    const atrikCoAdmin = users.find(u => u.email === 'atriksingh2004@gmail.com');
+    const atrikCoAdmin = users.find(u => u.email === '15mondalatrik@gmail.com');
     
     const adminIds = new Set();
     if (harshAdmin) adminIds.add(harshAdmin.id);
@@ -96,22 +96,22 @@ export function CommunityMembersList() {
             </h3>
         </div>
 
-        <Card className="relative w-full max-w-2xl mx-auto mb-12 overflow-hidden rounded-xl animate-tilt group aspect-[2/1] border-0">
+        <Card className="relative w-full max-w-2xl mx-auto mb-12 overflow-hidden border-0 rounded-xl group aspect-[2/1] animate-tilt">
             <Image 
                 src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
                 alt="Site Administrators"
                 fill
-                objectFit="contain"
+                objectFit="cover"
                 className="transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-center md:p-6">
-                <div className="flex justify-between">
+            <div className="absolute bottom-0 left-0 right-0 p-4 text-white md:p-6">
+                <div className="flex items-end justify-between">
                     {adminUser ? (
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='cursor-pointer'>
-                                    <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
+                                    <h2 className="text-2xl font-bold md:text-3xl">Admin</h2>
                                     <p className="text-lg text-white/90">Harsh</p>
                                 </div>
                             </PopoverTrigger>
@@ -121,7 +121,7 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                         <div>
-                            <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
+                            <h2 className="text-2xl font-bold md:text-3xl">Admin</h2>
                             <p className="text-lg text-white/90">Harsh</p>
                         </div>
                     )}
@@ -129,7 +129,7 @@ export function CommunityMembersList() {
                         <Popover>
                             <PopoverTrigger asChild>
                                 <div className='cursor-pointer'>
-                                    <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                                    <h2 className="text-2xl font-bold md:text-3xl">Co-Admin</h2>
                                     <p className="text-lg text-white/90">Atrik</p>
                                 </div>
                             </PopoverTrigger>
@@ -139,12 +139,12 @@ export function CommunityMembersList() {
                         </Popover>
                     ) : (
                          <div>
-                            <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                            <h2 className="text-2xl font-bold md:text-3xl">Co-Admin</h2>
                             <p className="text-lg text-white/90">Atrik</p>
                         </div>
                     )}
                 </div>
-                <p className="mt-2 text-sm text-white/80 md:text-base">The creators and maintainers of this platform.</p>
+                <p className="mt-2 text-sm text-center text-white/80 md:text-base">The creators and maintainers of this platform.</p>
             </div>
         </Card>
         
