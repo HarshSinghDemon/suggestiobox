@@ -4,11 +4,12 @@
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
-import { Music, AlertCircle } from "lucide-react";
-import { useCallback } from "react";
-import { WebPlaybackSDK } from 'react-spotify-web-playback-sdk';
+import { Music, AlertCircle, Play, Pause, SkipBack, SkipForward, Loader2 } from "lucide-react";
+import { useCallback, useState, useEffect } from "react";
+import { WebPlaybackSDK, useSpotifyPlayer, usePlaybackState } from 'react-spotify-web-playback-sdk';
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import Image from "next/image";
+import { Slider } from "@/components/ui/slider";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || '';
 const REDIRECT_URI = typeof window !== 'undefined' ? `${window.location.origin}/spotify-player` : '';
@@ -38,8 +39,6 @@ const base64encode = (input: ArrayBuffer) => {
 
 
 export default function SpotifyPlayerPage() {
-    const { user } = useAuth();
-    
     // This function will handle redirecting the user to Spotify for authentication
     const handleLogin = async () => {
         const codeVerifier = generateRandomString(64);
@@ -144,38 +143,106 @@ export default function SpotifyPlayerPage() {
     return (
         <AuthWrapper>
             <div className="container py-12 mx-auto">
-                <Card className="max-w-xl mx-auto">
-                    <CardHeader className="text-center">
-                        <div className="flex justify-center mb-4">
-                            <Music className="w-16 h-16 text-green-500" />
-                        </div>
-                        <CardTitle className="text-3xl">Spotify Web Player</CardTitle>
-                        <CardDescription className="text-lg text-muted-foreground">
-                            Connect your Spotify account to listen to music directly on this site.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <WebPlaybackSDK
-                            deviceName="My Study App Player"
-                            getOAuthToken={getOAuthToken}
-                            volume={0.5}
-                        >
-                          <PlayerUI />
-                        </WebPlaybackSDK>
-                    </CardContent>
-                </Card>
+                <WebPlaybackSDK
+                    deviceName="StudyShare Central Player"
+                    getOAuthToken={getOAuthToken}
+                    volume={0.5}
+                >
+                    <PlayerUI />
+                </WebPlaybackSDK>
             </div>
         </AuthWrapper>
     );
 }
 
 const PlayerUI = () => {
-  // A simple UI that will be rendered by the SDK when ready
+  const player = useSpotifyPlayer();
+  const playbackState = usePlaybackState();
+
+  const [volume, setVolume] = useState(0.5);
+
+  useEffect(() => {
+    if (player) {
+      player.getVolume().then(v => setVolume(v * 100));
+    }
+  }, [player]);
+
+  const handleVolumeChange = (value: number[]) => {
+    const newVolume = value[0];
+    if (player) {
+      player.setVolume(newVolume / 100);
+      setVolume(newVolume);
+    }
+  };
+  
+  if (!player) {
+    return (
+        <Card className="max-w-md mx-auto text-center">
+            <CardHeader>
+                <CardTitle>Connecting to Spotify...</CardTitle>
+                <CardDescription>Please wait while we set up the player.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Loader2 className="w-10 h-10 mx-auto animate-spin" />
+            </CardContent>
+        </Card>
+    );
+  }
+
+  const currentTrack = playbackState?.track_window?.current_track;
+  const isPaused = playbackState?.paused ?? true;
+  const albumArtUrl = currentTrack?.album.images[0]?.url;
+
   return (
-    <div className="p-4 border rounded-lg bg-muted">
-        <p className="text-center text-muted-foreground">
-            Player is ready. Control playback from your Spotify app or other devices.
-        </p>
-    </div>
+    <Card className="max-w-md mx-auto overflow-hidden">
+        <CardHeader className="p-0">
+            <div className="relative aspect-square">
+            {albumArtUrl ? (
+                <Image
+                    src={albumArtUrl}
+                    alt={currentTrack?.album.name || 'Album Art'}
+                    fill
+                    className="object-cover"
+                />
+            ) : (
+                <div className="flex items-center justify-center w-full h-full bg-muted">
+                    <Music className="w-24 h-24 text-muted-foreground" />
+                </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+            </div>
+        </CardHeader>
+        <CardContent className="relative p-6 text-center -mt-14">
+            <h2 className="text-xl font-bold truncate text-foreground">
+                {currentTrack?.name || 'No song selected'}
+            </h2>
+            <p className="text-muted-foreground">
+                {currentTrack?.artists.map(a => a.name).join(', ') || 'Select a song on your Spotify app'}
+            </p>
+
+            <div className="flex items-center justify-center gap-4 my-6">
+                <Button variant="ghost" size="icon" onClick={() => player.previousTrack()}>
+                    <SkipBack className="w-6 h-6" />
+                </Button>
+                <Button size="lg" className="w-16 h-16 rounded-full" onClick={() => player.togglePlay()}>
+                    {isPaused ? <Play className="w-8 h-8 fill-current" /> : <Pause className="w-8 h-8 fill-current" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => player.nextTrack()}>
+                    <SkipForward className="w-6 h-6" />
+                </Button>
+            </div>
+            
+            <div className="space-y-2">
+                <Label htmlFor="volume">Volume</Label>
+                <Slider 
+                    id="volume"
+                    defaultValue={[volume]} 
+                    max={100} 
+                    step={1} 
+                    onValueChange={handleVolumeChange}
+                />
+            </div>
+        </CardContent>
+    </Card>
   );
 };
