@@ -6,7 +6,7 @@ import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
-import { JamendoPlayer } from '@/components/jokebox/jamendo-player';
+import { YoutubePlayer } from '@/components/jokebox/youtube-player';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
@@ -33,9 +33,9 @@ function JokeboxSkeleton() {
 }
 
 export default function JokeboxPage() {
-    const jamendoClientId = process.env.NEXT_PUBLIC_JAMENDO_CLIENT_ID;
+    const youtubeApiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
 
-    if (!jamendoClientId) {
+    if (!youtubeApiKey) {
       return (
           <AuthWrapper>
               <div className="container py-8 mx-auto">
@@ -43,7 +43,7 @@ export default function JokeboxPage() {
                       <AlertCircle className="w-4 h-4" />
                       <AlertTitle>Configuration Error</AlertTitle>
                       <AlertDescription>
-                          The Jamendo Client ID is not configured. Please set NEXT_PUBLIC_JAMENDO_CLIENT_ID in your environment variables.
+                          The YouTube API Key is not configured. Please set NEXT_PUBLIC_YOUTUBE_API_KEY in your environment variables.
                       </AlertDescription>
                   </Alert>
               </div>
@@ -58,21 +58,21 @@ export default function JokeboxPage() {
                 <Card className="w-full max-w-2xl mx-auto overflow-hidden">
                     <div className="relative w-full h-48">
                         <Image
-                            src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
-                            alt="Jamendo hero image"
+                            src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
+                            alt="YouTube Music hero image"
                             fill
                             className="object-cover"
                             data-ai-hint="music audio sound"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
                         <div className="absolute bottom-0 left-0 p-6">
-                            <CardTitle className="text-3xl font-bold">Jamendo Jukebox</CardTitle>
-                            <CardDescription>Search for tracks or artists on Jamendo.</CardDescription>
+                            <CardTitle className="text-3xl font-bold">YouTube Audio Player</CardTitle>
+                            <CardDescription>Search for tracks on YouTube and listen to the audio.</CardDescription>
                         </div>
                     </div>
                     <CardContent className="p-6">
                         <Suspense fallback={<JokeboxSkeleton />}>
-                           <JamendoPlayer clientId={jamendoClientId} />
+                           <YoutubePlayer apiKey={youtubeApiKey} />
                         </Suspense>
                     </CardContent>
                 </Card>

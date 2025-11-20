@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'usercontent.jamendo.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+      },
     ],
   },
   experimental: {
@@ -56,7 +60,7 @@ const nextConfig: NextConfig = {
     },
   },
   env: {
-    NEXT_PUBLIC_YOUTUBE_API_KEY: process.env.NEXT_PUBLIC_YOUTUBE_API_KEY,
+    NEXT_PUBLIC_YOUTUBE_API_KEY: 'AIzaSyAX3DyUUOCOE2j3UpRNnP0VMUSjf0s6MFs',
     NEXT_PUBLIC_SPOTIFY_CLIENT_ID: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
     NEXT_PUBLIC_JAMENDO_CLIENT_ID: '3d159494',
   },
