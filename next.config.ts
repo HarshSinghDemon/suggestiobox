@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
         hostname: 'ryvsxwjnldugnwxjhgem.supabase.co',
       },
       {
-        protocol: 'https://',
+        protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
       {
