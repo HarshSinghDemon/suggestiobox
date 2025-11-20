@@ -99,7 +99,7 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 8;
+    let brickRowCount = 10;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
@@ -281,7 +281,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 10000); 
+        speedMultiplier = 1 + (localScore / 2000); 
         const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
         const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
@@ -328,26 +328,17 @@ export function BrickBreakerGame() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 h-full">
-        <div className="relative md:col-span-3 h-full">
-            <canvas ref={canvasRef} className="w-full h-full rounded-md bg-card-foreground/10" />
-             {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
-                    <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
-                    <p className='text-muted-foreground'>Your Score: {score}</p>
-                    <Button onClick={startGame} className="mt-4">
-                        {gameState === 'start' ? 'Start Game' : 'Play Again'}
-                    </Button>
-                </div>
-            )}
-        </div>
-        <div className="space-y-4 md:col-span-1 p-4 border-l">
-            <div className="flex flex-col items-center justify-center p-4 rounded-md bg-muted">
-                <p className="text-lg font-semibold">Score</p>
-                <p className="text-3xl font-bold text-primary">{score}</p>
+    <div className="relative w-full h-full">
+        <canvas ref={canvasRef} className="w-full h-full rounded-md bg-card-foreground/10" />
+            {(gameState === 'gameOver' || gameState === 'won' || gameState === 'start') && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center bg-background/80">
+                <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
+                <p className='text-muted-foreground'>Your Score: {score}</p>
+                <Button onClick={startGame} className="mt-4">
+                    {gameState === 'start' ? 'Start Game' : 'Play Again'}
+                </Button>
             </div>
-            <Leaderboard gameId="brick-breaker" />
-        </div>
+        )}
     </div>
   );
 }

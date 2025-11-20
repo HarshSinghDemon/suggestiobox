@@ -8,8 +8,8 @@ import { AuthWrapper } from '@/components/auth/auth-wrapper';
 export default function BrickBreakerPage() {
   return (
     <AuthWrapper>
-      <div className="w-full h-[calc(100vh-4rem)] flex justify-center p-0">
-          <Card className="w-full h-full flex flex-col rounded-none border-0">
+      <div className="w-full h-[calc(100vh-4rem)]">
+          <Card className="flex flex-col w-full h-full border-0 rounded-none">
               <CardHeader className="text-center">
                   <CardTitle>Brick Breaker</CardTitle>
                   <CardDescription>Use your mouse or finger to move the paddle. Clear all the bricks!</CardDescription>
