@@ -43,7 +43,7 @@ export default function JokeboxPage() {
                       <AlertCircle className="w-4 h-4" />
                       <AlertTitle>Configuration Error</AlertTitle>
                       <AlertDescription>
-                          The YouTube API Key is not configured. Please set NEXT_PUBLIC_YOUTUBE_API_KEY in your environment variables.
+                          The YouTube API Key is not configured. Please set NEXT_PUBLIC_YOUTUBE_API_KEY in your .env file.
                       </AlertDescription>
                   </Alert>
               </div>
