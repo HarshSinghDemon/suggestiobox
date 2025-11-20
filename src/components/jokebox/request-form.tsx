@@ -86,7 +86,9 @@ export function RequestForm({ onPlaySong, onAddToQueue }: RequestFormProps) {
             {searchResults.map((result) => (
               <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
                 <Image src={result.snippet.thumbnails.default.url} alt={result.snippet.title} width={64} height={48} className="rounded-md flex-shrink-0" />
-                <p className="flex-1 text-sm font-medium truncate">{result.snippet.title}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{result.snippet.title}</p>
+                </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <Button size="icon" variant="outline" onClick={() => handlePlayClick(result)} disabled={!!submittingSongId} aria-label="Play Now">
                     <Play className="w-4 h-4" />
