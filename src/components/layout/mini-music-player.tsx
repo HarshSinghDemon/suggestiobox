@@ -42,10 +42,20 @@ export function MiniMusicPlayer() {
     currentTrackIndex
   } = useAudio();
   
-  const isBen10Playing = currentTrack?.title === 'Ben 10 Theme';
-  const animationUrl = isBen10Playing 
-    ? "https://media1.tenor.com/m/9gRzxTY_MegAAAAC/ben10-four-arms.gif" 
-    : "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
+  const getAnimationUrl = () => {
+    switch (currentTrack?.title) {
+      case 'Ben 10 Theme':
+        return "https://ik.imagekit.io/bt0k47tzc/ben10-four-arms.gif?updatedAt=1763670807759";
+      case 'Dragon Ball Z - Cha-La':
+        return "https://ik.imagekit.io/bt0k47tzc/lr-agl-super-saiyan-god-ss-goku-and-super-saiyan-god-ss-vegeta-all-out-final-battle.gif?updatedAt=1763670802637";
+      case 'Pokémon Theme':
+        return "https://ik.imagekit.io/bt0k47tzc/pikachu-haki-captain-pikachu.gif?updatedAt=1763670804016";
+      default:
+        return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
+    }
+  };
+
+  const animationUrl = getAnimationUrl();
 
 
   if (!tracklist.length) {
