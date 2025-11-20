@@ -9,6 +9,17 @@ import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 import { RotateCcw } from 'lucide-react';
 
+type Particle = {
+    x: number;
+    y: number;
+    radius: number;
+    color: string;
+    vx: number;
+    vy: number;
+    life: number;
+};
+
+
 export function BrickBreakerGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<'start' | 'playing' | 'gameOver' | 'won'>('start');
@@ -54,7 +65,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = window.innerHeight * 0.8;
+            canvas.height = canvas.width * 0.75;
         }
     };
     
@@ -79,7 +90,7 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = 2;
+    const baseSpeed = 2.5;
     let speedMultiplier = 1;
     let dx = baseSpeed;
     let dy = -baseSpeed;
@@ -89,19 +100,30 @@ export function BrickBreakerGame() {
     let paddleWidth = canvas.width / 5;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
-    let brickRowCount = 15;
+    let brickRowCount = 5;
     let brickColumnCount = 9;
     let brickPadding = 10;
     let brickOffsetTop = 30;
     let brickOffsetLeft = 30;
     let brickWidth = (canvas.width - (brickOffsetLeft * 2) - (brickPadding * (brickColumnCount - 1))) / brickColumnCount;
-    let brickHeight = 15;
+    let brickHeight = 20;
+
+    let particles: Particle[] = [];
+    let paddleHitFlash = 0;
     
-    let bricks: { x: number, y: number, status: number }[][] = [];
+    const brickColors = [
+        "hsl(var(--chart-1))", 
+        "hsl(var(--chart-2))",
+        "hsl(var(--chart-3))",
+        "hsl(var(--chart-4))",
+        "hsl(var(--chart-5))"
+    ];
+    
+    let bricks: { x: number, y: number, status: number, color: string }[][] = [];
     for(let c=0; c<brickColumnCount; c++) {
         bricks[c] = [];
         for(let r=0; r<brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1 };
+            bricks[c][r] = { x: 0, y: 0, status: 1, color: brickColors[r % brickColors.length] };
         }
     }
     
@@ -136,12 +158,12 @@ export function BrickBreakerGame() {
     
     const touchMoveHandler = (e: TouchEvent) => {
         e.preventDefault();
-        updatePaddlePosition(e.touches[0].clientX);
+        if(e.touches.length > 0) updatePaddlePosition(e.touches[0].clientX);
     }
     
     const touchStartHandler = (e: TouchEvent) => {
         e.preventDefault();
-        updatePaddlePosition(e.touches[0].clientX);
+        if(e.touches.length > 0) updatePaddlePosition(e.touches[0].clientX);
     };
 
     document.addEventListener("keydown", keyDownHandler, false);
@@ -149,6 +171,20 @@ export function BrickBreakerGame() {
     document.addEventListener("mousemove", mouseMoveHandler, false);
     canvas.addEventListener("touchstart", touchStartHandler, { passive: false });
     canvas.addEventListener("touchmove", touchMoveHandler, { passive: false });
+    
+    const createParticles = (brick: {x:number, y:number, color: string}) => {
+        for (let i = 0; i < 15; i++) {
+            particles.push({
+                x: brick.x + brickWidth / 2,
+                y: brick.y + brickHeight / 2,
+                radius: Math.random() * 2 + 1,
+                color: brick.color,
+                vx: (Math.random() - 0.5) * 3,
+                vy: (Math.random() - 0.5) * 3,
+                life: 30,
+            });
+        }
+    }
 
     function collisionDetection() {
         for(let c=0; c<brickColumnCount; c++) {
@@ -160,6 +196,7 @@ export function BrickBreakerGame() {
                         b.status = 0;
                         localScore += 10;
                         setScore(s => s + 10);
+                        createParticles(b);
                         if(localScore == brickRowCount*brickColumnCount*10) {
                             setGameState('won');
                             submitScore(localScore + 100); // Bonus for winning
@@ -181,6 +218,11 @@ export function BrickBreakerGame() {
         ctx!.beginPath();
         ctx!.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
         ctx!.fillStyle = "hsl(var(--primary))";
+        if (paddleHitFlash > 0) {
+            const alpha = paddleHitFlash / 10;
+            ctx!.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            paddleHitFlash--;
+        }
         ctx!.fill();
         ctx!.closePath();
     }
@@ -194,7 +236,7 @@ export function BrickBreakerGame() {
                     bricks[c][r].y = brickY;
                     ctx!.beginPath();
                     ctx!.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx!.fillStyle = "hsl(var(--accent))";
+                    ctx!.fillStyle = bricks[c][r].color;
                     ctx!.fill();
                     ctx!.closePath();
                 }
@@ -202,16 +244,33 @@ export function BrickBreakerGame() {
         }
     }
     
+    function drawParticles() {
+        particles = particles.filter(p => p.life > 0);
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 1;
+            ctx!.beginPath();
+            ctx!.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx!.globalAlpha = p.life / 30;
+            ctx!.fillStyle = p.color;
+            ctx!.fill();
+            ctx!.closePath();
+        });
+        ctx!.globalAlpha = 1;
+    }
+    
     function draw() {
         ctx!.clearRect(0, 0, canvas.width, canvas.height);
+        drawParticles();
         drawBricks();
         drawBall();
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / 2000); // Increase speed every 2000 points
-        const currentDx = Math.sign(dx) * baseSpeed * speedMultiplier;
-        const currentDy = Math.sign(dy) * baseSpeed * speedMultiplier;
+        speedMultiplier = 1 + (localScore / 5000); 
+        const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
+        const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
 
         if(x + currentDx > canvas.width-ballRadius || x + currentDx < ballRadius) dx = -dx;
@@ -220,6 +279,7 @@ export function BrickBreakerGame() {
         } else if(y + currentDy > canvas.height-ballRadius) {
             if(x > paddleX && x < paddleX + paddleWidth) {
                 dy = -dy;
+                paddleHitFlash = 10;
             }
             else {
                 setGameState('gameOver');
@@ -278,3 +338,5 @@ export function BrickBreakerGame() {
     </div>
   );
 }
+
+    
