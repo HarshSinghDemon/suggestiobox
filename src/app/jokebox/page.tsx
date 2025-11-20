@@ -10,8 +10,8 @@ import { AlertCircle, Radio } from 'lucide-react';
 import { RequestForm, type SearchResult } from '@/components/jokebox/request-form';
 import { RequestsList } from '@/components/jokebox/requests-list';
 import { JokeboxPlayer } from '@/components/jokebox/jokebox-player';
-import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, deleteDocumentNonBlocking, useDoc } from '@/firebase';
-import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, deleteDocumentNonBlocking, useDoc } from '@/firebase';
+import { collection, query, orderBy, limit, serverTimestamp, doc, setDoc, addDoc } from 'firebase/firestore';
 import type { MusicRequest, Jukebox } from '@/lib/types';
 import { JokeboxChat } from '@/components/jokebox/jokebox-chat';
 import { useToast } from '@/hooks/use-toast';
@@ -33,9 +33,7 @@ const JokeboxPageContent = () => {
     const { data: requests, isLoading: isLoadingRequests } = useCollection<MusicRequest>(requestsQuery);
 
     const isLoading = isLoadingJukebox || isLoadingRequests;
-    const nowPlaying = jukeboxState?.currentSong;
-    const isPlaying = jukeboxState?.isPlaying ?? false;
-
+    
     // A song is considered "in progress" if there's a current song object in the state
     const isSongInProgress = !!jukeboxState?.currentSong;
 
@@ -51,7 +49,8 @@ const JokeboxPageContent = () => {
             userName: user?.displayName || 'You',
             userId: user?.uid || 'anonymous',
             songName: searchResult.snippet.title,
-            createdAt: serverTimestamp(),
+            // Firestore timestamps are handled server-side, so use a local date for sorting if needed, but rely on serverTimestamp()
+            createdAt: new Date() as any,
         };
 
         await setDoc(jukeboxStateRef!, {
@@ -81,9 +80,9 @@ const JokeboxPageContent = () => {
           createdAt: serverTimestamp(),
         };
 
-        const docRef = await addDocumentNonBlocking(collection(firestore, 'musicRequests'), newRequest);
+        await addDoc(collection(firestore, 'musicRequests'), newRequest);
         
-        await addDocumentNonBlocking(collection(firestore, 'jukeboxMessages'), {
+        await addDoc(collection(firestore, 'jukeboxMessages'), {
           userId: 'system',
           userName: 'Jokebox Bot',
           text: `${userName} requested "${video.snippet.title}"`,
@@ -104,31 +103,39 @@ const JokeboxPageContent = () => {
         if (!firestore) return;
 
         // Check if the song that just ended was from the queue
-        const endedSongId = nowPlaying?.id;
-        const songFromQueue = requests?.find(req => req.id === endedSongId);
-
-        if (songFromQueue) {
-            const songRef = doc(firestore, 'musicRequests', songFromQueue.id);
-            await deleteDocumentNonBlocking(songRef);
-        }
-
-        // Play the next song from the queue or clear the player
-        const nextSong = requests?.find(req => req.id !== endedSongId);
+        const endedSong = jukeboxState?.currentSong;
+        
+        // Find the next song in the queue
+        const nextSong = requests?.[0];
         
         if (nextSong) {
+            // Play the next song
             await setDoc(jukeboxStateRef!, {
                 currentSong: nextSong,
                 isPlaying: true,
                 timestamp: serverTimestamp(),
                 requesterId: nextSong.userId,
             });
+            // Delete the song that just started playing from the queue
+            const songRef = doc(firestore, 'musicRequests', nextSong.id);
+            await deleteDocumentNonBlocking(songRef);
         } else {
+             // If there's no next song, clear the player
             await setDoc(jukeboxStateRef!, {
                 currentSong: null,
                 isPlaying: false,
                 timestamp: serverTimestamp(),
                 requesterId: null,
             });
+        }
+        
+        // Check if the song that ended was in the queue and delete it, if it wasn't the one we just promoted
+        if (endedSong && endedSong.id !== nextSong?.id) {
+            const endedSongInQueue = requests?.find(req => req.id === endedSong.id);
+            if (endedSongInQueue) {
+                const songRef = doc(firestore, 'musicRequests', endedSongInQueue.id);
+                await deleteDocumentNonBlocking(songRef);
+            }
         }
     };
     
@@ -223,3 +230,4 @@ export default function JokeboxPage() {
         </AuthWrapper>
     );
 }
+

@@ -83,7 +83,7 @@ export function RequestForm({ onPlaySong, onAddToQueue, isSongPlaying }: Request
 
       {searchResults.length > 0 && (
         <ScrollArea className="h-64">
-          <div className="space-y-2">
+          <div className="space-y-2 pr-4">
             {searchResults.map((result) => (
               <div key={result.id.videoId} className="flex items-center gap-2 p-2 rounded-md bg-muted">
                 <div className="flex gap-2 shrink-0">

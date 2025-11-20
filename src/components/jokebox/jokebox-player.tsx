@@ -39,15 +39,16 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
         if (!playerContainerRef.current) return;
 
         const onPlayerStateChangeCallback = async (event: any) => {
-            if (event.data === 0) { // Video ended
+            // state 0 means the video has ended
+            if (event.data === 0) { 
                 onSongEnd();
             }
         };
 
         if (!playerRef.current) {
-            const player = YouTubePlayer(playerContainerRef.current, {
+            const player = YouTubePlayer(playerContainerRef.current!, {
                 playerVars: {
-                    autoplay: 0,
+                    autoplay: 1, // Autoplay when a new video is loaded
                     controls: 1,
                     modestbranding: 1,
                     rel: 0,
@@ -62,17 +63,23 @@ export function JokeboxPlayer({ jukeboxState, onSongEnd, onNextSong }: JokeboxPl
         const syncPlayer = async () => {
             const videoIdOnPlayer = await player.getVideoData()?.video_id;
             
-            if (song && song.videoId) {
+            if (song?.videoId) {
                 if (videoIdOnPlayer !== song.videoId) {
                     player.loadVideoById(song.videoId);
                 }
 
                 if (isPlaying) {
-                     const serverTimeOffset = 0; // Ideally, calculate this offset
-                     const songStartTime = timestamp?.toDate().getTime() ?? Date.now();
-                     const elapsedTime = (Date.now() - songStartTime + serverTimeOffset) / 1000;
+                     const serverTime = timestamp?.toDate().getTime() ?? Date.now();
+                     // A more robust solution would involve a server-side time sync, but this is good for client-side
+                     const clientTime = Date.now();
+                     const elapsedTime = (clientTime - serverTime) / 1000;
                      
-                     player.seekTo(elapsedTime, true);
+                     // Only seek if there's a significant difference to avoid jarring jumps
+                     const currentTime = await player.getCurrentTime();
+                     if (Math.abs(currentTime - elapsedTime) > 5) {
+                        player.seekTo(elapsedTime, true);
+                     }
+                     
                      player.playVideo();
                 } else {
                     player.pauseVideo();
