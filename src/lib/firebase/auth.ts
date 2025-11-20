@@ -32,7 +32,7 @@ export const handleNewUser = async (user: User, details?: { year?: string, displ
       displayName: details?.displayName || user.displayName,
       photoURL: details?.photoURL || user.photoURL,
       createdAt: serverTimestamp(),
-      role: user.email === 'harshroop100@gmail.com' ? 'admin' : 'user',
+      role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
     };
     if (details?.year) {
       userData.year = details.year;
@@ -115,4 +115,43 @@ export const delinkProvider = async (auth: Auth, providerId: string) => {
     } else {
         throw new Error("No user is currently signed in.");
     }
+};
+
+const handleSocialSignIn = async (auth: Auth, provider: GoogleAuthProvider | GithubAuthProvider) => {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const isNewUser = await handleNewUser(user);
+        return { user, isNewUser };
+    } catch (error: any) {
+        // Handle account exists with different credential error
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            const email = error.customData.email;
+            if (email) {
+                const methods = await fetchSignInMethodsForEmail(auth, email);
+                if (methods[0] === 'password') {
+                    // TODO: Prompt user to sign in with password to link accounts
+                    throw new Error("An account already exists with this email address. Please sign in with your password to link your accounts.");
+                }
+                const existingProvider = new OAuthProvider(methods[0]);
+                const credential = OAuthProvider.credentialFromError(error);
+                const existingProviderResult = await signInWithPopup(auth, existingProvider);
+                await linkWithCredential(existingProviderResult.user, credential);
+                const isNewUser = await handleNewUser(existingProviderResult.user);
+                return { user: existingProviderResult.user, isNewUser };
+            }
+        }
+        console.error('Social sign-in error: ', error);
+        throw error;
+    }
+};
+
+export const signInWithGoogle = async (auth: Auth) => {
+    const provider = new GoogleAuthProvider();
+    return handleSocialSignIn(auth, provider);
+};
+
+export const signInWithGitHub = async (auth: Auth) => {
+    const provider = new GithubAuthProvider();
+    return handleSocialSignIn(auth, provider);
 };

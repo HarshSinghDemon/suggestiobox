@@ -145,6 +145,7 @@ export function AdminUsersTable() {
   }
   
   const CREATOR_EMAIL = 'harshroop100@gmail.com';
+  const CO_ADMIN_EMAIL = '15mondalatrik@gmail.com';
 
   if (isLoading) {
     return <TableSkeleton />;
@@ -204,7 +205,7 @@ export function AdminUsersTable() {
                     <Select
                         defaultValue={user.role || 'user'}
                         onValueChange={(value: 'user' | 'admin') => handleRoleChange(user.id, value)}
-                        disabled={updatingId === user.id || user.email === CREATOR_EMAIL}
+                        disabled={updatingId === user.id || user.email === CREATOR_EMAIL || user.email === CO_ADMIN_EMAIL}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Role" />
@@ -227,7 +228,7 @@ export function AdminUsersTable() {
                 <TableCell className="text-right">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={user.email === CREATOR_EMAIL}>
+                      <Button variant="ghost" size="icon" disabled={user.email === CREATOR_EMAIL || user.email === CO_ADMIN_EMAIL}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </AlertDialogTrigger>
