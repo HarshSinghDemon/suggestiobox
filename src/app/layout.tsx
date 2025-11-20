@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Press_Start_2P } from 'next/font/google';
 import './globals.css';
@@ -7,6 +8,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Analytics } from '@vercel/analytics/react';
+import { SpotifyProvider } from '@/context/spotify-context';
+import { SiteWidePlayer } from '@/components/spotify/site-wide-player';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const pressStart2P = Press_Start_2P({
@@ -37,11 +40,14 @@ export default function RootLayout({
       >
         <TooltipProvider>
           <FirebaseClientProvider>
+            <SpotifyProvider>
               <div className="relative flex min-h-dvh flex-col">
                 <Header />
-                <main className="flex-1">{children}</main>
+                <main className="flex-1 pb-24">{children}</main>
+                <SiteWidePlayer />
               </div>
               <Toaster />
+            </SpotifyProvider>
           </FirebaseClientProvider>
         </TooltipProvider>
         <Analytics />
