@@ -143,13 +143,6 @@ export function Header() {
                 >
                     Upload
                 </Link>
-                 <Link
-                    href="/spotify-player"
-                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                    prefetch={false}
-                >
-                    Spotify Player
-                </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
@@ -281,9 +274,6 @@ export function Header() {
                             </NavLink>
                             <NavLink href="/jokebox" onNavigate={() => setIsSheetOpen(false)}>
                                 <Radio className="w-5 h-5 mr-3" /> Jokebox
-                            </NavLink>
-                            <NavLink href="/spotify-player" onNavigate={() => setIsSheetOpen(false)}>
-                                <Music className="w-5 h-5 mr-3" /> Spotify Player
                             </NavLink>
                             <NavLink href="/pookie-contributors" onNavigate={() => setIsSheetOpen(false)}>
                                 <Trophy className="w-5 h-5 mr-3" /> Contributors
