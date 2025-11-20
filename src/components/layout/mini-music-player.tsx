@@ -15,8 +15,6 @@ import { DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import Image from 'next/image';
-import LottiePlayer from 'react-lottie-player';
-import { useState, useEffect } from 'react';
 
 const SoundWave = () => (
     <div className="flex items-center justify-center gap-0.5 w-4 h-4">
@@ -42,13 +40,6 @@ export function MiniMusicPlayer() {
     playTrack,
     currentTrackIndex
   } = useAudio();
-  const [animationData, setAnimationData] = useState(null);
-
-  useEffect(() => {
-    fetch('https://lottie.host/da3f1f88-45d3-459e-8e36-45dddcf61bb5/n9RT8mZSLQ.lottie')
-      .then(response => response.json())
-      .then(data => setAnimationData(data));
-  }, []);
 
   if (!tracklist.length) {
     return (
@@ -62,16 +53,13 @@ export function MiniMusicPlayer() {
     <div className="p-2 space-y-3 w-80">
       <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
       <div className="relative mx-auto w-40 h-40 rounded-lg overflow-hidden shadow-lg group">
-          {animationData ? (
-            <LottiePlayer
-                loop
-                animationData={animationData}
-                play
-                className="w-full h-full object-cover"
-            />
-          ) : (
-             <div className="w-full h-full bg-muted animate-pulse" />
-          )}
+          <Image
+            src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif"
+            alt="Arcade animation"
+            fill
+            className="object-cover"
+            unoptimized
+          />
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
             {isPlaying && (
               <div className="flex items-center justify-center gap-1">
