@@ -54,22 +54,25 @@ export function CommunityMembersList() {
 
   const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
-  const { adminUsers, otherUsers } = useMemo(() => {
-    if (!users) return { adminUsers: [], otherUsers: [] };
+  const { adminUser, coAdminUser, otherUsers } = useMemo(() => {
+    if (!users) return { adminUser: null, coAdminUser: null, otherUsers: [] };
     const harshAdmin = users.find(u => u.email === 'harshroop100@gmail.com');
-    const allAdmins: FirebaseUser[] = [];
+    const atrikCoAdmin = users.find(u => u.email === 'atriksingh2004@gmail.com');
+    
+    const adminIds = new Set();
+    if (harshAdmin) adminIds.add(harshAdmin.id);
+    if (atrikCoAdmin) adminIds.add(atrikCoAdmin.id);
 
-    if (harshAdmin) {
-        allAdmins.push({
-            ...harshAdmin,
-            photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
-        });
-    }
-
-    const adminIds = new Set(allAdmins.map(a => a.id));
     const others = users.filter(u => !adminIds.has(u.id));
 
-    return { adminUsers: allAdmins, otherUsers: others };
+    return { 
+        adminUser: harshAdmin ? {
+            ...harshAdmin,
+            photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
+        } : null, 
+        coAdminUser: atrikCoAdmin,
+        otherUsers: others
+    };
   }, [users]);
 
 
@@ -104,14 +107,42 @@ export function CommunityMembersList() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
             <div className="absolute bottom-0 left-0 right-0 p-4 text-center md:p-6">
                 <div className="flex justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
-                        <p className="text-lg text-white/90">Harsh</p>
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
-                        <p className="text-lg text-white/90">Atrik</p>
-                    </div>
+                    {adminUser ? (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <div className='cursor-pointer'>
+                                    <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
+                                    <p className="text-lg text-white/90">Harsh</p>
+                                </div>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-80'>
+                                <UserProfilePopover user={adminUser} />
+                            </PopoverContent>
+                        </Popover>
+                    ) : (
+                        <div>
+                            <h2 className="text-2xl font-bold text-white md:text-3xl">Admin</h2>
+                            <p className="text-lg text-white/90">Harsh</p>
+                        </div>
+                    )}
+                    {coAdminUser ? (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <div className='cursor-pointer'>
+                                    <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                                    <p className="text-lg text-white/90">Atrik</p>
+                                </div>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-80'>
+                                <UserProfilePopover user={coAdminUser} />
+                            </PopoverContent>
+                        </Popover>
+                    ) : (
+                         <div>
+                            <h2 className="text-2xl font-bold text-white md:text-3xl">Co-Admin</h2>
+                            <p className="text-lg text-white/90">Atrik</p>
+                        </div>
+                    )}
                 </div>
                 <p className="mt-2 text-sm text-white/80 md:text-base">The creators and maintainers of this platform.</p>
             </div>
