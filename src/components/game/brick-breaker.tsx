@@ -54,7 +54,7 @@ export function BrickBreakerGame() {
         const container = canvas.parentElement;
         if (container) {
             canvas.width = container.clientWidth;
-            canvas.height = window.innerHeight * 0.7;
+            canvas.height = window.innerHeight * 0.8;
         }
     };
     
@@ -78,8 +78,12 @@ export function BrickBreakerGame() {
     let ballRadius = 8;
     let x = canvas.width / 2;
     let y = canvas.height - 30;
-    let dx = 4;
-    let dy = -4;
+    
+    const baseSpeed = 2.5;
+    let speedMultiplier = 1;
+    let dx = baseSpeed;
+    let dy = -baseSpeed;
+
 
     let paddleHeight = 10;
     let paddleWidth = canvas.width / 6.4;
@@ -201,10 +205,15 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
-        if(y + dy < ballRadius) {
+        speedMultiplier = 1 + (localScore / 500); // Increase speed every 500 points
+        const currentDx = Math.sign(dx) * baseSpeed * speedMultiplier;
+        const currentDy = Math.sign(dy) * baseSpeed * speedMultiplier;
+
+
+        if(x + currentDx > canvas.width-ballRadius || x + currentDx < ballRadius) dx = -dx;
+        if(y + currentDy < ballRadius) {
             dy = -dy;
-        } else if(y + dy > canvas.height-ballRadius) {
+        } else if(y + currentDy > canvas.height-ballRadius) {
             if(x > paddleX && x < paddleX + paddleWidth) {
                 dy = -dy;
             }
@@ -218,8 +227,8 @@ export function BrickBreakerGame() {
         if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 7;
         else if(leftPressed && paddleX > 0) paddleX -= 7;
 
-        x += dx;
-        y += dy;
+        x += currentDx;
+        y += currentDy;
         animationFrameId = requestAnimationFrame(draw);
     }
     
@@ -264,3 +273,5 @@ export function BrickBreakerGame() {
     </div>
   );
 }
+
+    
