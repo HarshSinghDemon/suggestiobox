@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -64,22 +65,30 @@ export function ItemCard({ item, type, variant = 'default', author }: ItemCardPr
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-4 pt-4 mt-auto border-t">
         <div className="flex items-center justify-between w-full">
-            <Popover>
-                <PopoverTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-pointer group/author">
-                        <Avatar className="w-8 h-8 transition-transform group-hover/author:scale-110">
-                            <AvatarImage src={userImage ?? undefined} />
-                            <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium transition-colors group-hover/author:text-primary">{userName || 'Anonymous'}</span>
-                    </div>
-                </PopoverTrigger>
-                {author && (
-                    <PopoverContent className='w-80'>
-                        <UserProfilePopover user={author} />
-                    </PopoverContent>
-                )}
-            </Popover>
+            {author ? (
+              <Popover>
+                  <PopoverTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-pointer group/author">
+                          <Avatar className="w-8 h-8 transition-transform group-hover/author:scale-110">
+                              <AvatarImage src={author.photoURL ?? undefined} />
+                              <AvatarFallback>{getInitials(author.displayName)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium transition-colors group-hover/author:text-primary">{author.displayName || 'Anonymous'}</span>
+                      </div>
+                  </PopoverTrigger>
+                  <PopoverContent className='w-80'>
+                      <UserProfilePopover user={author} />
+                  </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Avatar className="w-8 h-8">
+                    <AvatarImage src={userImage ?? undefined} />
+                    <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">{userName || 'Anonymous'}</span>
+              </div>
+            )}
             <Badge variant="secondary">{subject}</Badge>
         </div>
         
