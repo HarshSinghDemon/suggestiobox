@@ -12,8 +12,8 @@ export default function BrickBreakerPage() {
   return (
     <AuthWrapper>
       <div className="flex flex-col h-[calc(100vh-4rem)] md:flex-row">
-        <div className="flex-grow">
-            <Card className="flex flex-col h-full border-0 rounded-none">
+        <div className="flex-grow p-0 md:p-4">
+            <Card className="flex flex-col h-full border-0 md:border rounded-none md:rounded-lg">
                 <CardHeader className="text-center">
                     <CardTitle>Brick Breaker</CardTitle>
                     <CardDescription>Use your mouse or finger to move the paddle. Clear all the bricks!</CardDescription>
@@ -23,7 +23,7 @@ export default function BrickBreakerPage() {
                 </CardContent>
             </Card>
         </div>
-        <div className="w-full p-4 md:w-1/4 md:p-0 md:pl-4">
+        <div className="w-full p-4 shrink-0 md:w-1/4">
             {user && <Leaderboard gameId="brick-breaker" />}
         </div>
       </div>
