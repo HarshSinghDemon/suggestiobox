@@ -179,7 +179,7 @@ export function Header() {
                     <Popover>
                       <PopoverTrigger asChild>
                          <Button variant="ghost" size="icon" className="w-10 h-10">
-                            <Music className={isPlaying ? "text-primary animate-pulse" : ""} />
+                            <Music className={isPlaying ? "animate-music-glow" : ""} />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="end">
