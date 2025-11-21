@@ -66,7 +66,7 @@ function NotificationBell() {
         <Popover>
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
-                    <Bell />
+                    <Bell className="w-5 h-5" />
                     {unreadCount > 0 && !isLoading && (
                         <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce-in">
                             {unreadCount}
@@ -131,7 +131,7 @@ export function Header() {
           </Link>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
             {/* Desktop Navigation */}
             <nav className="items-center hidden gap-6 text-sm md:flex">
                 <Link
@@ -210,7 +210,7 @@ export function Header() {
                   <Skeleton className="w-10 h-10 rounded-full" />
                 </div>
               ) : user ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     {isAdmin && (
                         <Button
                             variant="outline"
@@ -271,7 +271,7 @@ export function Header() {
             <Popover>
               <PopoverTrigger asChild>
                  <Button variant="ghost" size="icon">
-                    <Music className={isPlaying ? "animate-music-glow" : ""} />
+                    <Music className={cn("w-5 h-5", isPlaying ? "animate-music-glow" : "")} />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
