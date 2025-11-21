@@ -68,7 +68,10 @@ export function MiniMusicPlayer() {
   const handlePlayPrev = isArcadeMode ? playPrevArcade : playPrevJokebox;
   
   const getAnimationUrl = () => {
-      return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
+    if (currentTrack?.title === 'Ben 10 Theme Song') {
+      return "https://ik.imagekit.io/bt0k47tzc/ben10-four-arms.gif?updatedAt=1763670807759";
+    }
+    return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
   };
 
   const animationUrl = getAnimationUrl();
