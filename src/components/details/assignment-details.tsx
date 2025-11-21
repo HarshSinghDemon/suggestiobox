@@ -33,6 +33,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
+import { CommentSection } from './comment-section';
 
 function AssignmentDetailsSkeleton() {
   return (
@@ -169,31 +170,33 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">This is an assignment file submission. Please download the file to view its contents.</p>
+        
+        {assignment.fileUrl && assignment.fileName && (
+            <div className="flex items-center justify-between w-full p-4 mt-6 rounded-lg bg-muted">
+                <div className="flex items-center gap-4">
+                <FileIcon fileType={assignment.fileType} className="w-6 h-6" />
+                <span className="font-medium">{assignment.fileName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                    <a href={assignment.fileUrl} target="_blank" rel="noopener noreferrer">
+                    <Eye className="w-4 h-4 mr-2" />
+                    View
+                    </a>
+                </Button>
+                <Button asChild size="sm">
+                    <a href={assignment.fileUrl} download={assignment.fileName}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                    </a>
+                </Button>
+                </div>
+            </div>
+        )}
+
+        <CommentSection collectionPath={['assignments', assignmentId, 'comments']} />
+
       </CardContent>
-      {assignment.fileUrl && assignment.fileName && (
-        <CardFooter>
-          <div className="flex items-center justify-between w-full p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-4">
-              <FileIcon fileType={assignment.fileType} className="w-6 h-6" />
-              <span className="font-medium">{assignment.fileName}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm">
-                <a href={assignment.fileUrl} target="_blank" rel="noopener noreferrer">
-                  <Eye className="w-4 h-4 mr-2" />
-                  View
-                </a>
-              </Button>
-              <Button asChild size="sm">
-                <a href={assignment.fileUrl} download={assignment.fileName}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </a>
-              </Button>
-            </div>
-          </div>
-        </CardFooter>
-      )}
     </Card>
   );
 }

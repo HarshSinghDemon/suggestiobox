@@ -210,6 +210,41 @@
         }
       },
       "required": ["userId", "userName", "score", "createdAt"]
+    },
+    "Comment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Comment",
+      "type": "object",
+      "description": "Represents a comment on a suggestion or assignment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Comment entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who posted the comment."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The display name of the user."
+        },
+        "userImage": {
+          "type": "string",
+          "description": "The profile picture URL of the user.",
+          "format": "uri"
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the comment was posted.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "userName", "text", "createdAt"]
     }
   },
   "auth": {
@@ -253,6 +288,26 @@
           ]
         }
       },
+       {
+        "path": "/suggestions/{suggestionId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments for a specific suggestion.",
+          "params": [
+            {
+              "name": "suggestionId",
+              "description": "The unique identifier of the suggestion."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier of the comment."
+            }
+          ]
+        }
+      },
       {
         "path": "/assignments/{assignmentId}",
         "definition": {
@@ -265,6 +320,26 @@
             {
               "name": "assignmentId",
               "description": "The unique identifier of the assignment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/assignments/{assignmentId}/comments/{commentId}",
+        "definition": {
+          "entityName": "Comment",
+          "schema": {
+            "$ref": "#/backend/entities/Comment"
+          },
+          "description": "Stores comments for a specific assignment.",
+          "params": [
+            {
+              "name": "assignmentId",
+              "description": "The unique identifier of the assignment."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique identifier of the comment."
             }
           ]
         }

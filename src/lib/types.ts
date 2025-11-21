@@ -53,6 +53,16 @@ export type Message = {
   userYear?: '1st' | '2nd' | '3rd' | null;
 };
 
+export type Comment = {
+  id: string;
+  text: string;
+  createdAt: Timestamp;
+  userId: string;
+  userName: string | null;
+  userImage: string | null;
+};
+
+
 export type Notification = {
   id: string;
   recipientId: string; // The user who should receive the notification

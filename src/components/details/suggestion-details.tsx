@@ -33,6 +33,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
+import { CommentSection } from './comment-section';
 
 function SuggestionDetailsSkeleton() {
   return (
@@ -166,33 +167,32 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 text-base text-foreground/90">
-        <p className="whitespace-pre-wrap">{suggestion.description}</p>
+      <CardContent>
+        <p className="whitespace-pre-wrap text-base text-foreground/90">{suggestion.description}</p>
+        {suggestion.fileUrl && suggestion.fileName && (
+            <div className="flex items-center justify-between w-full p-4 mt-6 rounded-lg bg-muted">
+                <div className="flex items-center gap-4">
+                <FileIcon fileType={suggestion.fileType} className="w-6 h-6" />
+                <span className="font-medium">{suggestion.fileName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                    <a href={suggestion.fileUrl} target="_blank" rel="noopener noreferrer">
+                    <Eye className="w-4 h-4 mr-2" />
+                    View
+                    </a>
+                </Button>
+                <Button asChild size="sm">
+                    <a href={suggestion.fileUrl} download={suggestion.fileName}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                    </a>
+                </Button>
+                </div>
+            </div>
+        )}
+        <CommentSection collectionPath={['suggestions', suggestionId, 'comments']} />
       </CardContent>
-      {suggestion.fileUrl && suggestion.fileName && (
-        <CardFooter>
-          <div className="flex items-center justify-between w-full p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-4">
-              <FileIcon fileType={suggestion.fileType} className="w-6 h-6" />
-              <span className="font-medium">{suggestion.fileName}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm">
-                <a href={suggestion.fileUrl} target="_blank" rel="noopener noreferrer">
-                  <Eye className="w-4 h-4 mr-2" />
-                  View
-                </a>
-              </Button>
-              <Button asChild size="sm">
-                <a href={suggestion.fileUrl} download={suggestion.fileName}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download
-                </a>
-              </Button>
-            </div>
-          </div>
-        </CardFooter>
-      )}
     </Card>
   );
 }
