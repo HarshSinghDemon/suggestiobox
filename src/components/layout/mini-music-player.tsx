@@ -71,6 +71,12 @@ export function MiniMusicPlayer() {
     if (currentTrack?.title === 'Ben 10 Theme Song') {
       return "https://ik.imagekit.io/bt0k47tzc/ben10-four-arms.gif?updatedAt=1763670807759";
     }
+    if (currentTrack?.title === 'Dragon Ball Z - Cha-La Head-Cha-La') {
+        return "https://ik.imagekit.io/bt0k47tzc/lr-agl-super-saiyan-god-ss-goku-and-super-saiyan-god-ss-vegeta-all-out-final-battle.gif?updatedAt=1763670802637";
+    }
+    if (currentTrack?.title === 'Pokemon Theme Song') {
+        return "https://ik.imagekit.io/bt0k47tzc/pikachu-haki-captain-pikachu.gif?updatedAt=1763670804016";
+    }
     return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
   };
 
