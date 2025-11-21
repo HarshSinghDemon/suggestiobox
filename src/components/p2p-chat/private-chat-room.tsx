@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getMyPrivateKey, decryptMessage, encryptMessage as encryptWithSessionKey } from "@/lib/e2ee";
+import { getMyPrivateKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const getInitials = (name: string | null | undefined) => {
@@ -24,7 +24,7 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-type OptimisticMessage = Message & { isSending?: boolean; text?: string };
+type OptimisticMessage = Message & { isSending?: boolean; text?: string; isOptimistic?: boolean; };
 
 function ChatMessage({ message, sessionKey }: { message: OptimisticMessage; sessionKey: CryptoKey | null }) {
     const { user: currentUser } = useUser();
@@ -32,13 +32,13 @@ function ChatMessage({ message, sessionKey }: { message: OptimisticMessage; sess
     
     useEffect(() => {
         const decrypt = async () => {
-            if (message.isSending && message.text) {
+            if (message.isOptimistic && message.text) {
                 setDecryptedText(message.text);
                 return;
             }
             if (sessionKey && message.cipherText && message.iv) {
                 try {
-                    const text = await decryptMessage(sessionKey, message.cipherText, message.iv);
+                    const text = await decryptMessage(sessionKey, message.cipherText, message.iv, true); // True because it's a session key
                     setDecryptedText(text);
                 } catch (e) {
                     console.error("Decryption failed:", e);
@@ -91,7 +91,6 @@ function ChatRoomSkeleton() {
     );
 }
 
-
 export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
@@ -99,6 +98,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const { toast } = useToast();
     const [messageText, setMessageText] = useState("");
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    
+    const [messageQueue, setMessageQueue] = useState<{ text: string; id: string }[]>([]);
+    const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
     
     const [sessionKey, setSessionKey] = useState<CryptoKey | null>(null);
     const [sessionFingerprint, setSessionFingerprint] = useState<string | null>(null);
@@ -117,100 +119,126 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const { data: dbMessages } = useCollection<Message>(messagesQuery);
     
-    // Decrypt session key
     useEffect(() => {
-        const decryptSessionKey = async () => {
-            if (room && currentUser && room.sessionKeys && room.sessionKeys[currentUser.uid] && !sessionKey) {
-                try {
+        const establishSession = async () => {
+            if (room && currentUser && !sessionKey) {
+                 try {
                     const myPrivateKey = await getMyPrivateKey();
                     if (!myPrivateKey) {
                         toast({ variant: 'destructive', title: 'Encryption Error', description: 'Could not load your private key. Please log out and back in.' });
                         return;
                     }
-                    const encryptedKeyData = room.sessionKeys[currentUser.uid];
-                    const decryptedJwk = await decryptMessage(myPrivateKey, encryptedKeyData.key, encryptedKeyData.iv, true);
-                    const key = await window.crypto.subtle.importKey(
+                    const encryptedSessionKeyData = room.sessionKeys[currentUser.uid];
+                    if (!encryptedSessionKeyData) {
+                        return; // Key for me not available yet
+                    }
+
+                    const sessionKeyJWK = await decryptMessage(myPrivateKey, encryptedSessionKeyData.key, encryptedSessionKeyData.iv);
+                    const importedSessionKey = await window.crypto.subtle.importKey(
                         'jwk',
-                        JSON.parse(decryptedJwk),
+                        JSON.parse(sessionKeyJWK),
                         { name: "AES-GCM", length: 256 },
                         true,
                         ["encrypt", "decrypt"]
                     );
-                    setSessionKey(key);
-                    
-                    // Generate fingerprint
-                    const keyData = await window.crypto.subtle.exportKey('raw', key);
+                    setSessionKey(importedSessionKey);
+
+                    const keyData = await window.crypto.subtle.exportKey('raw', importedSessionKey);
                     const hashBuffer = await window.crypto.subtle.digest('SHA-256', keyData);
                     const hashArray = Array.from(new Uint8Array(hashBuffer));
                     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
                     setSessionFingerprint(hashHex.substring(0, 10));
 
                 } catch (e) {
-                    console.error("Failed to decrypt session key:", e);
-                    toast({ variant: 'destructive', title: 'Security Error', description: 'Could not establish secure session. The chat may be compromised.'});
+                    console.error("Failed to establish secure session:", e);
                 }
             }
         };
-        decryptSessionKey();
+        establishSession();
     }, [room, currentUser, sessionKey, toast]);
 
+    useEffect(() => {
+        const processQueue = async () => {
+            if (messageQueue.length > 0 && sessionKey && firestore && currentUser && otherUser) {
+                const messageToProcess = messageQueue[0];
+                try {
+                    const { cipherText, iv } = await encryptMessage(sessionKey, messageToProcess.text, false); // false = not a session key
+                    
+                    const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
+                    const newDocRef = await addDoc(messagesColRef, {
+                        roomId: roomId,
+                        senderId: currentUser.uid,
+                        cipherText,
+                        iv,
+                        createdAt: serverTimestamp(),
+                    });
+
+                    await updateDoc(roomRef!, {
+                        lastMessage: { text: '🔒 Encrypted message', timestamp: serverTimestamp() }
+                    });
+                     if(otherUser) {
+                        const notificationPromise = addDoc(collection(firestore, 'users', otherUser.id, 'notifications'), {
+                            recipientId: otherUser.id,
+                            senderId: currentUser.uid,
+                            senderName: currentUser.displayName,
+                            senderImage: currentUser.photoURL,
+                            type: 'private_message',
+                            content: 'sent you a message.',
+                            relatedId: roomId,
+                            relatedLink: `/messages/${roomId}`,
+                            isRead: false,
+                            createdAt: serverTimestamp(),
+                        });
+                        await notificationPromise;
+                    }
+
+                    setMessageQueue(q => q.slice(1));
+                    setOptimisticMessages(msgs => msgs.filter(m => m.id !== messageToProcess.id));
+
+                } catch (error) {
+                    console.error("Failed to process message queue:", error);
+                    toast({ variant: 'destructive', title: 'Send Failed', description: 'Could not encrypt and send a message.' });
+                    setOptimisticMessages(msgs => msgs.map(m => m.id === messageToProcess.id ? { ...m, isSending: false } : m));
+                    setMessageQueue(q => q.slice(1));
+                }
+            }
+        };
+        processQueue();
+    }, [messageQueue, sessionKey, firestore, currentUser, roomId, roomRef, otherUser, toast]);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
         }
-    }, [dbMessages]);
+    }, [dbMessages, optimisticMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !firestore || !messageText.trim()) {
-            return;
-        }
-        
-        if (!sessionKey) {
-             toast({ variant: 'destructive', title: 'Not Ready', description: 'Secure session is not yet established. Please wait.'});
-             return;
-        }
+        if (!currentUser || !messageText.trim()) return;
 
         const textToSend = messageText.trim();
-        setMessageText("");
+        const optimisticId = `optimistic-${Date.now()}`;
         
-        try {
-            const { cipherText, iv } = await encryptWithSessionKey(sessionKey, textToSend, false);
-            const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
-            
-            await addDoc(messagesColRef, {
-                senderId: currentUser.uid,
-                cipherText,
-                iv,
-                createdAt: serverTimestamp(),
-            });
-            
-            await updateDoc(roomRef!, {
-                lastMessage: { text: '🔒 Encrypted message', timestamp: serverTimestamp() }
-            });
-            
-            if(otherUser) {
-                const notificationPromise = addDoc(collection(firestore, 'users', otherUser.id, 'notifications'), {
-                    recipientId: otherUser.id,
-                    senderId: currentUser.uid,
-                    senderName: currentUser.displayName,
-                    senderImage: currentUser.photoURL,
-                    type: 'private_message',
-                    content: 'sent you a message.',
-                    relatedId: roomId,
-                    relatedLink: `/messages/${roomId}`,
-                    isRead: false,
-                    createdAt: serverTimestamp(),
-                });
-                await notificationPromise;
-            }
+        const optimisticMessage: OptimisticMessage = {
+            id: optimisticId,
+            roomId: roomId,
+            senderId: currentUser.uid,
+            text: textToSend,
+            isSending: true,
+            isOptimistic: true,
+            cipherText: '',
+            iv: '',
+            createdAt: new Date() as any, // Temporary timestamp
+        };
 
-        } catch (error) {
-            console.error("Failed to send message:", error);
-            toast({ variant: 'destructive', title: 'Send Failed', description: 'Could not encrypt and send your message.' });
-        }
+        setOptimisticMessages(prev => [...prev, optimisticMessage]);
+        setMessageQueue(prev => [...prev, { text: textToSend, id: optimisticId }]);
+        setMessageText("");
     };
 
+    const combinedMessages = useMemo(() => {
+        const allMessages = [...(dbMessages || []), ...optimisticMessages];
+        return allMessages.sort((a, b) => (a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt as number) - (b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt as number));
+    }, [dbMessages, optimisticMessages]);
 
     const isLoading = isLoadingRoom || isLoadingOtherUser;
     
@@ -257,8 +285,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             <CardContent className="flex-1 p-0 overflow-hidden">
                  <ScrollArea className="h-full" ref={scrollAreaRef}>
                     <div className="flex flex-col gap-4 p-6">
-                        {dbMessages && dbMessages.length > 0 ? (
-                            dbMessages.map(msg => (
+                        {combinedMessages && combinedMessages.length > 0 ? (
+                            combinedMessages.map(msg => (
                                 <ChatMessage key={msg.id} message={msg} sessionKey={sessionKey} />
                             ))
                         ) : (
@@ -280,7 +308,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         onChange={e => setMessageText(e.target.value)}
                         disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || !sessionKey}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
                         <Send />
                     </Button>
                 </form>
