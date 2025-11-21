@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, serverTimestamp, query, orderBy, addDoc } from 'firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Send, Loader2 } from 'lucide-react';
@@ -20,6 +20,23 @@ type User = {
   email: string;
   year?: '1st' | '2nd' | '3rd';
 };
+
+const findMentions = (text: string, users: User[]): { userId: string, userName: string }[] => {
+    const mentionRegex = /@(\w+(\s\w+)*)/g;
+    let match;
+    const mentions = new Set<{ userId: string, userName: string }>();
+    
+    while((match = mentionRegex.exec(text)) !== null) {
+        const mentionedName = match[1];
+        const mentionedUser = users.find(u => u.displayName === mentionedName);
+        if (mentionedUser) {
+            mentions.add({ userId: mentionedUser.id, userName: mentionedUser.displayName });
+        }
+    }
+    
+    return Array.from(mentions);
+};
+
 
 export function MessageInput() {
   const { user } = useUser();
@@ -92,7 +109,7 @@ export function MessageInput() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !firestore || message.trim() === '') return;
+    if (!user || !firestore || message.trim() === '' || !users) return;
 
     setIsSending(true);
     
@@ -118,7 +135,28 @@ export function MessageInput() {
         userYear: currentUserData?.year || null,
       };
 
-      await addDocumentNonBlocking(messagesCol, messageData);
+      const messageRef = await addDocumentNonBlocking(messagesCol, messageData);
+
+      // Handle notifications
+      const mentions = findMentions(message.trim(), users);
+      for (const mention of mentions) {
+          if (mention.userId !== user.uid) { // Don't notify self
+            const notificationRef = collection(firestore, 'users', mention.userId, 'notifications');
+            await addDoc(notificationRef, {
+                recipientId: mention.userId,
+                senderId: user.uid,
+                senderName: user.displayName,
+                senderImage: user.photoURL,
+                type: 'mention',
+                content: `mentioned you in the community chat.`,
+                relatedId: messageRef.id,
+                relatedLink: '/community-chat',
+                isRead: false,
+                createdAt: serverTimestamp(),
+            });
+          }
+      }
+
       setMessage('');
 
     } catch (error) {

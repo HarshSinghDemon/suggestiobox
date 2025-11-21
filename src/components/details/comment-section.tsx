@@ -4,14 +4,15 @@
 import { useState } from 'react';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { Comment } from '@/lib/types';
+import type { Comment, FirebaseUser as User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { moderateText } from '@/ai/flows/moderate-text';
+import { useRouter } from 'next/navigation';
 
 interface CommentSectionProps {
   collectionPath: string[];
@@ -20,6 +21,22 @@ interface CommentSectionProps {
 const getInitials = (name: string | null | undefined) => {
   if (!name) return 'U';
   return name.split(' ').map(n => n[0]).join('').substring(0, 2);
+};
+
+const findMentions = (text: string, users: User[]): { userId: string, userName: string }[] => {
+    const mentionRegex = /@(\w+(\s\w+)*)/g;
+    let match;
+    const mentions = new Set<{ userId: string, userName: string }>();
+    
+    while((match = mentionRegex.exec(text)) !== null) {
+        const mentionedName = match[1];
+        const mentionedUser = users.find(u => u.displayName === mentionedName);
+        if (mentionedUser) {
+            mentions.add({ userId: mentionedUser.id, userName: mentionedUser.displayName });
+        }
+    }
+    
+    return Array.from(mentions);
 };
 
 
@@ -47,8 +64,15 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null),
+    [firestore]
+  );
+  const { data: users } = useCollection<User>(usersQuery);
 
   const commentsQuery = useMemoFirebase(
     () => {
@@ -68,7 +92,7 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !firestore || !commentText.trim()) return;
+    if (!user || !firestore || !commentText.trim() || !users) return;
 
     setIsSubmitting(true);
     
@@ -87,13 +111,32 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
       const [collectionName, docId, subcollectionName] = collectionPath;
       const commentsColRef = collection(firestore, collectionName, docId, subcollectionName);
 
-      await addDoc(commentsColRef, {
+      const commentRef = await addDoc(commentsColRef, {
         text: commentText.trim(),
         userId: user.uid,
         userName: user.displayName,
         userImage: user.photoURL,
         createdAt: serverTimestamp(),
       });
+      
+      const mentions = findMentions(commentText.trim(), users);
+      for (const mention of mentions) {
+          if (mention.userId !== user.uid) { // Don't notify self
+            const notificationRef = collection(firestore, 'users', mention.userId, 'notifications');
+            await addDoc(notificationRef, {
+                recipientId: mention.userId,
+                senderId: user.uid,
+                senderName: user.displayName,
+                senderImage: user.photoURL,
+                type: 'mention',
+                content: `mentioned you in a comment.`,
+                relatedId: docId,
+                relatedLink: `/${collectionName}/${docId}`,
+                isRead: false,
+                createdAt: serverTimestamp(),
+            });
+          }
+      }
 
       setCommentText('');
     } catch (error) {
@@ -111,7 +154,7 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
   return (
     <div className="pt-8 mt-8 border-t">
       <h3 className="mb-6 text-2xl font-semibold">Comments</h3>
-      {user && (
+      {user ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-8">
             <div className='flex gap-4'>
                 <Avatar className="w-10 h-10 border">
@@ -121,7 +164,7 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
                 <Textarea
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Add a public comment..."
+                    placeholder="Add a public comment... use @ to mention"
                     disabled={isSubmitting}
                 />
             </div>
@@ -130,6 +173,10 @@ export function CommentSection({ collectionPath }: CommentSectionProps) {
             Comment
           </Button>
         </form>
+      ) : (
+        <p className="mb-8 text-center text-muted-foreground">
+            You must be logged in to comment. <Button variant="link" className="p-0" onClick={() => router.push('/login')}>Login now</Button>
+        </p>
       )}
 
       <div className="space-y-6">

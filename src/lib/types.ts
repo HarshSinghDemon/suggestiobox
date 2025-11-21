@@ -64,15 +64,17 @@ export type Comment = {
 
 
 export type Notification = {
-  id: string;
-  recipientId: string; // The user who should receive the notification
-  senderId: string;
-  senderName: string;
-  type: 'mention';
-  content: string; // e.g., 'mentioned you in a message'
-  relatedId: string; // e.g., the messageId
-  isRead: boolean;
-  createdAt: Timestamp;
+    id: string;
+    recipientId: string; // The user who should receive the notification
+    senderId: string;
+    senderName: string;
+    senderImage: string | null;
+    type: 'mention';
+    content: string; // e.g., 'mentioned you in a comment'
+    relatedId: string; // e.g., the suggestion or messageId
+    relatedLink: string; // e.g., /suggestions/suggestionId
+    isRead: boolean;
+    createdAt: Timestamp;
 };
 
 export type GameScore = {

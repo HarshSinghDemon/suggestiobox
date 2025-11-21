@@ -245,6 +245,73 @@
         }
       },
       "required": ["id", "userId", "userName", "text", "createdAt"]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification for a user, such as a mention.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "recipientId": {
+          "type": "string",
+          "description": "The ID of the user who should receive the notification."
+        },
+        "senderId": {
+          "type": "string",
+          "description": "The ID of the user who triggered the notification."
+        },
+        "senderName": {
+          "type": "string",
+          "description": "The display name of the user who triggered the notification."
+        },
+        "senderImage": {
+          "type": "string",
+          "description": "The profile picture URL of the sender.",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of notification.",
+          "enum": ["mention"]
+        },
+        "content": {
+          "type": "string",
+          "description": "A short description of the notification content."
+        },
+        "relatedId": {
+          "type": "string",
+          "description": "The ID of the related item (e.g., suggestion, assignment, or message)."
+        },
+        "relatedLink": {
+            "type": "string",
+            "description": "The URL to navigate to when the notification is clicked."
+        },
+        "isRead": {
+          "type": "boolean",
+          "description": "Whether the notification has been read by the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The timestamp when the notification was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "recipientId",
+        "senderId",
+        "senderName",
+        "type",
+        "content",
+        "relatedId",
+        "relatedLink",
+        "isRead",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -263,13 +330,33 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile information.  This is the root for all user-owned data.",
+          "description": "Stores user profile information. This is the root for all user-owned data.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier of the user, matching their Firebase Auth UID."
             }
           ]
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+            "entityName": "Notification",
+            "schema": {
+                "$ref": "#/backend/entities/Notification"
+            },
+            "description": "Stores notifications for a specific user.",
+            "params": [
+                {
+                    "name": "userId",
+                    "description": "The unique identifier of the user receiving the notification."
+                },
+                {
+                    "name": "notificationId",
+                    "description": "The unique identifier of the notification."
+                }
+            ]
         }
       },
       {
