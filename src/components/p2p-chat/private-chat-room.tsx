@@ -197,19 +197,23 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             if (otherUser?.publicKey && !sharedKey) {
                 try {
                     const privateKey = await getMyPrivateKey();
-                    if (!privateKey) return; // Wait for key generation
-                    const key = await deriveSharedKey(privateKey, otherUser.publicKey!);
+                    if (!privateKey) {
+                         console.log("Waiting for private key to become available...");
+                         return; // Wait for key generation
+                    }
+                    const key = await deriveSharedKey(privateKey, otherUser.publicKey);
                     setSharedKey(key);
                     await processMessageQueue(key);
                 } catch (e) {
                     console.error("Key derivation failed", e);
+                    toast({ variant: 'destructive', title: 'Encryption Error', description: 'Could not establish a secure session. Please try again later.' });
                 }
             } else if (sharedKey) {
                 await processMessageQueue(sharedKey);
             }
         };
         deriveAndProcessKey();
-    }, [otherUser, sharedKey, processMessageQueue]);
+    }, [otherUser, sharedKey, processMessageQueue, toast]);
 
 
     useEffect(() => {
@@ -253,7 +257,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     if (isLoading) return <ChatRoomSkeleton />;
     
     if (!room || !otherUser) {
-        return <p>Chat not found.</p>
+        return (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+                <p className="text-lg text-muted-foreground">Chat not found or user does not exist.</p>
+                <Button onClick={() => router.push('/messages')}>Go back to messages</Button>
+            </div>
+        );
     }
     
     return (
@@ -270,7 +279,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <CardTitle>{otherUser.displayName}</CardTitle>
                     <div className={cn(
                         "flex items-center gap-1.5 text-xs",
-                        sharedKey ? "text-green-500" : "text-muted-foreground"
+                        sharedKey ? "text-green-500" : "text-amber-500 animate-pulse"
                     )}>
                         <Lock className="w-3 h-3" />
                         <span>Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)</span>
@@ -303,10 +312,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         placeholder="Type an encrypted message..."
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
-                        disabled={!sharedKey}
+                        disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !sharedKey}>
-                        {messageQueue.current.length > 0 && !sharedKey ? <Loader2 className="animate-spin" /> : <Send />}
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
+                        {isProcessingQueue.current ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>
             </CardFooter>
