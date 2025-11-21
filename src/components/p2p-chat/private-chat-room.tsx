@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -8,7 +7,7 @@ import type { ChatRoom, FirebaseUser, Message } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -18,6 +17,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { deriveSharedKey, encryptMessage, decryptMessage, getMyPrivateKey } from "@/lib/e2ee";
+import { Alert } from "../ui/alert";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -38,6 +38,8 @@ function ChatMessage({ message, sharedKey }: { message: Message; sharedKey: Cryp
                     console.error("Decryption failed:", e);
                     setDecryptedText("⚠️ Failed to decrypt");
                 }
+            } else if (!message.cipherText) {
+                 setDecryptedText("Message format is outdated.");
             }
         };
         decrypt();
@@ -100,6 +102,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
 
+    const currentUserRef = useMemoFirebase(() => currentUser ? doc(firestore, 'users', currentUser.uid) : null, [firestore, currentUser]);
+    const { data: currentUserData, isLoading: isLoadingCurrentUser } = useDoc<FirebaseUser>(currentUserRef);
+    
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
 
@@ -117,7 +122,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     // Derive shared E2EE key
     useEffect(() => {
         const deriveKey = async () => {
-            if (otherUser?.publicKey) {
+            if (otherUser?.publicKey && currentUserData?.publicKey) {
                 try {
                     const privateKey = await getMyPrivateKey();
                     if (!privateKey) {
@@ -133,7 +138,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             }
         };
         deriveKey();
-    }, [otherUser, toast]);
+    }, [otherUser, currentUserData, toast]);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -163,7 +168,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             };
 
             const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
-            const messageDocRef = await addDoc(messagesColRef, messageData);
+            await addDoc(messagesColRef, messageData);
             
             await Promise.all([
                 updateDoc(roomRef!, {
@@ -198,13 +203,15 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     };
 
 
-    const isLoading = isLoadingRoom || isLoadingOtherUser;
+    const isLoading = isLoadingRoom || isLoadingOtherUser || isLoadingCurrentUser;
     
     if (isLoading) return <ChatRoomSkeleton />;
     
     if (!room || !otherUser) {
         return <p>Chat not found.</p>
     }
+    
+    const canChat = currentUserData?.publicKey && otherUser?.publicKey;
 
     return (
         <Card className="flex flex-col h-full">
@@ -218,10 +225,17 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </Avatar>
                 <div>
                     <CardTitle>{otherUser.displayName}</CardTitle>
-                    <div className="flex items-center gap-1.5 text-xs text-green-500">
-                        <Lock className="w-3 h-3" />
-                        <span>End-to-end encrypted</span>
-                    </div>
+                    {canChat ? (
+                        <div className="flex items-center gap-1.5 text-xs text-green-500">
+                            <Lock className="w-3 h-3" />
+                            <span>End-to-end encrypted</span>
+                        </div>
+                    ) : (
+                         <div className="flex items-center gap-1.5 text-xs text-amber-500">
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Not secure</span>
+                        </div>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
@@ -229,6 +243,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <div className="flex flex-col gap-4 p-6">
                         {isLoadingMessages ? (
                             <Loader2 className="m-auto animate-spin" />
+                        ) : !canChat ? (
+                            <Alert variant="destructive">
+                                <AlertCircle className="w-4 h-4" />
+                                <CardTitle>Insecure Chat</CardTitle>
+                                <CardDescription>
+                                    End-to-end encryption cannot be established because one or both users have an outdated account without an encryption key. Please ask the user to log in again to generate their key.
+                                </CardDescription>
+                            </Alert>
                         ) : messages && messages.length > 0 ? (
                             messages.map(msg => (
                                 <ChatMessage key={msg.id} message={{...msg, senderId: msg.senderId === currentUser?.uid ? 'currentUser' : 'otherUser' }} sharedKey={sharedKey} />

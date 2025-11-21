@@ -19,7 +19,7 @@ import {
   EmailAuthProvider,
   unlink,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { generateAndStoreKeyPair } from '../e2ee';
 
 export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string, publicKey?: string }) => {
@@ -128,12 +128,19 @@ const handleSocialSignIn = async (auth: Auth, provider: GoogleAuthProvider | Git
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         const db = getFirestore(user.auth.app);
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
         
         let isNewUser = false;
         if (!userDoc.exists()) {
              const { publicKeyBase64 } = await generateAndStoreKeyPair();
              isNewUser = await handleNewUser(user, { publicKey: publicKeyBase64 });
+        } else if (!userDoc.data()?.publicKey) {
+            // This is an existing user without a public key, so we create one for them.
+            const { publicKeyBase64 } = await generateAndStoreKeyPair();
+            await updateDoc(userDocRef, { publicKey: publicKeyBase64 });
+            // This isn't a "new user" in the sense of the app, but they are new to E2EE.
+            // We don't set isNewUser = true because we don't want to redirect them to profile completion.
         }
 
         return { user, isNewUser };
