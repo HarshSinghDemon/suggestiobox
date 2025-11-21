@@ -24,6 +24,7 @@ import { ProfileAvatarModal } from '../profile-avatar-modal';
 import { MiniMusicPlayer } from './mini-music-player';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useAudio } from './audio-provider';
+import { Skeleton } from '../ui/skeleton';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
@@ -43,7 +44,7 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
 }
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const firebaseAuth = useFirebaseAuth();
   const router = useRouter();
   const { isPlaying } = useAudio();
@@ -162,7 +163,13 @@ export function Header() {
                 </DropdownMenu>
             </nav>
 
-              {user ? (
+            <div className="flex items-center">
+              {isAuthLoading ? (
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-24 h-10 hidden md:block" />
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                </div>
+              ) : user ? (
                 <div className="flex items-center gap-2">
                     {isAdmin && (
                         <Button
@@ -216,6 +223,7 @@ export function Header() {
                   </Link>
                 </Button>
               )}
+            </div>
             <ProfileAvatarModal isOpen={isAvatarModalOpen} onOpenChange={setIsAvatarModalOpen} />
           
             {/* Common controls for both mobile and desktop */}
