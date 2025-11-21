@@ -15,8 +15,8 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
     }
 
-    // Chat Rooms can be created by authenticated users.
-    // They can only be listed/read if the user is a participant.
+    // Chat Rooms can be read by participants and created by authenticated users.
+    // The list operation is secured by the query in the application code.
     match /chatRooms/{roomId} {
       allow list, read: if request.auth.uid in resource.data.participants;
       allow create: if request.auth != null;
