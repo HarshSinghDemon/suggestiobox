@@ -21,8 +21,10 @@ export type FirebaseUser = {
 export type ChatRoom = {
     id: string;
     participants: string[];
+    sessionKey_b64: string; // Base64-encoded AES-256-GCM key
     lastMessage?: {
-        text: string;
+        cipherText: string; // Last message is also encrypted
+        iv: string;
         timestamp: Timestamp;
     };
     // For displaying participant info in the chat list
@@ -69,7 +71,8 @@ export type Message = {
     id: string;
     roomId: string;
     senderId: string;
-    text: string; // Message content is now plaintext
+    cipherText: string; // Encrypted message content
+    iv: string; // Initialization Vector for AES-GCM
     createdAt: Timestamp;
     // Denormalized data for display in lists
     userName?: string | null;

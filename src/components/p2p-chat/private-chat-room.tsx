@@ -2,37 +2,35 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
-import type { ChatRoom, FirebaseUser, Message } from "@/lib/types";
+import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc } from "firebase/firestore";
+import type { ChatRoom, FirebaseUser, Message as EncryptedMessage } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { importKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+
+type DecryptedMessage = {
+    id: string;
+    senderId: string;
+    text: string;
+    createdAt: EncryptedMessage['createdAt'];
+}
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-function ChatMessage({ message, onDelete }: { message: Message; onDelete: (messageId: string) => void }) {
-    const { user: currentUser } = useUser();
-    const isCurrentUserSender = message.senderId === currentUser?.uid;
-
-    // Once the message is rendered, we can consider it "read" and delete it.
-    useEffect(() => {
-        // Only the recipient should delete the message.
-        if (!isCurrentUserSender) {
-            onDelete(message.id);
-        }
-    }, [message.id, isCurrentUserSender, onDelete]);
-
+function ChatMessage({ message, isCurrentUserSender }: { message: DecryptedMessage; isCurrentUserSender: boolean }) {
     return (
         <div className={cn("flex items-end gap-2 max-w-md", isCurrentUserSender ? "self-end" : "self-start")}>
             <div className={cn(
@@ -78,8 +76,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const router = useRouter();
     const [messageText, setMessageText] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [sessionKey, setSessionKey] = useState<CryptoKey | null>(null);
+    const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
-
+    
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
 
@@ -92,31 +92,64 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         return query(collection(firestore, 'chatRooms', roomId, 'messages'), orderBy('createdAt', 'asc'));
     }, [firestore, roomId]);
 
-    const { data: messages } = useCollection<Message>(messagesQuery);
+    const { data: encryptedMessages } = useCollection<EncryptedMessage>(messagesQuery);
+    
+    // Decrypt messages whenever the session key or encrypted messages change
+    useEffect(() => {
+        if (!sessionKey || !encryptedMessages) {
+            setDecryptedMessages([]);
+            return;
+        };
+
+        const decryptAll = async () => {
+            const newDecryptedMessages: DecryptedMessage[] = await Promise.all(
+                encryptedMessages.map(async (msg) => {
+                    const decryptedText = await decryptMessage(sessionKey, msg.cipherText, msg.iv);
+                    return { ...msg, text: decryptedText };
+                })
+            );
+            setDecryptedMessages(newDecryptedMessages);
+        };
+        decryptAll();
+
+    }, [sessionKey, encryptedMessages]);
+
+
+    // Effect to import the session key when the room data is available
+    useEffect(() => {
+        if (room?.sessionKey_b64) {
+            importKey(room.sessionKey_b64)
+                .then(setSessionKey)
+                .catch(err => console.error("Failed to import session key:", err));
+        }
+    }, [room]);
     
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
         }
-    }, [messages]);
+    }, [decryptedMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !messageText.trim() || !firestore) return;
+        if (!currentUser || !messageText.trim() || !firestore || !sessionKey) return;
         setIsSending(true);
         const textToSend = messageText.trim();
         setMessageText("");
 
         try {
+            const { cipherText, iv } = await encryptMessage(sessionKey, textToSend);
+
             const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
             await addDoc(messagesColRef, {
                 roomId: roomId,
                 senderId: currentUser.uid,
-                text: textToSend,
+                cipherText: cipherText,
+                iv: iv,
                 createdAt: serverTimestamp(),
             });
 
             await updateDoc(roomRef!, {
-                lastMessage: { text: textToSend, timestamp: serverTimestamp() }
+                lastMessage: { cipherText, iv, timestamp: serverTimestamp() }
             });
             
              if(otherUser) {
@@ -141,17 +174,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             setIsSending(false);
         }
     };
-    
-    const handleDeleteMessage = async (messageId: string) => {
-        if (!firestore) return;
-        const messageRef = doc(firestore, 'chatRooms', roomId, 'messages', messageId);
-        try {
-            await deleteDoc(messageRef);
-        } catch (error) {
-            console.error("Failed to delete message:", error);
-        }
-    };
-
 
     const isLoading = isLoadingRoom || isLoadingOtherUser;
     
@@ -176,22 +198,36 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <AvatarImage src={otherUser.photoURL ?? undefined} />
                     <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                     <CardTitle>{otherUser.displayName}</CardTitle>
                 </div>
+                 <Tooltip>
+                    <TooltipTrigger>
+                        <Lock className="w-5 h-5 text-green-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Messages are end-to-end encrypted.</p>
+                    </TooltipContent>
+                </Tooltip>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
                  <ScrollArea className="h-full" ref={scrollAreaRef}>
                     <div className="flex flex-col gap-4 p-6">
-                        {messages && messages.length > 0 ? (
-                            messages.map(msg => (
-                                <ChatMessage key={msg.id} message={msg} onDelete={handleDeleteMessage} />
+                        {decryptedMessages.length > 0 ? (
+                            decryptedMessages.map(msg => (
+                                <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} />
                             ))
                         ) : (
                             <p className="text-center text-muted-foreground">
                                 No messages yet. Say hello!
                             </p>
                         )}
+                         {!sessionKey && encryptedMessages && encryptedMessages.length > 0 && (
+                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                <Loader2 className="w-4 h-4 animate-spin"/>
+                                <p>Decrypting messages...</p>
+                            </div>
+                         )}
                     </div>
                 </ScrollArea>
             </CardContent>
@@ -201,12 +237,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     onSubmit={e => { e.preventDefault(); handleSendMessage(); }}
                 >
                     <Input 
-                        placeholder="Type a message..."
+                        placeholder="Type an encrypted message..."
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
-                        disabled={!currentUser || isSending}
+                        disabled={!currentUser || isSending || !sessionKey}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey}>
                        {isSending ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>

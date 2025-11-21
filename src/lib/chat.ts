@@ -1,10 +1,11 @@
 
 import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import type { FirebaseUser } from "./types";
+import { generateAndExportKey } from "./e2ee";
 
 /**
  * Finds an existing 1-on-1 chat room between two users, or creates a new one if it doesn't exist.
- * This version is simplified and does not handle key exchange.
+ * This version also generates a shared AES session key for the chat.
  * @param firestore - The Firestore instance.
  * @param currentUserId - The ID of the currently logged-in user.
  * @param otherUserId - The ID of the user to chat with.
@@ -41,11 +42,15 @@ export async function findOrCreateChat(firestore: Firestore, currentUserId: stri
         // Chat room already exists
         return querySnapshot.docs[0].id;
     } else {
+        // Generate a new AES key for this session
+        const sessionKeyBase64 = await generateAndExportKey();
+
         // Create a new chat room
         const newRoomData = {
             participants: [currentUserId, otherUserId],
             createdAt: serverTimestamp(),
             lastMessage: null,
+            sessionKey_b64: sessionKeyBase64,
         };
         const newRoomRef = await addDoc(chatRoomsRef, newRoomData);
         
