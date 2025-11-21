@@ -52,6 +52,7 @@ export function MiniMusicPlayer() {
     // Jokebox
     jokeboxPlaylist,
     currentJokeboxTrack,
+    isJokeboxPlaying,
     playPauseJokebox,
     playNextJokebox,
     playPrevJokebox,
@@ -123,7 +124,7 @@ export function MiniMusicPlayer() {
       <DropdownMenuLabel className="text-center">{isArcadeMode ? 'Arcade Mix' : 'Jokebox Player'}</DropdownMenuLabel>
       <div className="relative w-40 h-40 mx-auto rounded-lg shadow-lg group">
           <Image
-            src={animationUrl}
+            src={isArcadeMode ? animationUrl : (currentJokeboxTrack?.thumbnail || animationUrl)}
             alt="Music animation"
             fill
             className="object-cover rounded-lg"
@@ -208,7 +209,10 @@ export function MiniMusicPlayer() {
                 {((isArcadeMode && currentArcadeTrack?.url === (track as ArcadeTrack).url) || (!isArcadeMode && currentJokeboxTrack?.id === (track as JokeboxTrack).id)) && isPlaying ? (
                     <SoundWave />
                 ) : (
-                    <Music className="w-4 h-4 text-muted-foreground" />
+                  isArcadeMode ? <Music className="w-4 h-4 text-muted-foreground" /> :
+                  <div className='relative w-4 h-4 rounded-sm shrink-0'>
+                      <Image src={(track as JokeboxTrack).thumbnail || ''} alt={track.title} fill className='object-cover' />
+                  </div>
                 )}
                 <span className="flex-1 truncate">{track.title}</span>
                  {!isArcadeMode && (
@@ -231,3 +235,5 @@ export function MiniMusicPlayer() {
     </div>
   );
 }
+
+    
