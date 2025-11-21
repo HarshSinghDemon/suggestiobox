@@ -24,7 +24,7 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-type OptimisticMessage = Message & { isSending?: boolean; id: string; text?: string };
+type OptimisticMessage = Message & { isSending?: boolean; text?: string };
 
 function ChatMessage({ message, sessionKey }: { message: OptimisticMessage; sessionKey: CryptoKey | null }) {
     const { user: currentUser } = useUser();
@@ -127,7 +127,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         toast({ variant: 'destructive', title: 'Encryption Error', description: 'Could not load your private key. Please log out and back in.' });
                         return;
                     }
-                    const encryptedSessionKeyData = room.sessionKeys[currentUser.uid];
+                    const encryptedKeyData = room.sessionKeys[currentUser.uid];
                     const decryptedJwk = await decryptMessage(myPrivateKey, encryptedKeyData.key, encryptedKeyData.iv, true);
                     const key = await window.crypto.subtle.importKey(
                         'jwk',
@@ -162,9 +162,13 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [dbMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !firestore || !sessionKey || !messageText.trim()) {
-            if(!sessionKey) toast({ variant: 'destructive', title: 'Not Ready', description: 'Secure session is not yet established. Please wait.'});
+        if (!currentUser || !firestore || !messageText.trim()) {
             return;
+        }
+        
+        if (!sessionKey) {
+             toast({ variant: 'destructive', title: 'Not Ready', description: 'Secure session is not yet established. Please wait.'});
+             return;
         }
 
         const textToSend = messageText.trim();
@@ -274,7 +278,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         placeholder="Type an encrypted message..."
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
-                        disabled={!currentUser || !sessionKey}
+                        disabled={!currentUser}
                     />
                     <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || !sessionKey}>
                         <Send />
