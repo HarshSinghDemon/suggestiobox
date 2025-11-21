@@ -72,10 +72,31 @@ export function MiniMusicPlayer() {
       return "https://ik.imagekit.io/bt0k47tzc/ben10-four-arms.gif?updatedAt=1763670807759";
     }
     if (currentTrack?.title === 'Dragon Ball Z - Cha-La Head-Cha-La') {
-        return "https://ik.imagekit.io/bt0k47tzc/lr-agl-super-saiyan-god-ss-goku-and-super-saiyan-god-ss-vegeta-all-out-final-battle.gif?updatedAt=1763670802637";
+      return "https://ik.imagekit.io/bt0k47tzc/lr-agl-super-saiyan-god-ss-goku-and-super-saiyan-god-ss-vegeta-all-out-final-battle.gif?updatedAt=1763670802637";
     }
     if (currentTrack?.title === 'Pokemon Theme Song') {
-        return "https://ik.imagekit.io/bt0k47tzc/pikachu-haki-captain-pikachu.gif?updatedAt=1763670804016";
+      return "https://ik.imagekit.io/bt0k47tzc/pikachu-haki-captain-pikachu.gif?updatedAt=1763670804016";
+    }
+    if (currentTrack?.title === 'Cadillacs & Dinosaurs - Select') {
+      return "https://ik.imagekit.io/bt0k47tzc/cadillacs-and-dinosaurs---demo-gameplay-002.gif";
+    }
+    if (currentTrack?.title === 'Shinobi BGM 1') {
+      return "https://ik.imagekit.io/bt0k47tzc/rascal-ninja.gif";
+    }
+    if (currentTrack?.title === 'Street Fighter II - Opening') {
+      return "https://ik.imagekit.io/bt0k47tzc/akuma-street-fighter.gif";
+    }
+    if (currentTrack?.title === 'Sonic - Green Hill Zone') {
+      return "https://ik.imagekit.io/bt0k47tzc/giphy.gif";
+    }
+    if (currentTrack?.title === 'Super Mario Bros. Theme') {
+      return "https://ik.imagekit.io/bt0k47tzc/dance-happy.gif";
+    }
+    if (currentTrack?.title === 'Street Fighter - Ryu\'s Theme') {
+      return "https://ik.imagekit.io/bt0k47tzc/ryu-street-fighter.gif";
+    }
+    if (currentTrack?.title === 'Mega Man 2 - Dr. Wily Stage') {
+      return "https://ik.imagekit.io/bt0k47tzc/mega-man-x-mega-man.gif";
     }
     return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
   };
