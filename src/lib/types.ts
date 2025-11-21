@@ -74,6 +74,7 @@ export type Message = {
   // Denormalized data for display
   userName?: string | null;
   userImage?: string | null;
+  text?: string; // Only used for optimistic UI, not stored in DB
 };
 
 
