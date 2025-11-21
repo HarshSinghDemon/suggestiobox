@@ -244,7 +244,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         sharedKey ? "text-green-500" : "text-muted-foreground"
                     )}>
                         <Lock className="w-3 h-3" />
-                        <span>End-to-end encrypted</span>
+                        <span>Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)</span>
                     </div>
                 </div>
             </CardHeader>
