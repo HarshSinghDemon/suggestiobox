@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, query, where, orderBy, doc } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
@@ -37,31 +37,38 @@ export function ChatList() {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
 
-    const chatRoomsQuery = useMemoFirebase(() => {
+    // 1. Fetch the current user's data to get their chatRoomIds
+    const userDocRef = useMemoFirebase(() => {
         if (!currentUser || !firestore) return null;
+        return doc(firestore, 'users', currentUser.uid);
+    }, [currentUser, firestore]);
+    const { data: userData, isLoading: isLoadingUser } = useDoc<FirebaseUser>(userDocRef);
+
+    const chatRoomIds = userData?.chatRoomIds || [];
+
+    // 2. Fetch only the chat rooms the user is part of
+    const chatRoomsQuery = useMemoFirebase(() => {
+        if (!firestore || chatRoomIds.length === 0) return null;
         return query(
             collection(firestore, 'chatRooms'),
-            where('participants', 'array-contains', currentUser.uid),
+            where('__name__', 'in', chatRoomIds),
             orderBy('lastMessage.timestamp', 'desc')
         );
-    }, [currentUser, firestore]);
-
+    }, [firestore, chatRoomIds]);
     const { data: chatRooms, isLoading: isLoadingRooms } = useCollection<ChatRoom>(chatRoomsQuery);
-    
-    const allUserIds = useMemo(() => {
+
+    const allParticipantIds = useMemo(() => {
         if (!chatRooms) return [];
         const ids = new Set<string>();
         chatRooms.forEach(room => room.participants.forEach(id => ids.add(id)));
         return Array.from(ids);
     }, [chatRooms]);
     
-    // Fetch all users involved in any of the chat rooms for efficiency
+    // 3. Fetch all participant profiles in one query
     const usersQuery = useMemoFirebase(() => {
-        if (!firestore || allUserIds.length === 0) return null;
-        // Use a 'in' query which is very efficient for up to 30 IDs.
-        return query(collection(firestore, 'users'), where('id', 'in', allUserIds));
-    }, [firestore, allUserIds]);
-
+        if (!firestore || allParticipantIds.length === 0) return null;
+        return query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
+    }, [firestore, allParticipantIds]);
     const { data: users, isLoading: isLoadingUsers } = useCollection<FirebaseUser>(usersQuery);
 
     const usersMap = useMemo(() => {
@@ -69,6 +76,7 @@ export function ChatList() {
         return new Map(users.map(u => [u.id, u]));
     }, [users]);
     
+    // 4. Join the data on the client
     const enrichedChatRooms = useMemo(() => {
         if (!chatRooms || !currentUser || usersMap.size === 0) return [];
         return chatRooms.map(room => {
@@ -82,11 +90,13 @@ export function ChatList() {
                     photoURL: participantDetails.photoURL
                 }] : []
             };
-        }).filter(room => room.participantDetails.length > 0); // Ensure we have participant details before rendering
+        }).filter(room => room.participantDetails.length > 0);
     }, [chatRooms, currentUser, usersMap]);
 
 
-    if (isLoadingRooms || (allUserIds.length > 0 && isLoadingUsers)) {
+    const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
+
+    if (isLoading) {
         return <ChatListSkeleton />;
     }
     
@@ -133,3 +143,5 @@ export function ChatList() {
         </div>
     )
 }
+
+    

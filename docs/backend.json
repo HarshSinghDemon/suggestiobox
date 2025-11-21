@@ -39,6 +39,11 @@
         "publicKey": {
             "type": "string",
             "description": "The user's public key for end-to-end encryption."
+        },
+        "chatRoomIds": {
+            "type": "array",
+            "description": "An array of ChatRoom IDs the user is a part of.",
+            "items": { "type": "string" }
         }
       },
       "required": [
@@ -481,3 +486,5 @@
   }
 }
 
+
+    

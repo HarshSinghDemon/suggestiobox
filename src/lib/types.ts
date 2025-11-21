@@ -11,6 +11,7 @@ export type FirebaseUser = {
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
   publicKey?: string;
+  chatRoomIds?: string[];
 };
 
 export type ChatRoom = {
@@ -116,4 +117,6 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
+    
+
     
