@@ -7,7 +7,7 @@ import type { ChatRoom, FirebaseUser, Message as EncryptedMessage } from "@/lib/
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -23,6 +23,7 @@ type DecryptedMessage = {
     senderId: string;
     text: string;
     createdAt: EncryptedMessage['createdAt'];
+    status?: 'sent' | 'pending';
 }
 
 const getInitials = (name: string | null | undefined) => {
@@ -38,12 +39,15 @@ function ChatMessage({ message, isCurrentUserSender }: { message: DecryptedMessa
                 isCurrentUserSender ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
                 <p>{message.text}</p>
-                 <p className={cn(
-                     "text-xs mt-1",
+                 <div className={cn(
+                     "text-xs mt-1 flex items-center gap-1",
                      isCurrentUserSender ? "text-primary-foreground/70" : "text-muted-foreground"
                  )}>
-                    {message.createdAt ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'just now'}
-                </p>
+                    {message.status === 'pending' && <Clock className="w-3 h-3" />}
+                    <span>
+                        {message.createdAt ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : (message.status === 'pending' ? 'Sending...' : 'just now')}
+                    </span>
+                 </div>
             </div>
         </div>
     );
@@ -78,6 +82,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [isSending, setIsSending] = useState(false);
     const [sessionKey, setSessionKey] = useState<CryptoKey | null>(null);
     const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
+    const [pendingMessages, setPendingMessages] = useState<DecryptedMessage[]>([]);
     const [keyFingerprint, setKeyFingerprint] = useState<string | null>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     
@@ -102,17 +107,47 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         setKeyFingerprint(hashHex.substring(0, 10)); // Use first 10 chars
     };
+
+    const processPendingMessages = useCallback(async (key: CryptoKey) => {
+        if (pendingMessages.length === 0 || !currentUser) return;
+        
+        setIsSending(true);
+        const messagesToSend = [...pendingMessages];
+        setPendingMessages([]);
+
+        for (const msg of messagesToSend) {
+            try {
+                const { cipherText, iv } = await encryptMessage(key, msg.text);
+                const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
+                await addDoc(messagesColRef, {
+                    roomId: roomId,
+                    senderId: currentUser.uid,
+                    cipherText: cipherText,
+                    iv: iv,
+                    createdAt: serverTimestamp(),
+                });
+                await updateDoc(roomRef!, {
+                    lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp() }
+                });
+            } catch (error) {
+                console.error("Failed to send a pending message:", error);
+                // Optionally re-add to pending queue or show an error
+            }
+        }
+        setIsSending(false);
+    }, [pendingMessages, currentUser, firestore, roomId, roomRef]);
     
     useEffect(() => {
-        if (room?.sessionKey_b64) {
+        if (room?.sessionKey_b64 && !sessionKey) {
             importKey(room.sessionKey_b64)
                 .then(key => {
                     setSessionKey(key);
                     calculateFingerprint(key);
+                    processPendingMessages(key);
                 })
                 .catch(err => console.error("Failed to import session key:", err));
         }
-    }, [room]);
+    }, [room, sessionKey, processPendingMessages]);
 
     useEffect(() => {
         if (!sessionKey || !encryptedMessages) {
@@ -124,7 +159,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             const newDecryptedMessages: DecryptedMessage[] = await Promise.all(
                 encryptedMessages.map(async (msg) => {
                     const decryptedText = await decryptMessage(sessionKey, msg.cipherText, msg.iv);
-                    return { ...msg, text: decryptedText };
+                    return { ...msg, text: decryptedText, status: 'sent' };
                 })
             );
             setDecryptedMessages(newDecryptedMessages);
@@ -133,54 +168,34 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     }, [sessionKey, encryptedMessages]);
     
+    const allMessages = useMemo(() => [...decryptedMessages, ...pendingMessages], [decryptedMessages, pendingMessages]);
+    
     useEffect(() => {
         if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+            setTimeout(() => {
+                 scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+            }, 100);
         }
-    }, [decryptedMessages]);
+    }, [allMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !messageText.trim() || !firestore || !sessionKey) return;
-        setIsSending(true);
+        if (!currentUser || !messageText.trim() || !firestore) return;
+        
         const textToSend = messageText.trim();
         setMessageText("");
 
-        try {
-            const { cipherText, iv } = await encryptMessage(sessionKey, textToSend);
+        const pendingMsg: DecryptedMessage = {
+            id: `pending-${Date.now()}`,
+            senderId: currentUser.uid,
+            text: textToSend,
+            createdAt: new Date() as any, // Temporary timestamp
+            status: 'pending'
+        };
 
-            const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
-            await addDoc(messagesColRef, {
-                roomId: roomId,
-                senderId: currentUser.uid,
-                cipherText: cipherText,
-                iv: iv,
-                createdAt: serverTimestamp(),
-            });
+        setPendingMessages(prev => [...prev, pendingMsg]);
 
-            await updateDoc(roomRef!, {
-                lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp() } // Placeholder for list view
-            });
-            
-             if(otherUser) {
-                await addDoc(collection(firestore, 'users', otherUser.id, 'notifications'), {
-                    recipientId: otherUser.id,
-                    senderId: currentUser.uid,
-                    senderName: currentUser.displayName,
-                    senderImage: currentUser.photoURL,
-                    type: 'private_message',
-                    content: 'sent you a message.',
-                    relatedId: roomId,
-                    relatedLink: `/messages/${roomId}`,
-                    isRead: false,
-                    createdAt: serverTimestamp(),
-                });
-            }
-
-        } catch (error) {
-            console.error("Error sending message:", error);
-            setMessageText(textToSend); // Restore text on error
-        } finally {
-            setIsSending(false);
+        if (sessionKey) {
+            await processPendingMessages(sessionKey);
         }
     };
 
@@ -223,8 +238,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             <CardContent className="flex-1 p-0 overflow-hidden">
                  <ScrollArea className="h-full" ref={scrollAreaRef}>
                     <div className="flex flex-col gap-4 p-6">
-                        {decryptedMessages.length > 0 ? (
-                            decryptedMessages.map(msg => (
+                        {allMessages.length > 0 ? (
+                            allMessages.map(msg => (
                                 <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} />
                             ))
                         ) : (
@@ -232,10 +247,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                                 No messages yet. Say hello!
                             </p>
                         )}
-                         {!sessionKey && encryptedMessages && encryptedMessages.length > 0 && (
+                         {!sessionKey && (
                             <div className="flex items-center justify-center gap-2 text-muted-foreground">
                                 <Loader2 className="w-4 h-4 animate-spin"/>
-                                <p>Decrypting messages...</p>
+                                <p>Establishing secure connection...</p>
                             </div>
                          )}
                     </div>
@@ -250,9 +265,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         placeholder="Type an encrypted message..."
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
-                        disabled={!currentUser || isSending || !sessionKey}
+                        disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending}>
                        {isSending ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>
@@ -260,3 +275,5 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </Card>
     );
 }
+
+    
