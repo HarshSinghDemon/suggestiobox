@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -7,7 +8,7 @@ import type { ChatRoom, FirebaseUser, Message } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { deriveSharedKey, encryptMessage, decryptMessage, getMyPrivateKey } from "@/lib/e2ee";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -23,13 +25,27 @@ const getInitials = (name: string | null | undefined) => {
 };
 
 
-function ChatMessage({ message, isOwnMessage }: { message: Message; isOwnMessage: boolean }) {
-    // In a real E2EE app, you would decrypt message.cipherText here
-    const messageText = message.cipherText; 
+function ChatMessage({ message, sharedKey }: { message: Message; sharedKey: CryptoKey | null }) {
+    const [decryptedText, setDecryptedText] = useState('...');
+    
+    useEffect(() => {
+        const decrypt = async () => {
+            if (sharedKey && message.cipherText && message.iv) {
+                try {
+                    const text = await decryptMessage(sharedKey, message.cipherText, message.iv);
+                    setDecryptedText(text);
+                } catch (e) {
+                    console.error("Decryption failed:", e);
+                    setDecryptedText("⚠️ Failed to decrypt");
+                }
+            }
+        };
+        decrypt();
+    }, [message, sharedKey]);
     
     return (
-        <div className={cn("flex items-end gap-2 max-w-md", isOwnMessage ? "self-end" : "self-start")}>
-            {!isOwnMessage && (
+        <div className={cn("flex items-end gap-2 max-w-md", message.senderId === 'currentUser' ? "self-end" : "self-start")}>
+            {message.senderId !== 'currentUser' && (
                 <Avatar className="w-8 h-8">
                     <AvatarImage src={message.userImage ?? undefined} />
                     <AvatarFallback>{getInitials(message.userName)}</AvatarFallback>
@@ -37,14 +53,14 @@ function ChatMessage({ message, isOwnMessage }: { message: Message; isOwnMessage
             )}
             <div className={cn(
                 "p-3 rounded-lg",
-                isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"
+                message.senderId === 'currentUser' ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
-                <p>{messageText}</p>
+                <p>{decryptedText}</p>
                  <p className={cn(
                      "text-xs mt-1",
-                     isOwnMessage ? "text-primary-foreground/70" : "text-muted-foreground"
+                     message.senderId === 'currentUser' ? "text-primary-foreground/70" : "text-muted-foreground"
                  )}>
-                    {formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}
+                    {message.createdAt ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : 'sending...'}
                 </p>
             </div>
         </div>
@@ -82,6 +98,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [messageText, setMessageText] = useState("");
     const [isSending, setIsSending] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
 
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -97,6 +114,27 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
     
+    // Derive shared E2EE key
+    useEffect(() => {
+        const deriveKey = async () => {
+            if (otherUser?.publicKey) {
+                try {
+                    const privateKey = await getMyPrivateKey();
+                    if (!privateKey) {
+                        toast({ variant: 'destructive', title: 'Encryption Error', description: 'Could not load your private key.' });
+                        return;
+                    }
+                    const key = await deriveSharedKey(privateKey, otherUser.publicKey);
+                    setSharedKey(key);
+                } catch(e) {
+                    console.error("Key derivation failed", e);
+                    toast({ variant: 'destructive', title: 'Encryption Error', description: 'Failed to establish secure connection.' });
+                }
+            }
+        };
+        deriveKey();
+    }, [otherUser, toast]);
+
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
@@ -104,28 +142,32 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [messages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !firestore || !messageText.trim()) return;
+        if (!currentUser || !firestore || !messageText.trim() || !sharedKey) {
+             toast({ variant: 'destructive', title: "Cannot Send", description: "Secure connection not established or message is empty." });
+            return;
+        }
         
         setIsSending(true);
 
-        const messageData = {
-            roomId,
-            senderId: currentUser.uid,
-            // In a real E2EE app, you would encrypt the message here before sending
-            cipherText: messageText.trim(),
-            createdAt: serverTimestamp(),
-            userName: currentUser.displayName,
-            userImage: currentUser.photoURL,
-        };
-
         try {
+            const { cipherText, iv } = await encryptMessage(sharedKey, messageText.trim());
+
+            const messageData = {
+                roomId,
+                senderId: currentUser.uid,
+                cipherText,
+                iv,
+                createdAt: serverTimestamp(),
+                userName: currentUser.displayName,
+                userImage: currentUser.photoURL,
+            };
+
             const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
             await addDoc(messagesColRef, messageData);
             
-            // Also update the lastMessage on the chatRoom for list view
             await updateDoc(roomRef!, {
                 lastMessage: {
-                    text: messageText.trim(),
+                    text: '🔒 Encrypted message',
                     timestamp: serverTimestamp()
                 }
             });
@@ -133,7 +175,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             setMessageText("");
         } catch(error) {
             console.error("Failed to send message:", error);
-            toast({ variant: 'destructive', title: "Error", description: "Could not send message." });
+            toast({ variant: 'destructive', title: "Error", description: "Could not send encrypted message." });
         } finally {
             setIsSending(false);
         }
@@ -160,7 +202,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </Avatar>
                 <div>
                     <CardTitle>{otherUser.displayName}</CardTitle>
-                    <CardDescription>{otherUser.email}</CardDescription>
+                    <div className="flex items-center gap-1.5 text-xs text-green-500">
+                        <Lock className="w-3 h-3" />
+                        <span>End-to-end encrypted</span>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
@@ -170,11 +215,11 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                             <Loader2 className="m-auto animate-spin" />
                         ) : messages && messages.length > 0 ? (
                             messages.map(msg => (
-                                <ChatMessage key={msg.id} message={msg} isOwnMessage={msg.senderId === currentUser?.uid} />
+                                <ChatMessage key={msg.id} message={{...msg, senderId: msg.senderId === currentUser?.uid ? 'currentUser' : 'otherUser' }} sharedKey={sharedKey} />
                             ))
                         ) : (
                             <p className="text-center text-muted-foreground">
-                                This is the beginning of your conversation. Send a message to start.
+                                This is the beginning of your encrypted conversation.
                             </p>
                         )}
                     </div>
@@ -186,12 +231,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     onSubmit={e => { e.preventDefault(); handleSendMessage(); }}
                 >
                     <Input 
-                        placeholder="Type your message..." 
+                        placeholder={sharedKey ? "Type your encrypted message..." : "Establishing secure connection..."}
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
-                        disabled={isSending}
+                        disabled={isSending || !sharedKey}
                     />
-                    <Button type="submit" size="icon" disabled={isSending || !messageText.trim()}>
+                    <Button type="submit" size="icon" disabled={isSending || !messageText.trim() || !sharedKey}>
                         {isSending ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>

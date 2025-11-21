@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -19,8 +20,9 @@ import {
   unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { generateAndStoreKeyPair } from '../e2ee';
 
-export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string }) => {
+export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string, publicKey?: string }) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
@@ -33,6 +35,7 @@ export const handleNewUser = async (user: User, details?: { year?: string, displ
       photoURL: details?.photoURL || user.photoURL,
       createdAt: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
+      publicKey: details?.publicKey || null,
     };
     if (details?.year) {
       userData.year = details.year;
@@ -59,12 +62,15 @@ export const signUpWithEmail = async (
     );
     const user = userCredential.user;
 
+    // Generate and store E2EE key pair
+    const { publicKeyBase64 } = await generateAndStoreKeyPair();
+
     await updateProfile(user, { displayName, photoURL });
     await sendEmailVerification(user);
 
     const updatedUser = auth.currentUser;
     if (updatedUser) {
-        await handleNewUser(updatedUser, { year });
+        await handleNewUser(updatedUser, { year, publicKey: publicKeyBase64 });
     }
 
     return user;
@@ -85,7 +91,7 @@ export const signInWithEmail = async (
       email,
       password
     );
-    await handleNewUser(userCredential.user);
+    // Don't call handleNewUser here to avoid overwriting existing user data on sign-in
     return userCredential.user;
   } catch (error) {
     console.error('Error signing in: ', error);
@@ -121,7 +127,15 @@ const handleSocialSignIn = async (auth: Auth, provider: GoogleAuthProvider | Git
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        const isNewUser = await handleNewUser(user);
+        const db = getFirestore(user.auth.app);
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        let isNewUser = false;
+        if (!userDoc.exists()) {
+             const { publicKeyBase64 } = await generateAndStoreKeyPair();
+             isNewUser = await handleNewUser(user, { publicKey: publicKeyBase64 });
+        }
+
         return { user, isNewUser };
     } catch (error: any) {
         // Handle account exists with different credential error

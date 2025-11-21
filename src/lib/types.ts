@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 import type { Subject, Semester } from "./constants";
 
@@ -10,7 +11,7 @@ export type FirebaseUser = {
   photoURL: string | null;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
-  publicKey?: string;
+  publicKey?: string; // Stored in Base64
   chatRoomIds?: string[];
   friends?: string[];
   friendRequestsSent?: string[];
@@ -21,7 +22,7 @@ export type ChatRoom = {
     id: string;
     participants: string[];
     lastMessage?: {
-        text: string;
+        text: string; // This might be ciphertext for the last message preview
         timestamp: Timestamp;
     };
     // For displaying participant info in the chat list
@@ -68,7 +69,8 @@ export type Message = {
   id: string;
   roomId: string;
   senderId: string;
-  cipherText: string; // Storing encrypted text
+  cipherText: string; // Base64 encoded ciphertext
+  iv: string; // Base64 encoded Initialization Vector
   createdAt: Timestamp;
   // Denormalized data for display
   userName?: string | null;
