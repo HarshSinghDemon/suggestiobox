@@ -108,6 +108,33 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       }
   };
 
+  const playNextJokebox = useCallback(() => {
+    if (jokeboxPlaylist.length === 0) return;
+    const nextIndex = (currentJokeboxTrackIndex! + 1) % jokeboxPlaylist.length;
+    setCurrentJokeboxTrackIndex(nextIndex);
+    setIsJokeboxPlaying(true);
+  }, [currentJokeboxTrackIndex, jokeboxPlaylist]);
+
+  const playJokeboxTrack = useCallback((track: JokeboxTrack) => {
+      const trackIndex = jokeboxPlaylist.findIndex(t => t.id === track.id);
+      if (playerMode !== 'jokebox') setPlayerMode('jokebox');
+
+      if (trackIndex !== -1) {
+          // If same track is clicked, toggle play/pause
+          if (currentJokeboxTrackIndex === trackIndex) {
+              setIsJokeboxPlaying(prev => !prev);
+          } else {
+              setCurrentJokeboxTrackIndex(trackIndex);
+              setIsJokeboxPlaying(true);
+          }
+      } else {
+          const newPlaylist = [...jokeboxPlaylist, track];
+          setJokeboxPlaylist(newPlaylist);
+          setCurrentJokeboxTrackIndex(newPlaylist.length - 1);
+          setIsJokeboxPlaying(true);
+      }
+  }, [jokeboxPlaylist, playerMode, currentJokeboxTrackIndex]);
+  
   // --- Arcade Logic ---
   const currentArcadeTrack = currentArcadeTrackIndex !== null ? arcadeMusicTracks[currentArcadeTrackIndex] : null;
 
@@ -195,33 +222,6 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   // --- Jokebox Logic ---
   const currentJokeboxTrack = currentJokeboxTrackIndex !== null ? jokeboxPlaylist[currentJokeboxTrackIndex] : null;
 
-   const playJokeboxTrack = useCallback((track: JokeboxTrack) => {
-        const trackIndex = jokeboxPlaylist.findIndex(t => t.id === track.id);
-        if (playerMode !== 'jokebox') setPlayerMode('jokebox');
-
-        if (trackIndex !== -1) {
-            // If same track is clicked, toggle play/pause
-            if (currentJokeboxTrackIndex === trackIndex) {
-                setIsJokeboxPlaying(prev => !prev);
-            } else {
-                setCurrentJokeboxTrackIndex(trackIndex);
-                setIsJokeboxPlaying(true);
-            }
-        } else {
-            const newPlaylist = [...jokeboxPlaylist, track];
-            setJokeboxPlaylist(newPlaylist);
-            setCurrentJokeboxTrackIndex(newPlaylist.length - 1);
-            setIsJokeboxPlaying(true);
-        }
-    }, [jokeboxPlaylist, playerMode, currentJokeboxTrackIndex]);
-
-  const playNextJokebox = useCallback(() => {
-        if (jokeboxPlaylist.length === 0) return;
-        const nextIndex = (currentJokeboxTrackIndex! + 1) % jokeboxPlaylist.length;
-        setCurrentJokeboxTrackIndex(nextIndex);
-        setIsJokeboxPlaying(true);
-  }, [currentJokeboxTrackIndex, jokeboxPlaylist]);
-
   const playPrevJokebox = useCallback(() => {
     if (jokeboxPlaylist.length === 0) return;
     const prevIndex = (currentJokeboxTrackIndex! - 1 + jokeboxPlaylist.length) % jokeboxPlaylist.length;
@@ -232,32 +232,43 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initializePlayer = () => {
-      if (ytPlayerRef.current || typeof window === 'undefined') return;
-
-      const container = document.createElement('div');
-      container.id = 'yt-player-container';
-      container.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;';
-      document.body.appendChild(container);
-      playerContainerRef.current = container;
-
-      const player = createYouTubePlayer(container, {
-          playerVars: { controls: 0, modestbranding: 1, playsinline: 1, origin: window.location.origin },
-      });
-      ytPlayerRef.current = player;
-      setIsJokeboxReady(true);
-      
-      player.on('stateChange', async (event) => {
-          if (event.data === 1) setIsJokeboxPlaying(true); // Playing
-          if (event.data === 2) setIsJokeboxPlaying(false); // Paused
-          if (event.data === 0) { // Ended
-              playNextJokebox();
+      return new Promise<YouTubePlayer>((resolve) => {
+        if (ytPlayerRef.current || typeof window === 'undefined') {
+          if (ytPlayerRef.current) {
+            resolve(ytPlayerRef.current);
           }
-      });
-      
-      player.on('error', (event) => {
-          console.error("YouTube Player Error:", event);
-          toast({ variant: 'destructive', title: 'Playback Error', description: 'This video could not be played. Skipping to next.' });
-          playNextJokebox();
+          return;
+        }
+  
+        const container = document.createElement('div');
+        container.id = 'yt-player-container';
+        container.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;';
+        document.body.appendChild(container);
+        playerContainerRef.current = container;
+  
+        const player = createYouTubePlayer(container, {
+            playerVars: { controls: 0, modestbranding: 1, playsinline: 1, origin: window.location.origin },
+        });
+        
+        player.on('ready', () => {
+            ytPlayerRef.current = player;
+            setIsJokeboxReady(true);
+            resolve(player);
+        });
+
+        player.on('stateChange', async (event) => {
+            if (event.data === 1) setIsJokeboxPlaying(true); // Playing
+            if (event.data === 2) setIsJokeboxPlaying(false); // Paused
+            if (event.data === 0) { // Ended
+                playNextJokebox();
+            }
+        });
+        
+        player.on('error', (event) => {
+            console.error("YouTube Player Error:", event);
+            toast({ variant: 'destructive', title: 'Playback Error', description: 'This video could not be played. Skipping to next.' });
+            playNextJokebox();
+        });
       });
     };
 
@@ -275,23 +286,46 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, playNextJokebox]);
   
   useEffect(() => {
-    if(playerMode === 'jokebox') {
-        setIsArcadePlaying(false); // Ensure arcade is paused
-        if (currentJokeboxTrack && ytPlayerRef.current) {
-            if (isJokeboxPlaying) {
-                ytPlayerRef.current.loadVideoById(currentJokeboxTrack.id);
-                ytPlayerRef.current.playVideo();
-            } else {
-                ytPlayerRef.current.pauseVideo();
-            }
-        } else if (!currentJokeboxTrack) {
-            ytPlayerRef.current?.stopVideo();
-        }
-    } else if (playerMode === 'arcade') {
-        setIsJokeboxPlaying(false); // Ensure jokebox is paused
-        ytPlayerRef.current?.pauseVideo();
-    }
-  }, [playerMode, currentJokeboxTrack, isJokeboxPlaying]);
+    const managePlayback = async () => {
+      if (!isJokeboxReady || !ytPlayerRef.current) return;
+  
+      const player = ytPlayerRef.current;
+      
+      if(playerMode === 'jokebox') {
+          setIsArcadePlaying(false); // Ensure arcade is paused
+          if (currentJokeboxTrack) {
+              const playerState = await player.getPlayerState();
+              const videoId = await player.getVideoUrl().then(url => new URL(url).searchParams.get('v'));
+              
+              if (isJokeboxPlaying) {
+                  // If not the same video, load and play.
+                  if (videoId !== currentJokeboxTrack.id) {
+                      player.loadVideoById(currentJokeboxTrack.id);
+                  }
+                  // If it's paused or unstarted, play it.
+                  if (playerState !== 1) { 
+                      player.playVideo();
+                  }
+              } else {
+                  // If the state is playing, pause it.
+                  if (playerState === 1) {
+                      player.pauseVideo();
+                  }
+              }
+          } else {
+              player.stopVideo();
+          }
+      } else if (playerMode === 'arcade') {
+          setIsJokeboxPlaying(false); // Ensure jokebox is paused
+          const playerState = await player.getPlayerState();
+          if (playerState === 1) {
+            player.pauseVideo();
+          }
+      }
+    };
+    
+    managePlayback();
+  }, [playerMode, currentJokeboxTrack, isJokeboxPlaying, isJokeboxReady]);
   
 
   const playPauseJokebox = () => {
@@ -388,5 +422,3 @@ export const useAudio = () => {
   }
   return context;
 };
-
-    
