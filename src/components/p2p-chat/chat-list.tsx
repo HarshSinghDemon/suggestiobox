@@ -58,6 +58,7 @@ export function ChatList() {
     // Fetch all users involved in any of the chat rooms for efficiency
     const usersQuery = useMemoFirebase(() => {
         if (!firestore || allUserIds.length === 0) return null;
+        // Use a 'in' query which is very efficient for up to 30 IDs.
         return query(collection(firestore, 'users'), where('id', 'in', allUserIds));
     }, [firestore, allUserIds]);
 
@@ -81,11 +82,11 @@ export function ChatList() {
                     photoURL: participantDetails.photoURL
                 }] : []
             };
-        });
+        }).filter(room => room.participantDetails.length > 0); // Ensure we have participant details before rendering
     }, [chatRooms, currentUser, usersMap]);
 
 
-    if (isLoadingRooms || isLoadingUsers) {
+    if (isLoadingRooms || (allUserIds.length > 0 && isLoadingUsers)) {
         return <ChatListSkeleton />;
     }
     
