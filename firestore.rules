@@ -15,11 +15,10 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
     }
 
-    // Chat Rooms are only accessible to participants
+    // Chat Rooms can be created by authenticated users.
+    // They can only be listed/read if the user is a participant.
     match /chatRooms/{roomId} {
-      // Allow read if user is a participant
-      allow read: if request.auth.uid in resource.data.participants;
-      // Allow create for any authenticated user
+      allow list, read: if request.auth.uid in resource.data.participants;
       allow create: if request.auth != null;
 
       // Messages can be read by participants and created by the sender
