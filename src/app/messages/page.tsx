@@ -2,11 +2,12 @@
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Users } from "lucide-react";
+import { MessageSquare, Users, Lock } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FindFriendsList } from "@/components/p2p-chat/find-friends-list";
+import { cn } from "@/lib/utils";
 
 function ListSkeleton() {
     return (
@@ -36,6 +37,13 @@ export default function MessagesPage() {
                                 <CardTitle>My Messages</CardTitle>
                                 <CardDescription>Your private conversations and friend finder.</CardDescription>
                             </div>
+                        </div>
+                        <div className={cn(
+                            "flex items-center gap-1.5 text-xs pt-2",
+                            "text-green-500"
+                        )}>
+                            <Lock className="w-3 h-3" />
+                            <span>Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)</span>
                         </div>
                     </CardHeader>
                     <CardContent>
