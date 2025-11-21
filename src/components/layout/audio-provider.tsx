@@ -18,7 +18,8 @@ const arcadeMusicTracks = [
     { title: "Shinobi BGM 1", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/(Music)%20Shinobi%20-%20BGM%201%20(Arcade).mp3" },
     { title: "Arcade Game Loop", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Arcade%20game%20music%20loop%20%20free%20sound%20effects.mp3" },
     { title: "Cadillacs & Dinosaurs - Select", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Cadillacs%20And%20Dinosaurs%20-%20Player%20Select.mp3" },
-    { title: "Pokemon Original Composition", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Pokimon%20Original%20Composition.mp3" },
+    { title: "Pokemon Theme", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Ben%2010%20-%20Ben%2010%20(Full%20Theme%20Song).mp3" },
+    { title: "Ben 10 Theme", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Pokemon%20Theme%20Song.mp3" },
     { title: "Street Fighter II - Opening", url: "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/music/Street%20Fighter%20II%20Arcade%20Music%20-%20Opening%20Theme%20-%20CPS1.mp3" },
 ];
 
@@ -127,8 +128,9 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== 'undefined' && !arcadeAudioRef.current) {
         arcadeAudioRef.current = new Audio();
+        arcadeAudioRef.current.volume = arcadeVolume;
     }
-  }, []);
+  }, [arcadeVolume]);
   
   useEffect(() => {
     const audio = arcadeAudioRef.current;
@@ -151,29 +153,26 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const audio = arcadeAudioRef.current;
-    if (currentArcadeTrack && audio) {
-        if (audio.src !== currentArcadeTrack.url) {
-            audio.src = currentArcadeTrack.url;
-            audio.load();
-        }
+    if (!audio || !currentArcadeTrack) return;
 
-        const playPromise = isArcadePlaying ? audio.play() : Promise.resolve();
-        playPromise.catch(e => {
-            // Ignore interruption errors, but log others
+    // Only change source if it's different
+    if (audio.src !== currentArcadeTrack.url) {
+        audio.src = currentArcadeTrack.url;
+        audio.load(); // Load the new source
+    }
+
+    const playPromise = isArcadePlaying ? audio.play() : Promise.resolve(audio.pause());
+
+    if(isArcadePlaying) {
+        audio.play().catch(e => {
             if (e.name !== 'AbortError') {
-                console.error("Arcade audio playback error:", e)
+                console.error("Arcade audio playback error:", e);
             }
         });
-        
-        if (!isArcadePlaying) {
-            audio.pause();
-        }
-
-    } else if (!currentArcadeTrack && audio) {
+    } else {
         audio.pause();
-        audio.src = "";
     }
-  }, [currentArcadeTrack, isArcadePlaying]);
+}, [currentArcadeTrack, isArcadePlaying]);
 
   const playPauseArcade = () => {
     if (currentArcadeTrackIndex === null) {
@@ -232,16 +231,23 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
       });
       
       player.on('error', (event) => {
-          console.error("YouTube Player Error", event);
+          console.error("YouTube Player Error: A playback error occurred.", event);
           toast({ variant: 'destructive', title: 'Playback Error', description: 'This video could not be played.' });
           playNextJokebox();
       });
     };
 
-    if (playerMode === 'jokebox') {
-        initializePlayer();
+    initializePlayer();
+
+    return () => {
+        if (ytPlayerRef.current) {
+            ytPlayerRef.current?.destroy();
+            if (playerContainerRef.current && playerContainerRef.current.parentNode === document.body) {
+                document.body.removeChild(playerContainerRef.current);
+            }
+        }
     }
-  }, [toast, playNextJokebox, playerMode]);
+  }, [toast, playNextJokebox]);
   
   useEffect(() => {
     if(playerMode === 'jokebox' && currentJokeboxTrack && ytPlayerRef.current) {
@@ -252,7 +258,7 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
     } else if (playerMode === 'arcade') {
         ytPlayerRef.current?.pauseVideo();
     }
-  }, [playerMode, currentJokeboxTrack]);
+  }, [playerMode, currentJokeboxTrack, isJokeboxPlaying]);
   
    useEffect(() => {
     if (ytPlayerRef.current) {
