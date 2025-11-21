@@ -51,7 +51,7 @@ function b64_to_ab(b64: string): ArrayBuffer {
  * Generates an X25519 key pair for ECDH.
  * Stores the private key in localStorage and returns the public key.
  */
-export async function generateAndStoreKeyPair(): Promise<{ publicKeyBase64: string }> {
+export async function generateAndStoreKeyPair(): Promise<{ publicKeyBase64: string, privateKey: CryptoKey }> {
   const keyPair = await window.crypto.subtle.generateKey(
     { name: 'ECDH', namedCurve: 'X25519' },
     true,
@@ -66,7 +66,7 @@ export async function generateAndStoreKeyPair(): Promise<{ publicKeyBase64: stri
 
   localStorage.setItem('e2ee_private_key', privateKeyBase64);
 
-  return { publicKeyBase64 };
+  return { publicKeyBase64, privateKey: keyPair.privateKey };
 }
 
 /**
@@ -78,14 +78,21 @@ export async function getMyPrivateKey(): Promise<CryptoKey | null> {
   if (!privateKeyB64) {
     return null;
   }
-  const privateKeyAB = b64_to_ab(privateKeyB64);
-  return window.crypto.subtle.importKey(
-    'pkcs8',
-    privateKeyAB,
-    { name: 'ECDH', namedCurve: 'X25519' },
-    true,
-    ['deriveKey']
-  );
+  try {
+    const privateKeyAB = b64_to_ab(privateKeyB64);
+    return await window.crypto.subtle.importKey(
+      'pkcs8',
+      privateKeyAB,
+      { name: 'ECDH', namedCurve: 'X25519' },
+      true,
+      ['deriveKey']
+    );
+  } catch (error) {
+    console.error("Failed to import private key:", error);
+    // If key is invalid, remove it. A new one will be generated on next login.
+    localStorage.removeItem('e2ee_private_key');
+    return null;
+  }
 }
 
 /**

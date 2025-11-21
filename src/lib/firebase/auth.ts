@@ -19,14 +19,55 @@ import {
   unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { generateAndStoreKeyPair } from '../e2ee';
+import { generateAndStoreKeyPair, getMyPrivateKey } from '../e2ee';
 
-export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string, publicKey?: string }) => {
+/**
+ * Silently ensures a user has a valid keypair, generating one if needed.
+ * This is non-blocking and runs in the background after login.
+ */
+const ensureEncryptionKeys = async (user: User) => {
+    const db = getFirestore(user.auth.app);
+    const userDocRef = doc(db, 'users', user.uid);
+    
+    try {
+        const [privateKey, userDoc] = await Promise.all([
+            getMyPrivateKey(),
+            getDoc(userDocRef)
+        ]);
+
+        if (!privateKey || !userDoc.exists() || !userDoc.data()?.publicKey) {
+            console.log("User missing private key or public key in DB. Generating new keys.");
+            const { publicKeyBase64 } = await generateAndStoreKeyPair();
+
+            if (userDoc.exists()) {
+                await updateDoc(userDocRef, { publicKey: publicKeyBase64 });
+            } else {
+                // This handles the case where the user document itself doesn't exist yet.
+                 await setDoc(userDocRef, {
+                    id: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    createdAt: serverTimestamp(),
+                    role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
+                    publicKey: publicKeyBase64,
+                }, { merge: true });
+            }
+        }
+    } catch (error) {
+        console.error("Error ensuring encryption keys:", error);
+    }
+};
+
+
+export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string }) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
   if (!userDoc.exists()) {
+    // New user: Generate keys and create document.
+    const { publicKeyBase64 } = await generateAndStoreKeyPair();
     const userData: any = {
       id: user.uid,
       email: user.email,
@@ -34,13 +75,16 @@ export const handleNewUser = async (user: User, details?: { year?: string, displ
       photoURL: details?.photoURL || user.photoURL,
       createdAt: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
-      publicKey: details?.publicKey || null,
+      publicKey: publicKeyBase64,
     };
     if (details?.year) {
       userData.year = details.year;
     }
     await setDoc(userDocRef, userData);
     return true; // Indicates a new user was created
+  } else {
+    // Existing user: Silently ensure their keys are in place in the background.
+    ensureEncryptionKeys(user);
   }
   return false; // Indicates user already exists
 };
@@ -61,16 +105,11 @@ export const signUpWithEmail = async (
     );
     const user = userCredential.user;
 
-    // Generate and store E2EE key pair
-    const { publicKeyBase64 } = await generateAndStoreKeyPair();
-
     await updateProfile(user, { displayName, photoURL });
     await sendEmailVerification(user);
 
-    const updatedUser = auth.currentUser;
-    if (updatedUser) {
-        await handleNewUser(updatedUser, { year, publicKey: publicKeyBase64 });
-    }
+    // This will generate keys and create the user document.
+    await handleNewUser(user, { year });
 
     return user;
   } catch (error) {
@@ -90,7 +129,8 @@ export const signInWithEmail = async (
       email,
       password
     );
-    // Don't call handleNewUser here to avoid overwriting existing user data on sign-in
+    // After sign-in, trigger the silent key check in the background.
+    ensureEncryptionKeys(userCredential.user);
     return userCredential.user;
   } catch (error) {
     console.error('Error signing in: ', error);
@@ -126,21 +166,9 @@ const handleSocialSignIn = async (auth: Auth, provider: GoogleAuthProvider | Git
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        const db = getFirestore(user.auth.app);
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
         
-        let isNewUser = false;
-        if (!userDoc.exists()) {
-             const { publicKeyBase64 } = await generateAndStoreKeyPair();
-             isNewUser = await handleNewUser(user, { publicKey: publicKeyBase64 });
-        } else if (!userDoc.data()?.publicKey) {
-            // This is an existing user without a public key, so we create one for them.
-            const { publicKeyBase64 } = await generateAndStoreKeyPair();
-            await updateDoc(userDocRef, { publicKey: publicKeyBase64 });
-            // This isn't a "new user" in the sense of the app, but they are new to E2EE.
-            // We don't set isNewUser = true because we don't want to redirect them to profile completion.
-        }
+        // Let handleNewUser manage key creation/check
+        const isNewUser = await handleNewUser(user);
 
         return { user, isNewUser };
     } catch (error: any) {
