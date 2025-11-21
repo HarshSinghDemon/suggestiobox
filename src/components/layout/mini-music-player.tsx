@@ -10,6 +10,8 @@ import {
   SkipForward,
   SkipBack,
   Volume2,
+  Volume1,
+  VolumeX,
   Music,
   Youtube,
   Globe,
@@ -79,6 +81,12 @@ export function MiniMusicPlayer() {
   const switchToArcade = () => {
     setPlayerMode('arcade');
   };
+  
+  const handleVolumeRocker = () => {
+    if (volume > 0.5) setVolume(0.25); // from high to low
+    else if (volume > 0) setVolume(0); // from low to mute
+    else setVolume(1); // from mute to high
+  };
 
   return (
     <div className="p-2 space-y-3 w-80">
@@ -124,14 +132,21 @@ export function MiniMusicPlayer() {
             <SkipForward className="w-5 h-5" />
           </Button>
         </div>
-        <div className="flex items-center gap-2 pt-2">
-          <Volume2 className="w-5 h-5 text-muted-foreground" />
-          <Slider
-            defaultValue={[volume]}
-            max={1}
-            step={0.01}
-            onValueChange={(value) => setVolume(value[0])}
-          />
+        <div className="flex items-center justify-center gap-2 pt-2">
+            {/* Desktop Volume Slider */}
+            <div className="hidden w-full md:flex items-center gap-2">
+                <Volume2 className="w-5 h-5 text-muted-foreground" />
+                <Slider
+                    value={[volume]}
+                    max={1}
+                    step={0.01}
+                    onValueChange={(value) => setVolume(value[0])}
+                />
+            </div>
+            {/* Mobile Volume Rocker */}
+            <Button variant="outline" size="icon" onClick={handleVolumeRocker} className="md:hidden">
+              {volume > 0.5 ? <Volume2 className="w-5 h-5"/> : volume > 0 ? <Volume1 className="w-5 h-5"/> : <VolumeX className="w-5 h-5"/>}
+            </Button>
         </div>
       </div>
       <DropdownMenuSeparator />
