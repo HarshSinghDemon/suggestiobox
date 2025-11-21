@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -12,16 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UserTagPopover } from './user-tag-popover';
 import { moderateText } from '@/ai/flows/moderate-text';
+import type { FirebaseUser } from '@/lib/types';
 
-type User = {
-  id: string;
-  displayName: string;
-  photoURL: string;
-  email: string;
-  year?: '1st' | '2nd' | '3rd';
-};
 
-const findMentions = (text: string, users: User[]): { userId: string, userName: string }[] => {
+const findMentions = (text: string, users: FirebaseUser[]): { userId: string, userName: string }[] => {
     const mentionRegex = /@(\w+(\s\w+)*)/g;
     let match;
     const mentions = new Set<{ userId: string, userName: string }>();
@@ -54,8 +49,8 @@ export function MessageInput() {
     [firestore]
   );
   
-  const { data: users } = useCollection<User>(usersQuery);
-  const [currentUserData, setCurrentUserData] = useState<User | undefined>(undefined);
+  const { data: users } = useCollection<FirebaseUser>(usersQuery);
+  const [currentUserData, setCurrentUserData] = useState<FirebaseUser | undefined>(undefined);
 
   useEffect(() => {
     if (users && user) {
@@ -79,7 +74,7 @@ export function MessageInput() {
     setMessage(text);
   };
   
-  const handleUserSelect = (taggedUser: User) => {
+  const handleUserSelect = (taggedUser: FirebaseUser) => {
     if (!inputRef.current) return;
 
     const text = message;
@@ -100,7 +95,7 @@ export function MessageInput() {
       // Set focus and cursor position after the inserted tag
       setTimeout(() => {
         inputRef.current?.focus();
-        const newCursorPos = start + taggedUser.displayName.length + 2;
+        const newCursorPos = start + (taggedUser.displayName?.length || 0) + 2;
         inputRef.current?.setSelectionRange(newCursorPos, newCursorPos);
       }, 0);
     }
@@ -135,8 +130,10 @@ export function MessageInput() {
         userYear: currentUserData?.year || null,
       };
 
-      const messageRef = await addDocumentNonBlocking(messagesCol, messageData);
-
+      // This is a community chat, so there is no single messageRef ID available before creation
+      // We will create the message first, then send notifications.
+      const messageDocRef = await addDoc(messagesCol, messageData);
+      
       // Handle notifications
       const mentions = findMentions(message.trim(), users);
       for (const mention of mentions) {
@@ -149,7 +146,7 @@ export function MessageInput() {
                 senderImage: user.photoURL,
                 type: 'mention',
                 content: `mentioned you in the community chat.`,
-                relatedId: messageRef.id,
+                relatedId: messageDocRef.id, // Use the ID from the newly created message
                 relatedLink: '/community-chat',
                 isRead: false,
                 createdAt: serverTimestamp(),

@@ -1,23 +1,17 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User as UserIcon } from 'lucide-react';
+import type { FirebaseUser } from '@/lib/types';
 
-type User = {
-    id: string;
-    displayName: string;
-    photoURL: string;
-    email: string;
-};
 
 type UserTagPopoverProps = {
-  onSelect: (user: User) => void;
+  onSelect: (user: FirebaseUser) => void;
   searchQuery: string;
 };
 
@@ -48,12 +42,13 @@ export function UserTagPopover({ onSelect, searchQuery }: UserTagPopoverProps) {
     [firestore]
   );
   
-  const { data: users, isLoading } = useCollection<User>(usersQuery);
+  const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
+    if (!searchQuery) return users.slice(0, 10); // Show some users by default
     return users.filter(user => 
-      user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+      user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [users, searchQuery]);
 
@@ -63,7 +58,7 @@ export function UserTagPopover({ onSelect, searchQuery }: UserTagPopoverProps) {
       <div className="p-2 border-b">
         <p className="text-sm font-medium text-muted-foreground">Tag a user</p>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 max-h-60">
         <div className="p-1">
           {isLoading ? (
             <UserListSkeleton />
@@ -75,7 +70,7 @@ export function UserTagPopover({ onSelect, searchQuery }: UserTagPopoverProps) {
                 onClick={() => onSelect(user)}
               >
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={user.photoURL} />
+                  <AvatarImage src={user.photoURL ?? ''} />
                   <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium">{user.displayName}</span>

@@ -10,7 +10,24 @@ export type FirebaseUser = {
   photoURL: string | null;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
+  publicKey?: string;
 };
+
+export type ChatRoom = {
+    id: string;
+    participants: string[];
+    lastMessage?: {
+        text: string;
+        timestamp: Timestamp;
+    };
+    // For displaying participant info in the chat list
+    participantDetails?: {
+        id: string;
+        displayName: string | null;
+        photoURL: string | null;
+    }[];
+};
+
 
 export type Suggestion = {
   id: string;
@@ -45,13 +62,15 @@ export type Assignment = {
 
 export type Message = {
   id: string;
-  text: string;
+  roomId: string;
+  senderId: string;
+  cipherText: string; // Storing encrypted text
   createdAt: Timestamp;
-  userId: string;
-  userName: string | null;
-  userImage: string | null;
-  userYear?: '1st' | '2nd' | '3rd' | null;
+  // Denormalized data for display
+  userName?: string | null;
+  userImage?: string | null;
 };
+
 
 export type Comment = {
   id: string;

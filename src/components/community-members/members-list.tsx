@@ -2,16 +2,8 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, where } from 'firebase/firestore';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
@@ -19,10 +11,14 @@ import { cn } from '@/lib/utils';
 import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
-import { ShieldCheck, Star } from 'lucide-react';
 import { Card } from '../ui/card';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import { Button } from '../ui/button';
+import { MessageSquare, Loader2 } from 'lucide-react';
+import { findOrCreateChat } from '@/lib/chat';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 function MemberListSkeleton() {
   return (
@@ -49,6 +45,10 @@ const getInitials = (name: string | null | undefined) => {
 
 export function CommunityMembersList() {
   const firestore = useFirestore();
+  const { user: currentUser } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [loadingChat, setLoadingChat] = useState<string | null>(null);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
 
@@ -56,14 +56,16 @@ export function CommunityMembersList() {
 
   const { adminUser, coAdminUser, otherUsers } = useMemo(() => {
     if (!users) return { adminUser: null, coAdminUser: null, otherUsers: [] };
-    const harshAdmin = users.find(u => u.email === 'harshroop100@gmail.com');
-    const atrikCoAdmin = users.find(u => u.email === '15mondalatrik@gmail.com');
+    const filteredUsers = users.filter(u => u.id !== currentUser?.uid);
+    
+    const harshAdmin = filteredUsers.find(u => u.email === 'harshroop100@gmail.com');
+    const atrikCoAdmin = filteredUsers.find(u => u.email === '15mondalatrik@gmail.com');
     
     const adminIds = new Set();
     if (harshAdmin) adminIds.add(harshAdmin.id);
     if (atrikCoAdmin) adminIds.add(atrikCoAdmin.id);
 
-    const others = users.filter(u => !adminIds.has(u.id));
+    const others = filteredUsers.filter(u => !adminIds.has(u.id));
 
     return { 
         adminUser: harshAdmin ? {
@@ -73,10 +75,28 @@ export function CommunityMembersList() {
         coAdminUser: atrikCoAdmin,
         otherUsers: others
     };
-  }, [users]);
+  }, [users, currentUser]);
 
 
   const totalMembers = users?.length ?? 0;
+  
+  const handleStartChat = async (otherUserId: string) => {
+    if (!currentUser || !firestore) {
+        toast({ variant: 'destructive', title: 'You must be logged in to start a chat.' });
+        return;
+    }
+    setLoadingChat(otherUserId);
+    try {
+        const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUserId);
+        router.push(`/messages/${roomId}`);
+    } catch(error) {
+        console.error("Failed to start chat:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not start chat. Please try again.' });
+    } finally {
+        setLoadingChat(null);
+    }
+  };
+
 
   if (isLoading) {
     return <MemberListSkeleton />;
@@ -164,27 +184,44 @@ export function CommunityMembersList() {
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {otherUsers.map((user, index) => {
                     return (
-                        <Popover key={user.id}>
-                            <PopoverTrigger asChild>
-                                <div 
-                                    className="flex flex-col items-center p-4 text-center transition-all duration-300 transform border rounded-lg shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 cursor-pointer opacity-0 animate-fade-in-up"
-                                    style={{ animationDelay: `${index * 75}ms` }}
-                                >
-                                    <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
-                                        <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
-                                        <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className='flex flex-col items-center gap-2'>
-                                    <p className="font-semibold truncate">{user.displayName}</p>
-                                    {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                        <Card 
+                            key={user.id}
+                            className="flex flex-col p-4 text-center transition-all duration-300 transform shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 opacity-0 animate-fade-in-up"
+                            style={{ animationDelay: `${index * 75}ms` }}
+                        >
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className='flex flex-col items-center flex-grow cursor-pointer'>
+                                        <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
+                                            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                                            <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className='flex flex-col items-center gap-2'>
+                                        <p className="font-semibold truncate">{user.displayName}</p>
+                                        {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                                        </div>
+                                        <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
                                     </div>
-                                    <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
-                                </div>
-                            </PopoverTrigger>
-                            <PopoverContent className='w-80'>
-                                <UserProfilePopover user={user} />
-                            </PopoverContent>
-                        </Popover>
+                                </PopoverTrigger>
+                                <PopoverContent className='w-80'>
+                                    <UserProfilePopover user={user} />
+                                </PopoverContent>
+                            </Popover>
+                             <Button
+                                className="w-full mt-4"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleStartChat(user.id)}
+                                disabled={loadingChat === user.id}
+                            >
+                                {loadingChat === user.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                )}
+                                Chat
+                            </Button>
+                        </Card>
                     )
                 })}
             </div>

@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import Link from 'next/link';
@@ -81,7 +82,10 @@ function NotificationBell() {
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
                     {unreadCount > 0 && !isLoading && (
-                        <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-amber-400 ring-2 ring-background animate-pulse" />
+                        <span className="absolute top-2 right-2 flex h-2 w-2">
+                            <span className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-amber-400"></span>
+                            <span className="relative inline-flex w-2 h-2 rounded-full bg-amber-500"></span>
+                        </span>
                     )}
                     {isLoading && <Skeleton className="absolute top-1 right-1 w-5 h-5 rounded-full" />}
                 </Button>
@@ -164,6 +168,10 @@ export function Header() {
                     <DropdownMenuItem onClick={() => router.push('/community-chat')}>
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Community Chat
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => router.push('/messages')}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Private Messages
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/community-members')}>
                       <Users className="w-4 h-4 mr-2" />
@@ -337,6 +345,9 @@ export function Header() {
                            </NavLink>
                             <NavLink href="/community-chat" onNavigate={() => setIsSheetOpen(false)}>
                                 <MessageSquare className="w-5 h-5 mr-3" /> Community Chat
+                            </NavLink>
+                            <NavLink href="/messages" onNavigate={() => setIsSheetOpen(false)}>
+                                <MessageSquare className="w-5 h-5 mr-3" /> Private Messages
                             </NavLink>
                             <NavLink href="/community-members" onNavigate={() => setIsSheetOpen(false)}>
                                 <Users className="w-5 h-5 mr-3" /> Members
