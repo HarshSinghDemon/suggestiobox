@@ -4,8 +4,14 @@
 import { FirebaseUser } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mail, ShieldCheck, Star } from 'lucide-react';
+import { Mail, MessageSquare, ShieldCheck, Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '../ui/button';
+import { useState } from 'react';
+import { useUser, useFirestore } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { findOrCreateChat } from '@/lib/chat';
 
 interface UserProfilePopoverProps {
   user: FirebaseUser;
@@ -47,28 +53,56 @@ const YearBadge = ({ year }: { year: '1st' | '2nd' | '3rd' | undefined }) => {
 };
 
 
-export function UserProfilePopover({ user }: UserProfilePopoverProps) {
-  if (!user) return null;
+export function UserProfilePopover({ user: otherUser }: UserProfilePopoverProps) {
+  const { user: currentUser } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStartChat = async () => {
+    if (!currentUser || !firestore) return;
+    setIsLoading(true);
+    try {
+        const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUser.id);
+        router.push(`/messages/${roomId}`);
+    } catch(error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  if (!otherUser) return null;
   
+  const isOwnProfile = currentUser?.uid === otherUser.id;
+
   return (
     <div className="flex flex-col items-center gap-4 text-center">
       <Avatar className="w-24 h-24 border-4 border-primary/50">
-        <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User Avatar'} />
-        <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+        <AvatarImage src={otherUser.photoURL ?? undefined} alt={otherUser.displayName ?? 'User Avatar'} />
+        <AvatarFallback className="text-3xl">{getInitials(otherUser.displayName)}</AvatarFallback>
       </Avatar>
       <div>
-        <h3 className="text-lg font-semibold">{user.displayName}</h3>
+        <h3 className="text-lg font-semibold">{otherUser.displayName}</h3>
         <div className="mt-1">
-          <YearBadge year={user.year} />
+          <YearBadge year={otherUser.year} />
         </div>
       </div>
       
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Mail className="w-4 h-4" />
-        <a href={`mailto:${user.email}`} className="hover:underline">
-            {user.email}
+        <a href={`mailto:${otherUser.email}`} className="hover:underline">
+            {otherUser.email}
         </a>
       </div>
+      
+      {!isOwnProfile && (
+        <Button className="w-full mt-2" onClick={handleStartChat} disabled={isLoading}>
+          {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+          Chat
+        </Button>
+      )}
     </div>
   );
 }
