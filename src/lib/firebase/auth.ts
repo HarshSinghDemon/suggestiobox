@@ -15,66 +15,44 @@ import {
   fetchSignInMethodsForEmail,
   linkWithCredential,
   OAuthProvider,
-  EmailAuthProvider,
   unlink,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { generateAndStoreKeyPair, getMyPrivateKey } from '../e2ee';
-
-const PRIVATE_KEY_STORAGE_KEY = 'e2ee_private_key';
-
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { generateAndStoreKeyPair } from '../e2ee';
 
 /**
- * Silently ensures a user has a valid keypair, generating one if needed.
- * This is non-blocking and should be run in the background after login.
- * @param user - The Firebase User object.
- */
-export const ensureUserKeys = async (user: User) => {
-    const db = getFirestore(user.auth.app);
-    const userDocRef = doc(db, 'users', user.uid);
-    
-    try {
-        let privateKey = await getMyPrivateKey();
-        const userDoc = await getDoc(userDocRef);
-
-        // Regenerate if local private key is missing OR server public key is missing.
-        if (!privateKey || !userDoc.exists() || !userDoc.data()?.publicKey) {
-            console.log("User missing private or public key. Silently generating new keys.");
-            const { publicKeyBase64 } = await generateAndStoreKeyPair();
-            
-            // Upload public key to server.
-            await setDoc(userDocRef, { publicKey: publicKeyBase64 }, { merge: true });
-        }
-    } catch (error) {
-        console.error("Critical error during key-check/regeneration:", error);
-    }
-};
-
-/**
- * Handles the creation of a new user document in Firestore, including generating
- * their initial E2EE key pair.
+ * Handles user sign-in and sign-up logic. On every successful login,
+ * it generates a new E2EE key pair for the user, ensuring keys are always fresh.
+ * It stores the public key in Firestore and the private key locally.
+ *
  * @param user - The Firebase User object from authentication.
- * @param details - Additional details like year, displayName, and photoURL.
+ * @param details - Optional details for new user creation (e.g., year).
  * @returns {Promise<boolean>} True if a new user document was created.
  */
-export const handleNewUser = async (user: User, details?: { year?: string, displayName?: string, photoURL?: string }) => {
+export const handleUserSignIn = async (user: User, details?: { year?: string }) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
+  // ALWAYS generate a new key pair on login for session freshness and security.
+  const { publicKeyBase64 } = await generateAndStoreKeyPair();
+  const keyVersion = Date.now();
+
   if (!userDoc.exists()) {
-    // New user: Generate keys and create document.
-    const { publicKeyBase64 } = await generateAndStoreKeyPair();
-    
-    // Create user document with public key.
+    // New user: create the document with all details and the new public key.
     const userData: any = {
       id: user.uid,
       email: user.email,
-      displayName: details?.displayName || user.displayName,
-      photoURL: details?.photoURL || user.photoURL,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
       createdAt: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
-      publicKey: publicKeyBase64,
+      encryptionPublicKey: publicKeyBase64,
+      publicKeyVersion: keyVersion,
+      friends: [],
+      friendRequestsSent: [],
+      friendRequestsReceived: [],
+      chatRoomIds: [],
     };
     if (details?.year) {
       userData.year = details.year;
@@ -82,8 +60,14 @@ export const handleNewUser = async (user: User, details?: { year?: string, displ
     await setDoc(userDocRef, userData);
     return true; // Indicates a new user was created
   } else {
-    // Existing user: Silently ensure their keys are in place in the background.
-    ensureUserKeys(user).catch(console.error);
+    // Existing user: always overwrite with the new public key for this session.
+    await setDoc(userDocRef, {
+      encryptionPublicKey: publicKeyBase64,
+      publicKeyVersion: keyVersion,
+      // Also update profile info that may have changed from social login
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+    }, { merge: true });
   }
   return false; // Indicates user already exists
 };
@@ -107,8 +91,7 @@ export const signUpWithEmail = async (
     await updateProfile(user, { displayName, photoURL });
     await sendEmailVerification(user);
 
-    // This will generate keys and create the user document.
-    await handleNewUser(user, { year });
+    await handleUserSignIn(user, { year });
 
     return user;
   } catch (error) {
@@ -128,8 +111,7 @@ export const signInWithEmail = async (
       email,
       password
     );
-    // After sign-in, trigger the silent key check in the background.
-    ensureUserKeys(userCredential.user).catch(console.error);
+    await handleUserSignIn(userCredential.user);
     return userCredential.user;
   } catch (error) {
     console.error('Error signing in: ', error);
@@ -140,9 +122,6 @@ export const signInWithEmail = async (
 export const signOut = async (auth: Auth) => {
   try {
     await firebaseSignOut(auth);
-    // Optionally clear the private key on sign out for security,
-    // though this means it will be regenerated on next login.
-    // localStorage.removeItem(PRIVATE_KEY_STORAGE_KEY);
   } catch (error) {
     console.error('Error signing out: ', error);
   }
@@ -169,24 +148,23 @@ const handleSocialSignIn = async (auth: Auth, provider: GoogleAuthProvider | Git
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         
-        const isNewUser = await handleNewUser(user);
+        const isNewUser = await handleUserSignIn(user);
 
         return { user, isNewUser };
     } catch (error: any) {
-        // Handle account exists with different credential error
         if (error.code === 'auth/account-exists-with-different-credential') {
             const email = error.customData.email;
             if (email) {
                 const methods = await fetchSignInMethodsForEmail(auth, email);
                 if (methods[0] === 'password') {
-                    // TODO: Prompt user to sign in with password to link accounts
                     throw new Error("An account already exists with this email address. Please sign in with your password to link your accounts.");
                 }
                 const existingProvider = new OAuthProvider(methods[0]);
                 const credential = OAuthProvider.credentialFromError(error);
                 const existingProviderResult = await signInWithPopup(auth, existingProvider);
                 await linkWithCredential(existingProviderResult.user, credential);
-                const isNewUser = await handleNewUser(existingProviderResult.user);
+                
+                const isNewUser = await handleUserSignIn(existingProviderResult.user);
                 return { user: existingProviderResult.user, isNewUser };
             }
         }

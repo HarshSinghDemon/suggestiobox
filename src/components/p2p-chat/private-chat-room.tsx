@@ -111,7 +111,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [messageText, setMessageText] = useState("");
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     
-    // Non-blocking E2EE state
     const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
     const messageQueue = useRef<OptimisticMessage[]>([]);
     const isProcessingQueue = useRef(false);
@@ -198,13 +197,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     useEffect(() => {
         const deriveAndProcessKey = async () => {
-            if (otherUser?.publicKey && !sharedKey) {
+            if (otherUser?.encryptionPublicKey && !sharedKey) {
                 try {
                     const myPrivateKey = await getMyPrivateKey();
                     if (!myPrivateKey) {
-                        return; // Key generation is handled automatically, just wait.
+                        // Key will be generated on login, just wait for it.
+                        return; 
                     }
-                    const key = await deriveSharedKey(myPrivateKey, otherUser.publicKey);
+                    const key = await deriveSharedKey(myPrivateKey, otherUser.encryptionPublicKey);
                     setSharedKey(key);
                     await processMessageQueue(key);
                 } catch (e) {
@@ -266,19 +266,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         );
     }
     
-    if (!otherUser.publicKey) {
-         return (
-            <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
-                <Lock className="w-16 h-16 text-destructive" />
-                <h2 className="text-2xl font-bold">Cannot Establish Secure Chat</h2>
-                <p className="max-w-md text-muted-foreground">
-                    Could not start an encrypted conversation because <span className="font-semibold">{otherUser.displayName}</span> does not have a valid encryption key. They may need to log in again to generate one.
-                </p>
-                <Button onClick={() => router.push('/messages')}>Go back to messages</Button>
-            </div>
-        );
-    }
-    
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex flex-row items-center gap-4 border-b">
@@ -328,7 +315,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         onChange={e => setMessageText(e.target.value)}
                         disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || !sharedKey}>
                         {isProcessingQueue.current ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>
@@ -336,5 +323,3 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </Card>
     );
 }
-
-    
