@@ -15,8 +15,8 @@ export async function findOrCreateChat(firestore: Firestore, currentUserId: stri
     const currentUserDoc = await getDoc(currentUserDocRef);
     const currentUserData = currentUserDoc.data() as FirebaseUser;
     
-    // Check if users are friends before creating or finding a chat
-    if (!currentUserData.friends?.includes(otherUserId)) {
+    // Admins can bypass the friend check.
+    if (currentUserData.role !== 'admin' && !currentUserData.friends?.includes(otherUserId)) {
         throw new Error("You can only chat with your friends.");
     }
     
