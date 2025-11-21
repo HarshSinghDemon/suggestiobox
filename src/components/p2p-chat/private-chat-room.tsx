@@ -15,7 +15,7 @@ import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { importKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
+import { importKey, encryptMessage, decryptMessage, generateAndExportKey } from "@/lib/e2ee";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type DecryptedMessage = {
@@ -109,7 +109,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     };
 
     const processPendingMessages = useCallback(async (key: CryptoKey) => {
-        if (pendingMessages.length === 0 || !currentUser) return;
+        if (pendingMessages.length === 0 || !currentUser || !roomRef) return;
         
         setIsSending(true);
         const messagesToSend = [...pendingMessages];
@@ -126,19 +126,31 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     iv: iv,
                     createdAt: serverTimestamp(),
                 });
-                await updateDoc(roomRef!, {
+                await updateDoc(roomRef, {
                     lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp() }
                 });
             } catch (error) {
                 console.error("Failed to send a pending message:", error);
-                // Optionally re-add to pending queue or show an error
             }
         }
         setIsSending(false);
     }, [pendingMessages, currentUser, firestore, roomId, roomRef]);
     
     useEffect(() => {
-        if (room?.sessionKey_b64 && !sessionKey) {
+        if (isLoadingRoom || !room || !roomRef) return;
+
+        // Auto-repair: if key is missing, generate and set it.
+        if (!room.sessionKey_b64 && !sessionKey) {
+            generateAndExportKey().then(newKeyB64 => {
+                updateDoc(roomRef, { sessionKey_b64: newKeyB64 }).then(() => {
+                    importKey(newKeyB64).then(key => {
+                        setSessionKey(key);
+                        calculateFingerprint(key);
+                        processPendingMessages(key);
+                    });
+                });
+            });
+        } else if (room.sessionKey_b64 && !sessionKey) {
             importKey(room.sessionKey_b64)
                 .then(key => {
                     setSessionKey(key);
@@ -147,7 +159,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 })
                 .catch(err => console.error("Failed to import session key:", err));
         }
-    }, [room, sessionKey, processPendingMessages]);
+    }, [room, isLoadingRoom, sessionKey, roomRef, processPendingMessages]);
 
     useEffect(() => {
         if (!sessionKey || !encryptedMessages) {
@@ -158,8 +170,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         const decryptAll = async () => {
             const newDecryptedMessages: DecryptedMessage[] = await Promise.all(
                 encryptedMessages.map(async (msg) => {
-                    const decryptedText = await decryptMessage(sessionKey, msg.cipherText, msg.iv);
-                    return { ...msg, text: decryptedText, status: 'sent' };
+                    try {
+                        const decryptedText = await decryptMessage(sessionKey, msg.cipherText, msg.iv);
+                        return { ...msg, text: decryptedText, status: 'sent' };
+                    } catch (e) {
+                        return { ...msg, text: "Failed to decrypt message.", status: 'sent' };
+                    }
                 })
             );
             setDecryptedMessages(newDecryptedMessages);
@@ -179,7 +195,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [allMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !messageText.trim() || !firestore) return;
+        if (!currentUser || !messageText.trim()) return;
         
         const textToSend = messageText.trim();
         setMessageText("");
@@ -275,5 +291,3 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </Card>
     );
 }
-
-    

@@ -10,8 +10,6 @@ export type FirebaseUser = {
   photoURL: string | null;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
-  encryptionPublicKey?: string; // Stored in Base64
-  publicKeyVersion?: number; // Timestamp of key generation
   chatRoomIds?: string[];
   friends?: string[];
   friendRequestsSent?: string[];

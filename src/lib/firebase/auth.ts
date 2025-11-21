@@ -35,6 +35,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
     // New user: create the document.
     const userData: any = {
       id: user.uid,
+      uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
