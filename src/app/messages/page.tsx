@@ -5,9 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MessageSquare, Users, Lock } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FindFriendsList } from "@/components/p2p-chat/find-friends-list";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 function ListSkeleton() {
     return (
@@ -25,52 +24,39 @@ function ListSkeleton() {
     );
 }
 
+function WelcomePanel() {
+    return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 text-center bg-muted/50 rounded-lg">
+            <div className="relative w-48 h-48">
+                <Image 
+                    src="https://ik.imagekit.io/bt0k47tzc/undraw_chatting_re_j55r_1.svg?updatedAt=1764121287955"
+                    alt="Select a chat"
+                    fill
+                    className="object-contain"
+                />
+            </div>
+            <h2 className="text-2xl font-bold">Your Private Messenger</h2>
+            <p className="max-w-xs text-muted-foreground">
+                Select a conversation from the list to start chatting. Your messages are end-to-end encrypted.
+            </p>
+        </div>
+    )
+}
+
 export default function MessagesPage() {
     return (
         <AuthWrapper>
-            <div className="container max-w-3xl py-8 mx-auto">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-4">
-                            <MessageSquare className="w-8 h-8 text-primary" />
-                            <div>
-                                <CardTitle>My Messages</CardTitle>
-                                <CardDescription>Your private conversations and friend finder.</CardDescription>
-                            </div>
-                        </div>
-                        <div className={cn(
-                            "flex items-center gap-1.5 text-xs pt-2",
-                            "text-green-500"
-                        )}>
-                            <Lock className="w-3 h-3" />
-                            <span>Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)</span>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="chats" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="chats">
-                                    <MessageSquare className="w-4 h-4 mr-2" />
-                                    My Chats
-                                </TabsTrigger>
-                                <TabsTrigger value="find">
-                                    <Users className="w-4 h-4 mr-2" />
-                                    Find Friends
-                                </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="chats" className="mt-4">
-                                <Suspense fallback={<ListSkeleton />}>
-                                    <ChatList />
-                                </Suspense>
-                            </TabsContent>
-                            <TabsContent value="find" className="mt-4">
-                                <Suspense fallback={<ListSkeleton />}>
-                                    <FindFriendsList />
-                                </Suspense>
-                            </TabsContent>
-                        </Tabs>
-                    </CardContent>
-                </Card>
+            <div className="container h-[calc(100vh-4rem)] p-0 sm:p-6 sm:py-6">
+                <div className="h-full border rounded-lg md:grid md:grid-cols-3">
+                    <div className="h-full md:col-span-1 md:border-r">
+                        <Suspense fallback={<ListSkeleton />}>
+                            <ChatList />
+                        </Suspense>
+                    </div>
+                    <div className="hidden h-full md:col-span-2 md:block">
+                        <WelcomePanel />
+                    </div>
+                </div>
             </div>
         </AuthWrapper>
     );

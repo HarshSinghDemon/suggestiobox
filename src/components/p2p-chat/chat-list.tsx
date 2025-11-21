@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -7,15 +8,17 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, MessageSquarePlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { FindFriendsList } from "./find-friends-list";
 
 function ChatListSkeleton() {
     return (
-        <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
+        <div className="p-4 space-y-2">
+            {[...Array(8)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-3">
                     <Skeleton className="w-12 h-12 rounded-full" />
                     <div className="flex-1 space-y-2">
@@ -33,12 +36,11 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-export function ChatList() {
+export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
 
-    // 1. Fetch the current user's data to get their chatRoomIds
     const userDocRef = useMemoFirebase(() => {
         if (!currentUser || !firestore) return null;
         return doc(firestore, 'users', currentUser.uid);
@@ -47,7 +49,6 @@ export function ChatList() {
 
     const chatRoomIds = userData?.chatRoomIds || [];
 
-    // 2. Fetch only the chat rooms the user is part of
     const chatRoomsQuery = useMemoFirebase(() => {
         if (!firestore || chatRoomIds.length === 0) return null;
         return query(
@@ -65,7 +66,6 @@ export function ChatList() {
         return Array.from(ids);
     }, [chatRooms]);
     
-    // 3. Fetch all participant profiles in one query
     const usersQuery = useMemoFirebase(() => {
         if (!firestore || allParticipantIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', allParticipantIds));
@@ -77,7 +77,6 @@ export function ChatList() {
         return new Map(users.map(u => [u.id, u]));
     }, [users]);
     
-    // 4. Join the data on the client
     const enrichedChatRooms = useMemo(() => {
         if (!chatRooms || !currentUser || usersMap.size === 0) return [];
         return chatRooms.map(room => {
@@ -103,60 +102,77 @@ export function ChatList() {
         );
     }, [enrichedChatRooms, searchQuery]);
 
-
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
     return (
-        <div className="space-y-4">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search conversations..."
-                    className="pl-9"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+        <div className="flex flex-col h-full">
+            <div className="p-4 border-b">
+                <h2 className="text-xl font-bold">Messages</h2>
             </div>
-             {isLoading ? (
-                <ChatListSkeleton />
-            ) : filteredChatRooms && filteredChatRooms.length > 0 ? (
-                 <div className="space-y-2">
-                    {filteredChatRooms.map(room => {
-                        const otherUser = room.participantDetails?.[0];
-                        if (!otherUser) return null;
-                        return (
-                            <Link href={`/messages/${room.id}`} key={room.id}>
-                                <div className={cn(
-                                    "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
-                                    "animate-fade-in-up"
-                                )}>
-                                    <Avatar className="w-12 h-12">
-                                        <AvatarImage src={otherUser.photoURL ?? undefined} />
-                                        <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                        <p className="text-sm italic truncate text-muted-foreground">
-                                            {room.lastMessage ? 'Encrypted message' : 'No messages yet.'}
-                                        </p>
-                                    </div>
-                                    {room.lastMessage?.timestamp && (
-                                        <p className="text-xs text-muted-foreground self-start">
-                                            {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
-                                        </p>
-                                    )}
-                                </div>
-                            </Link>
-                        )
-                    })}
+            <Tabs defaultValue="chats" className="flex flex-col flex-1 min-h-0">
+                <div className="p-4 border-b">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="chats"><MessagesSquare className="w-4 h-4 mr-2" />Chats</TabsTrigger>
+                        <TabsTrigger value="find"><UserPlus className="w-4 h-4 mr-2" />Find Friends</TabsTrigger>
+                    </TabsList>
                 </div>
-            ) : (
-                <div className="py-16 text-center text-muted-foreground">
-                    <MessagesSquare className="w-12 h-12 mx-auto mb-4" />
-                    <p className="font-semibold">No conversations found.</p>
-                    <p className="text-sm">Start a chat from the Community Members page or clear your search.</p>
-                </div>
-            )}
+                <TabsContent value="chats" className="flex-1 m-0 overflow-hidden">
+                    <div className="p-4 border-b">
+                         <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search conversations..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                     {isLoading ? (
+                        <ChatListSkeleton />
+                    ) : filteredChatRooms && filteredChatRooms.length > 0 ? (
+                        <div className="p-2 space-y-1">
+                            {filteredChatRooms.map(room => {
+                                const otherUser = room.participantDetails?.[0];
+                                if (!otherUser) return null;
+                                return (
+                                    <Link href={`/messages/${room.id}`} key={room.id} className="block">
+                                        <div className={cn(
+                                            "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
+                                            selectedRoomId === room.id && "bg-accent"
+                                        )}>
+                                            <Avatar className="w-12 h-12">
+                                                <AvatarImage src={otherUser.photoURL ?? undefined} />
+                                                <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="font-semibold truncate">{otherUser.displayName}</p>
+                                                <p className="text-sm italic truncate text-muted-foreground">
+                                                    {room.lastMessage ? 'Encrypted message' : 'No messages yet.'}
+                                                </p>
+                                            </div>
+                                            {room.lastMessage?.timestamp && (
+                                                <p className="text-xs text-muted-foreground self-start">
+                                                    {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
+                            <MessageSquarePlus className="w-12 h-12 mx-auto" />
+                            <p className="font-semibold">No conversations yet.</p>
+                            <p className="text-sm">Start a new chat by finding a friend.</p>
+                        </div>
+                    )}
+                </TabsContent>
+                <TabsContent value="find" className="flex-1 m-0 overflow-y-auto">
+                    <FindFriendsList />
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

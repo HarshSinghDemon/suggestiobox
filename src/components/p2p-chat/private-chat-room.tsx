@@ -7,7 +7,7 @@ import type { ChatRoom, FirebaseUser, Message as EncryptedMessage } from "@/lib/
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, Clock, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -22,7 +22,7 @@ type DecryptedMessage = {
     id: string;
     senderId: string;
     text: string;
-    createdAt: EncryptedMessage['createdAt'] | Date; // Allow JS Date for pending
+    createdAt: EncryptedMessage['createdAt'] | Date;
     status?: 'sent' | 'pending';
 }
 
@@ -31,9 +31,8 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-function ChatMessage({ message, isCurrentUserSender }: { message: DecryptedMessage; isCurrentUserSender: boolean }) {
+function ChatMessage({ message, isCurrentUserSender, author }: { message: DecryptedMessage; isCurrentUserSender: boolean; author?: FirebaseUser }) {
     
-    // Safely get the date
     let sentAtDate;
     if (message.createdAt && typeof (message.createdAt as any).toDate === 'function') {
         sentAtDate = (message.createdAt as any).toDate();
@@ -44,15 +43,24 @@ function ChatMessage({ message, isCurrentUserSender }: { message: DecryptedMessa
     const timeAgo = sentAtDate ? formatDistanceToNow(sentAtDate, { addSuffix: true }) : 'just now';
 
     return (
-        <div className={cn("flex items-end gap-2 max-w-md", isCurrentUserSender ? "self-end" : "self-start")}>
+        <div className={cn(
+            "flex items-end gap-2 max-w-lg w-fit", 
+            isCurrentUserSender ? "self-end flex-row-reverse" : "self-start"
+        )}>
+             <Avatar className={cn("w-8 h-8", isCurrentUserSender && "hidden")}>
+                <AvatarImage src={author?.photoURL ?? undefined} />
+                <AvatarFallback>{getInitials(author?.displayName)}</AvatarFallback>
+            </Avatar>
             <div className={cn(
-                "p-3 rounded-lg",
-                isCurrentUserSender ? "bg-primary text-primary-foreground" : "bg-muted"
+                "p-3 rounded-2xl relative",
+                isCurrentUserSender 
+                    ? "bg-primary text-primary-foreground rounded-br-none" 
+                    : "bg-muted rounded-bl-none"
             )}>
-                <p>{message.text}</p>
+                <p className="text-sm">{message.text}</p>
                  <div className={cn(
-                     "text-xs mt-1 flex items-center gap-1",
-                     isCurrentUserSender ? "text-primary-foreground/70" : "text-muted-foreground"
+                     "text-xs mt-1.5 flex items-center gap-1.5",
+                     isCurrentUserSender ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"
                  )}>
                     {message.status === 'pending' && <Clock className="w-3 h-3" />}
                     <span>{message.status === 'pending' ? 'Sending...' : timeAgo}</span>
@@ -64,22 +72,23 @@ function ChatMessage({ message, isCurrentUserSender }: { message: DecryptedMessa
 
 function ChatRoomSkeleton() {
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center gap-4">
-                <Skeleton className="w-12 h-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="w-32 h-6" />
+        <div className="flex flex-col h-full">
+            <header className="flex items-center h-16 gap-4 px-4 border-b shrink-0">
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div className="flex-1 space-y-1">
+                    <Skeleton className="w-32 h-5" />
+                    <Skeleton className="w-20 h-3" />
                 </div>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-4">
+            </header>
+            <div className="flex-1 p-6 space-y-4">
                 <Skeleton className="w-3/4 h-12" />
-                <Skeleton className="self-end w-1/2 h-16" />
+                <div className="flex justify-end"><Skeleton className="w-1/2 h-16" /></div>
                 <Skeleton className="w-3/4 h-8" />
-            </CardContent>
-            <CardFooter>
+            </div>
+            <footer className="p-4 border-t shrink-0">
                 <Skeleton className="w-full h-10" />
-            </CardFooter>
-        </Card>
+            </footer>
+        </div>
     );
 }
 
@@ -93,7 +102,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
     const [pendingMessages, setPendingMessages] = useState<DecryptedMessage[]>([]);
     const [keyFingerprint, setKeyFingerprint] = useState<string | null>(null);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const viewportRef = useRef<HTMLDivElement>(null);
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -114,15 +123,42 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         const hashBuffer = await window.crypto.subtle.digest('SHA-256', keyData);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        setKeyFingerprint(hashHex.substring(0, 10)); // Use first 10 chars
+        setKeyFingerprint(hashHex.substring(0, 10));
     };
-
+    
+    const initializeAndSetKey = useCallback(async () => {
+        if (!roomRef) return;
+        const newKeyB64 = await generateAndExportKey();
+        await updateDoc(roomRef, { sessionKey_b64: newKeyB64 });
+        const key = await importKey(newKeyB64);
+        setSessionKey(key);
+        calculateFingerprint(key);
+    }, [roomRef]);
+    
+    useEffect(() => {
+        if (isLoadingRoom || !room || !currentUser) return;
+        
+        if (room.sessionKey_b64 && !sessionKey) {
+            importKey(room.sessionKey_b64)
+                .then(key => {
+                    setSessionKey(key);
+                    calculateFingerprint(key);
+                })
+                .catch(err => {
+                    console.error("Failed to import session key, re-creating:", err);
+                    initializeAndSetKey();
+                });
+        } else if (!room.sessionKey_b64) {
+            initializeAndSetKey();
+        }
+    }, [room, isLoadingRoom, sessionKey, currentUser, initializeAndSetKey]);
+    
     const processPendingMessages = useCallback(async (key: CryptoKey) => {
         if (pendingMessages.length === 0 || !currentUser || !roomRef) return;
         
         setIsSending(true);
         const messagesToSend = [...pendingMessages];
-        setPendingMessages([]); // Clear queue immediately
+        setPendingMessages([]);
 
         for (const msg of messagesToSend) {
             try {
@@ -142,35 +178,11 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 });
             } catch (error) {
                 console.error("Failed to send a pending message:", error);
-                 // Optionally re-add to queue or show an error
             }
         }
         setIsSending(false);
     }, [pendingMessages, currentUser, firestore, roomId, roomRef]);
-    
-    useEffect(() => {
-        if (isLoadingRoom || !room || !roomRef || !currentUser) return;
 
-        // Auto-repair: if key is missing, generate and set it.
-        if (!room.sessionKey_b64) {
-             generateAndExportKey().then(newKeyB64 => {
-                updateDoc(roomRef, { sessionKey_b64: newKeyB64 }).then(() => {
-                    importKey(newKeyB64).then(key => {
-                        setSessionKey(key);
-                        calculateFingerprint(key);
-                    });
-                });
-            });
-        } else if (room.sessionKey_b64 && !sessionKey) {
-            importKey(room.sessionKey_b64)
-                .then(key => {
-                    setSessionKey(key);
-                    calculateFingerprint(key);
-                })
-                .catch(err => console.error("Failed to import session key:", err));
-        }
-    }, [room, isLoadingRoom, sessionKey, roomRef, currentUser]);
-    
     useEffect(() => {
         if (sessionKey && pendingMessages.length > 0) {
             processPendingMessages(sessionKey);
@@ -197,15 +209,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             setDecryptedMessages(newDecryptedMessages);
         };
         decryptAll();
-
     }, [sessionKey, encryptedMessages]);
     
     const allMessages = useMemo(() => [...decryptedMessages, ...pendingMessages], [decryptedMessages, pendingMessages]);
     
     useEffect(() => {
-        if (scrollAreaRef.current) {
+        if (viewportRef.current) {
             setTimeout(() => {
-                 scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+                 viewportRef.current?.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'auto' });
             }, 100);
         }
     }, [allMessages]);
@@ -234,72 +245,89 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     if (!room || !otherUser) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-                <p className="text-lg text-muted-foreground">Chat not found or user does not exist.</p>
+                <p className="text-lg text-muted-foreground">Chat not found.</p>
                 <Button onClick={() => router.push('/messages')}>Go back to messages</Button>
             </div>
         );
     }
     
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center gap-4 border-b">
-                <Button variant="ghost" size="icon" className="shrink-0" onClick={() => router.push('/messages')}>
+        <div className="flex flex-col h-full bg-card">
+            <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <Avatar className="w-12 h-12">
+                <Avatar className="w-10 h-10">
                     <AvatarImage src={otherUser.photoURL ?? undefined} />
                     <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                    <CardTitle>{otherUser.displayName}</CardTitle>
+                    <p className="font-semibold">{otherUser.displayName}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {otherUser.year} Year
+                    </p>
                 </div>
                  <Tooltip>
-                    <TooltipTrigger>
-                        <Lock className="w-5 h-5 text-green-500" />
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon">
+                            <Lock className={cn("w-5 h-5", sessionKey ? 'text-green-500' : 'text-amber-500 animate-pulse')} />
+                        </Button>
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>Messages are end-to-end encrypted.</p>
                         {keyFingerprint && <p className="mt-1 font-mono text-xs text-muted-foreground">Fingerprint: {keyFingerprint}</p>}
                     </TooltipContent>
                 </Tooltip>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-                 <ScrollArea className="h-full" ref={scrollAreaRef}>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon">
+                            <Info className="w-5 h-5" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>This is a private chat.</p>
+                        <p className="text-xs text-muted-foreground">Only you and {otherUser.displayName} can see these messages.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </header>
+            <div className="flex-1 min-h-0 overflow-hidden">
+                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-4 p-6">
                         {allMessages.length > 0 ? (
                             allMessages.map(msg => (
-                                <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} />
+                                <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} />
                             ))
                         ) : (
-                            <p className="text-center text-muted-foreground">
+                            <p className="py-12 text-sm text-center text-muted-foreground">
                                 No messages yet. Say hello!
                             </p>
                         )}
                          {!sessionKey && (
-                            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                            <div className="flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground">
                                 <Loader2 className="w-4 h-4 animate-spin"/>
                                 <p>Establishing secure connection...</p>
                             </div>
                          )}
                     </div>
                 </ScrollArea>
-            </CardContent>
-            <CardFooter className="pt-4 border-t">
+            </div>
+            <footer className="p-4 border-t shrink-0">
                 <form
                     className="flex w-full gap-2"
                     onSubmit={e => { e.preventDefault(); handleSendMessage(); }}
                 >
                     <Input 
-                        placeholder="Type an encrypted message..."
+                        placeholder="Type a message..."
                         value={messageText}
                         onChange={e => setMessageText(e.target.value)}
                         disabled={!currentUser}
+                        className="text-base"
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending}>
                        {isSending ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>
-            </CardFooter>
-        </Card>
+            </footer>
+        </div>
     );
 }
