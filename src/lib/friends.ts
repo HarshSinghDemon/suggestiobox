@@ -25,6 +25,27 @@ export async function sendFriendRequest(firestore: Firestore, fromUserId: string
 }
 
 /**
+ * Cancels a previously sent friend request.
+ * @param firestore - The Firestore instance.
+ * @param fromUserId - The ID of the user canceling the request.
+ * @param toUserId - The ID of the user who received the request.
+ */
+export async function cancelFriendRequest(firestore: Firestore, fromUserId: string, toUserId: string): Promise<void> {
+    const fromUserRef = doc(firestore, 'users', fromUserId);
+    const toUserRef = doc(firestore, 'users', toUserId);
+
+    await Promise.all([
+        updateDoc(fromUserRef, {
+            friendRequestsSent: arrayRemove(toUserId)
+        }),
+        updateDoc(toUserRef, {
+            friendRequestsReceived: arrayRemove(fromUserId)
+        })
+    ]);
+}
+
+
+/**
  * Accepts a friend request.
  * @param firestore - The Firestore instance.
  * @param currentUserId - The user accepting the request.
@@ -48,10 +69,10 @@ export async function acceptFriendRequest(firestore: Firestore, currentUserId: s
 }
 
 /**
- * Declines or cancels a friend request.
+ * Declines a friend request.
  * @param firestore - The Firestore instance.
- * @param currentUserId - The user declining/canceling the request.
- * @param otherUserId - The other user involved in the request.
+ * @param currentUserId - The user declining the request.
+ * @param otherUserId - The user who sent the request.
  */
 export async function declineFriendRequest(firestore: Firestore, currentUserId: string, otherUserId: string): Promise<void> {
     const currentUserRef = doc(firestore, 'users', currentUserId);

@@ -19,7 +19,7 @@ function ChatListSkeleton() {
                 </div>
             ))}
         </div>
-    )
+    );
 }
 
 export default function MessagesPage() {

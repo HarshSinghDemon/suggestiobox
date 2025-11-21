@@ -15,11 +15,11 @@ import { Card } from '../ui/card';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { MessageSquare, Loader2, UserPlus, UserCheck, UserMinus, Handshake, Check, X } from 'lucide-react';
+import { MessageSquare, Loader2, UserPlus, UserCheck, UserX, Check, X } from 'lucide-react';
 import { findOrCreateChat } from '@/lib/chat';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { acceptFriendRequest, declineFriendRequest, sendFriendRequest } from '@/lib/friends';
+import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, sendFriendRequest } from '@/lib/friends';
 
 function MemberListSkeleton() {
   return (
@@ -84,6 +84,19 @@ const ActionButton = ({
             setLoading(false);
         }
     };
+
+    const handleCancelRequest = async () => {
+        if (!currentUser || !firestore) return;
+        setLoading(true);
+        try {
+            await cancelFriendRequest(firestore, currentUser.uid, otherUser.id);
+            toast({ title: "Request Cancelled", description: `Your friend request to ${otherUser.displayName} has been cancelled.` });
+        } catch (e: any) {
+             toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setLoading(false);
+        }
+    }
     
     const handleAcceptRequest = async () => {
         if (!currentUser || !firestore) return;
@@ -133,10 +146,15 @@ const ActionButton = ({
     }
     if (requestSent) {
         return (
-            <Button className="w-full" variant="outline" size="sm" disabled>
-                <UserCheck className="w-4 h-4 mr-2" />
-                Request Sent
-            </Button>
+            <div className="flex w-full gap-2">
+                <Button className="flex-1" variant="outline" size="sm" disabled>
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Request Sent
+                </Button>
+                 <Button variant="destructive" size="sm" onClick={handleCancelRequest} disabled={loading}>
+                    <UserX className="w-4 h-4" />
+                </Button>
+            </div>
         );
     }
     return (

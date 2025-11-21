@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -8,9 +9,10 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare } from "lucide-react";
-import { useMemo } from "react";
+import { MessagesSquare, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "../ui/input";
 
 function ChatListSkeleton() {
     return (
@@ -36,6 +38,7 @@ const getInitials = (name: string | null | undefined) => {
 export function ChatList() {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
+    const [searchQuery, setSearchQuery] = useState('');
 
     // 1. Fetch the current user's data to get their chatRoomIds
     const userDocRef = useMemoFirebase(() => {
@@ -93,55 +96,69 @@ export function ChatList() {
         }).filter(room => room.participantDetails.length > 0);
     }, [chatRooms, currentUser, usersMap]);
 
+    const filteredChatRooms = useMemo(() => {
+        if (!enrichedChatRooms) return [];
+        if (!searchQuery.trim()) return enrichedChatRooms;
+        
+        return enrichedChatRooms.filter(room => 
+            room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [enrichedChatRooms, searchQuery]);
+
 
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
-    if (isLoading) {
-        return <ChatListSkeleton />;
-    }
-    
-    if (!enrichedChatRooms || enrichedChatRooms.length === 0) {
-        return (
-            <div className="py-16 text-center text-muted-foreground">
-                 <MessagesSquare className="w-12 h-12 mx-auto mb-4" />
-                <p className="font-semibold">No conversations yet.</p>
-                <p className="text-sm">Start a chat from the Community Members page.</p>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-2">
-            {enrichedChatRooms.map(room => {
-                const otherUser = room.participantDetails?.[0];
-                if (!otherUser) return null;
-                return (
-                    <Link href={`/messages/${room.id}`} key={room.id}>
-                        <div className={cn(
-                            "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
-                            "animate-fade-in-up"
-                        )}>
-                            <Avatar className="w-12 h-12">
-                                <AvatarImage src={otherUser.photoURL ?? undefined} />
-                                <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 overflow-hidden">
-                                <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                <p className="text-sm truncate text-muted-foreground">
-                                    {room.lastMessage?.text || 'No messages yet.'}
-                                </p>
-                            </div>
-                             {room.lastMessage?.timestamp && (
-                                <p className="text-xs text-muted-foreground self-start">
-                                    {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
-                                </p>
-                            )}
-                        </div>
-                    </Link>
-                )
-            })}
+        <div className="space-y-4">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search conversations..."
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+             {isLoading ? (
+                <ChatListSkeleton />
+            ) : filteredChatRooms && filteredChatRooms.length > 0 ? (
+                 <div className="space-y-2">
+                    {filteredChatRooms.map(room => {
+                        const otherUser = room.participantDetails?.[0];
+                        if (!otherUser) return null;
+                        return (
+                            <Link href={`/messages/${room.id}`} key={room.id}>
+                                <div className={cn(
+                                    "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
+                                    "animate-fade-in-up"
+                                )}>
+                                    <Avatar className="w-12 h-12">
+                                        <AvatarImage src={otherUser.photoURL ?? undefined} />
+                                        <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="font-semibold truncate">{otherUser.displayName}</p>
+                                        <p className="text-sm truncate text-muted-foreground">
+                                            {room.lastMessage?.text || 'No messages yet.'}
+                                        </p>
+                                    </div>
+                                    {room.lastMessage?.timestamp && (
+                                        <p className="text-xs text-muted-foreground self-start">
+                                            {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
+                                        </p>
+                                    )}
+                                </div>
+                            </Link>
+                        )
+                    })}
+                </div>
+            ) : (
+                <div className="py-16 text-center text-muted-foreground">
+                    <MessagesSquare className="w-12 h-12 mx-auto mb-4" />
+                    <p className="font-semibold">No conversations found.</p>
+                    <p className="text-sm">Start a chat from the Community Members page or clear your search.</p>
+                </div>
+            )}
         </div>
     )
 }
-
-    
