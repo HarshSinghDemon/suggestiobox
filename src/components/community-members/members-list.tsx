@@ -12,7 +12,7 @@ import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
 import { Card } from '../ui/card';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { MessageSquare, Loader2, UserPlus, UserCheck, UserMinus, Handshake, Check, X } from 'lucide-react';
@@ -151,6 +151,7 @@ const ActionButton = ({
 export function CommunityMembersList() {
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
   const { data: allUsers, isLoading } = useCollection<FirebaseUser>(usersQuery);
@@ -269,33 +270,33 @@ export function CommunityMembersList() {
         {otherUsers && otherUsers.length > 0 ? (
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {otherUsers.map((user, index) => {
+                    const isSelected = selectedUserId === user.id;
                     return (
                         <Card 
                             key={user.id}
-                            className="flex flex-col p-4 text-center transition-all duration-300 transform shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 opacity-0 animate-fade-in-up"
+                            className={cn(
+                                "flex flex-col p-4 text-center transition-all duration-300 transform shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 opacity-0 animate-fade-in-up",
+                                isSelected && "border-primary/50 -translate-y-1.5 shadow-xl shadow-primary/20"
+                            )}
                             style={{ animationDelay: `${index * 75}ms` }}
+                            onClick={() => setSelectedUserId(isSelected ? null : user.id)}
                         >
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <div className='flex flex-col items-center flex-grow cursor-pointer'>
-                                        <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
-                                            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
-                                            <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className='flex flex-col items-center gap-2'>
-                                        <p className="font-semibold truncate">{user.displayName}</p>
-                                        {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
-                                        </div>
-                                        <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
-                                    </div>
-                                </PopoverTrigger>
-                                <PopoverContent className='w-80'>
-                                    <UserProfilePopover user={user} />
-                                </PopoverContent>
-                            </Popover>
-                             {currentUserData && <div className="mt-4 w-full">
-                                <ActionButton currentUser={currentUserData} otherUser={user} />
-                             </div>}
+                           <div className='flex flex-col items-center flex-grow'>
+                                <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
+                                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                                    <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+                                </Avatar>
+                                <div className='flex flex-col items-center gap-2'>
+                                <p className="font-semibold truncate">{user.displayName}</p>
+                                {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                                </div>
+                                <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
+                            </div>
+                             {currentUserData && isSelected && (
+                                <div className="mt-4 w-full animate-fade-in-up animation-delay-200">
+                                    <ActionButton currentUser={currentUserData} otherUser={user} />
+                                </div>
+                             )}
                         </Card>
                     )
                 })}
