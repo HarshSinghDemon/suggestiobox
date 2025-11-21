@@ -94,7 +94,7 @@ export type Notification = {
     senderId: string;
     senderName: string;
     senderImage: string | null;
-    type: 'mention' | 'private_message';
+    type: 'mention' | 'private_message' | 'friend_request' | 'friend_request_accepted';
     content: string; // e.g., 'mentioned you in a comment'
     relatedId: string; // e.g., the suggestion or messageId
     relatedLink: string; // e.g., /suggestions/suggestionId
@@ -122,6 +122,8 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
+    
+
     
 
     

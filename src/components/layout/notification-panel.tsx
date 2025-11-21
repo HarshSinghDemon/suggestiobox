@@ -2,16 +2,19 @@
 'use client';
 
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { Notification } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BellRing, BellOff } from 'lucide-react';
+import { BellRing, BellOff, Check, X } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '../ui/button';
+import { acceptFriendRequest, declineFriendRequest } from '@/lib/friends';
+import { useState } from 'react';
 
 function NotificationSkeleton() {
     return (
@@ -39,6 +42,7 @@ export function NotificationPanel() {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
+    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
 
     const notificationsQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -47,23 +51,52 @@ export function NotificationPanel() {
 
     const { data: notifications, isLoading } = useCollection<Notification>(notificationsQuery);
 
-    const handleNotificationClick = async (notification: Notification) => {
+    const markAsRead = async (notificationId: string) => {
         if (!user || !firestore) return;
+        const notifRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
+        try {
+            await updateDoc(notifRef, { isRead: true });
+        } catch (e) {
+            console.error("Failed to mark notification as read", e);
+        }
+    };
+
+    const handleAccept = async (notification: Notification) => {
+        if (!user || !firestore) return;
+        setProcessingRequestId(notification.id);
+        try {
+            await acceptFriendRequest(firestore, user.uid, notification.senderId);
+            await deleteDoc(doc(firestore, 'users', user.uid, 'notifications', notification.id));
+            toast({ title: "Friend Added!", description: `You are now friends with ${notification.senderName}.`});
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setProcessingRequestId(null);
+        }
+    }
+
+    const handleDecline = async (notification: Notification) => {
+        if (!user || !firestore) return;
+        setProcessingRequestId(notification.id);
+        try {
+            await declineFriendRequest(firestore, user.uid, notification.senderId);
+            await deleteDoc(doc(firestore, 'users', user.uid, 'notifications', notification.id));
+            toast({ title: "Request Declined", description: `Friend request from ${notification.senderName} declined.`});
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setProcessingRequestId(null);
+        }
+    }
+
+    const handleNotificationClick = async (notification: Notification) => {
+        // Friend requests are handled by buttons, not by clicking the whole notification
+        if (notification.type === 'friend_request') return;
         
         router.push(notification.relatedLink);
 
         if (!notification.isRead) {
-            const notifRef = doc(firestore, 'users', user.uid, 'notifications', notification.id);
-            try {
-                await updateDoc(notifRef, { isRead: true });
-            } catch(e) {
-                console.error("Failed to mark notification as read", e);
-                toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: 'Could not update notification status.'
-                })
-            }
+            await markAsRead(notification.id);
         }
     };
     
@@ -84,24 +117,37 @@ export function NotificationPanel() {
                             <div
                                 key={notif.id}
                                 className={cn(
-                                    "flex items-start gap-3 p-2 rounded-md cursor-pointer hover:bg-accent",
+                                    "flex flex-col gap-3 p-2 rounded-md",
+                                    notif.type !== 'friend_request' && "cursor-pointer hover:bg-accent",
                                     !notif.isRead && "bg-primary/10"
                                 )}
                                 onClick={() => handleNotificationClick(notif)}
                             >
-                                <Avatar className="w-10 h-10 mt-1">
-                                    <AvatarImage src={notif.senderImage ?? undefined} />
-                                    <AvatarFallback>{getInitials(notif.senderName)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <p className="text-sm">
-                                        <span className="font-semibold">{notif.senderName}</span> {notif.content}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
-                                    </p>
-                                </div>
-                                {!notif.isRead && <div className="w-2 h-2 mt-2 rounded-full bg-primary animate-pulse" />}
+                               <div className='flex items-start gap-3'>
+                                    <Avatar className="w-10 h-10 mt-1">
+                                        <AvatarImage src={notif.senderImage ?? undefined} />
+                                        <AvatarFallback>{getInitials(notif.senderName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <p className="text-sm">
+                                            <span className="font-semibold">{notif.senderName}</span> {notif.content}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
+                                        </p>
+                                    </div>
+                                    {!notif.isRead && <div className="w-2 h-2 mt-2 rounded-full bg-primary animate-pulse" />}
+                               </div>
+                               {notif.type === 'friend_request' && !notif.isRead && (
+                                   <div className="flex justify-end gap-2">
+                                       <Button size="sm" onClick={() => handleAccept(notif)} disabled={processingRequestId === notif.id}>
+                                           <Check className="w-4 h-4 mr-2"/> Accept
+                                       </Button>
+                                       <Button size="sm" variant="outline" onClick={() => handleDecline(notif)} disabled={processingRequestId === notif.id}>
+                                           <X className="w-4 h-4 mr-2"/> Decline
+                                       </Button>
+                                   </div>
+                               )}
                             </div>
                         ))}
                     </div>
@@ -116,3 +162,4 @@ export function NotificationPanel() {
     );
 }
 
+    
