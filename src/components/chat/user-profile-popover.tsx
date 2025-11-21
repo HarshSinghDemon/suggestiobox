@@ -161,7 +161,7 @@ function ActionButtons({ otherUser }: { otherUser: FirebaseUser }) {
     
     if (requestSent) {
         return (
-            <div className='flex flex-col w-full gap-2 mt-2'>
+             <div className='flex flex-col w-full gap-2 mt-2'>
                 <Button variant="secondary" disabled>
                     <UserCheck className="w-4 h-4 mr-2" />
                     Request Sent

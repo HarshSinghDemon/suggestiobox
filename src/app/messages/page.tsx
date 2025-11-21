@@ -2,11 +2,13 @@
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FindFriendsList } from "@/components/p2p-chat/find-friends-list";
 
-function ChatListSkeleton() {
+function ListSkeleton() {
     return (
         <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -32,14 +34,33 @@ export default function MessagesPage() {
                             <MessageSquare className="w-8 h-8 text-primary" />
                             <div>
                                 <CardTitle>My Messages</CardTitle>
-                                <CardDescription>Your private conversations.</CardDescription>
+                                <CardDescription>Your private conversations and friend finder.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Suspense fallback={<ChatListSkeleton />}>
-                            <ChatList />
-                        </Suspense>
+                        <Tabs defaultValue="chats" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="chats">
+                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                    My Chats
+                                </TabsTrigger>
+                                <TabsTrigger value="find">
+                                    <Users className="w-4 h-4 mr-2" />
+                                    Find Friends
+                                </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="chats" className="mt-4">
+                                <Suspense fallback={<ListSkeleton />}>
+                                    <ChatList />
+                                </Suspense>
+                            </TabsContent>
+                            <TabsContent value="find" className="mt-4">
+                                <Suspense fallback={<ListSkeleton />}>
+                                    <FindFriendsList />
+                                </Suspense>
+                            </TabsContent>
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>
