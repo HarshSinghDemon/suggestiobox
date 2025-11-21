@@ -16,15 +16,14 @@ service cloud.firestore {
     }
 
     // Chat Rooms can be read by participants and created by authenticated users.
-    // The list operation is secured by the query in the application code.
     match /chatRooms/{roomId} {
-      allow list, read: if request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null;
+      allow get, list, create: if request.auth != null;
+      allow read: if request.auth.uid in resource.data.participants;
+      allow update: if request.auth.uid in resource.data.participants;
 
-      // Messages can be read by participants and created by the sender
+      // Messages can be read, created and deleted only by participants of the chat room.
       match /messages/{messageId} {
-        allow read: if get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participants.hasAny([request.auth.uid]);
-        allow create: if request.auth.uid == request.resource.data.senderId;
+        allow read, create, delete: if get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participants.hasAny([request.auth.uid]);
       }
     }
 

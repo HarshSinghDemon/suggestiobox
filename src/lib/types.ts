@@ -21,10 +21,8 @@ export type FirebaseUser = {
 export type ChatRoom = {
     id: string;
     participants: string[];
-    // Stores the session key, encrypted for each participant with their public key.
-    sessionKeys: { [userId: string]: { key: string, iv: string } };
     lastMessage?: {
-        text: string; // This might be ciphertext for the last message preview
+        text: string;
         timestamp: Timestamp;
     };
     // For displaying participant info in the chat list
@@ -71,10 +69,9 @@ export type Message = {
     id: string;
     roomId: string;
     senderId: string;
-    cipherText: string; // Base64 encoded ciphertext
-    iv: string;         // Base64 encoded Initialization Vector
+    text: string; // Message content is now plaintext
     createdAt: Timestamp;
-    // Denormalized data for display in lists (should also be encrypted)
+    // Denormalized data for display in lists
     userName?: string | null;
     userImage?: string | null;
 };

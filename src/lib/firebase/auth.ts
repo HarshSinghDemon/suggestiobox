@@ -18,11 +18,9 @@ import {
   unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { generateAndStoreKeyPair } from '../e2ee';
 
 /**
- * Handles user sign-in and sign-up logic. On first sign-up, or if keys are missing,
- * it generates an E2EE key pair for the user.
+ * Handles user sign-in and sign-up logic.
  * It stores the public key in Firestore and the private key locally.
  *
  * @param user - The Firebase User object from authentication.
@@ -35,8 +33,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
   const userDoc = await getDoc(userDocRef);
 
   if (!userDoc.exists()) {
-    // New user: generate keys and create the document.
-    const { publicKeyBase64 } = await generateAndStoreKeyPair();
+    // New user: create the document.
     const userData: any = {
       id: user.uid,
       email: user.email,
@@ -44,8 +41,6 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
       photoURL: user.photoURL,
       createdAt: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
-      encryptionPublicKey: publicKeyBase64,
-      publicKeyVersion: Date.now(),
       friends: [],
       friendRequestsSent: [],
       friendRequestsReceived: [],
@@ -57,15 +52,6 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
     await setDoc(userDocRef, userData);
     return true; // Indicates a new user was created
   } else {
-    // Existing user: check if they have keys. If not, generate and save them.
-    const userData = userDoc.data();
-    if (!userData.encryptionPublicKey || !localStorage.getItem('e2ee_private_key')) {
-        const { publicKeyBase64 } = await generateAndStoreKeyPair();
-        await updateDoc(userDocRef, {
-            encryptionPublicKey: publicKeyBase64,
-            publicKeyVersion: Date.now(),
-        });
-    }
      // Also update profile info that may have changed from social login
      await updateDoc(userDocRef, {
         displayName: user.displayName,
@@ -124,8 +110,6 @@ export const signInWithEmail = async (
 
 export const signOut = async (auth: Auth) => {
   try {
-    // Clear the private key on sign out for security
-    localStorage.removeItem('e2ee_private_key');
     await firebaseSignOut(auth);
   } catch (error) {
     console.error('Error signing out: ', error);
