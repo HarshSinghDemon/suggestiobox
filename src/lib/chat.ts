@@ -1,5 +1,6 @@
 
 import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import type { FirebaseUser } from "./types";
 
 /**
  * Finds an existing 1-on-1 chat room between two users, or creates a new one if it doesn't exist.
@@ -10,10 +11,18 @@ import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, 
  * @returns The ID of the chat room.
  */
 export async function findOrCreateChat(firestore: Firestore, currentUserId: string, otherUserId: string): Promise<string> {
+    const currentUserDocRef = doc(firestore, 'users', currentUserId);
+    const currentUserDoc = await getDoc(currentUserDocRef);
+    const currentUserData = currentUserDoc.data() as FirebaseUser;
+    
+    // Check if users are friends before creating or finding a chat
+    if (!currentUserData.friends?.includes(otherUserId)) {
+        throw new Error("You can only chat with your friends.");
+    }
+    
     const chatRoomsRef = collection(firestore, "chatRooms");
     
     // Check if a chat room already exists between these two users.
-    // This query is more robust and checks for both orderings of participants in one go.
     const q = query(chatRoomsRef, where("participants", "in", [[currentUserId, otherUserId], [otherUserId, currentUserId]]));
 
     const querySnapshot = await getDocs(q);
@@ -31,7 +40,6 @@ export async function findOrCreateChat(firestore: Firestore, currentUserId: stri
         const newRoomRef = await addDoc(chatRoomsRef, newRoomData);
         
         // Atomically update both user documents with the new chat room ID
-        const currentUserDocRef = doc(firestore, 'users', currentUserId);
         const otherUserDocRef = doc(firestore, 'users', otherUserId);
         
         await Promise.all([
@@ -46,5 +54,3 @@ export async function findOrCreateChat(firestore: Firestore, currentUserId: stri
         return newRoomRef.id;
     }
 }
-
-    

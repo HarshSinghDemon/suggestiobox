@@ -15,10 +15,11 @@ import { Card } from '../ui/card';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, UserPlus, UserCheck, UserMinus, Handshake, Check, X } from 'lucide-react';
 import { findOrCreateChat } from '@/lib/chat';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { acceptFriendRequest, declineFriendRequest, sendFriendRequest } from '@/lib/friends';
 
 function MemberListSkeleton() {
   return (
@@ -42,30 +43,134 @@ const getInitials = (name: string | null | undefined) => {
     return names.map((n) => n[0]).join('').substring(0, 2);
 };
 
+const ActionButton = ({
+    currentUser,
+    otherUser,
+}: {
+    currentUser: FirebaseUser;
+    otherUser: FirebaseUser;
+}) => {
+    const firestore = useFirestore();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const isFriend = currentUser.friends?.includes(otherUser.id);
+    const requestSent = currentUser.friendRequestsSent?.includes(otherUser.id);
+    const requestReceived = currentUser.friendRequestsReceived?.includes(otherUser.id);
+
+    const handleStartChat = async () => {
+        if (!currentUser || !firestore) return;
+        setLoading(true);
+        try {
+            const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUser.id);
+            router.push(`/messages/${roomId}`);
+        } catch(error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const handleAddFriend = async () => {
+        if (!currentUser || !firestore) return;
+        setLoading(true);
+        try {
+            await sendFriendRequest(firestore, currentUser.uid, otherUser.id);
+            toast({ title: "Request Sent!", description: `Friend request sent to ${otherUser.displayName}.` });
+        } catch(e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const handleAcceptRequest = async () => {
+        if (!currentUser || !firestore) return;
+        setLoading(true);
+        try {
+            await acceptFriendRequest(firestore, currentUser.uid, otherUser.id);
+            toast({ title: "Friend Added!", description: `You are now friends with ${otherUser.displayName}.` });
+        } catch(e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setLoading(false);
+        }
+    }
+    
+    const handleDeclineRequest = async () => {
+        if (!currentUser || !firestore) return;
+        setLoading(true);
+        try {
+            await declineFriendRequest(firestore, currentUser.uid, otherUser.id);
+            toast({ title: "Request Declined", description: `You have declined the friend request from ${otherUser.displayName}.` });
+        } catch(e: any) {
+            toast({ variant: 'destructive', title: 'Error', description: e.message });
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (isFriend) {
+        return (
+            <Button className="w-full" variant="outline" size="sm" onClick={handleStartChat} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                Chat
+            </Button>
+        );
+    }
+    if (requestReceived) {
+        return (
+            <div className="flex w-full gap-2">
+                <Button className="flex-1" variant="outline" size="sm" onClick={handleAcceptRequest} disabled={loading}>
+                    <Check className="w-4 h-4 mr-2"/> Accept
+                </Button>
+                <Button className="flex-1" variant="destructive" size="sm" onClick={handleDeclineRequest} disabled={loading}>
+                    <X className="w-4 h-4 mr-2"/> Decline
+                </Button>
+            </div>
+        );
+    }
+    if (requestSent) {
+        return (
+            <Button className="w-full" variant="outline" size="sm" disabled>
+                <UserCheck className="w-4 h-4 mr-2" />
+                Request Sent
+            </Button>
+        );
+    }
+    return (
+        <Button className="w-full" size="sm" onClick={handleAddFriend} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+            Add Friend
+        </Button>
+    );
+};
+
 
 export function CommunityMembersList() {
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [loadingChat, setLoadingChat] = useState<string | null>(null);
-
+  
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
+  const { data: allUsers, isLoading } = useCollection<FirebaseUser>(usersQuery);
+  
+  const currentUserData = useMemo(() => {
+    return allUsers?.find(u => u.id === currentUser?.uid);
+  }, [allUsers, currentUser]);
 
-  const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
-
-  const { adminUser, coAdminUser, otherUsers } = useMemo(() => {
-    if (!users) return { adminUser: null, coAdminUser: null, otherUsers: [] };
-    const filteredUsers = users.filter(u => u.id !== currentUser?.uid);
+  const { adminUser, coAdminUser, otherUsers, totalMembers } = useMemo(() => {
+    if (!allUsers) return { adminUser: null, coAdminUser: null, otherUsers: [], totalMembers: 0 };
     
-    const harshAdmin = filteredUsers.find(u => u.email === 'harshroop100@gmail.com');
-    const atrikCoAdmin = filteredUsers.find(u => u.email === '15mondalatrik@gmail.com');
+    const harshAdmin = allUsers.find(u => u.email === 'harshroop100@gmail.com');
+    const atrikCoAdmin = allUsers.find(u => u.email === '15mondalatrik@gmail.com');
     
     const adminIds = new Set();
     if (harshAdmin) adminIds.add(harshAdmin.id);
     if (atrikCoAdmin) adminIds.add(atrikCoAdmin.id);
+    if (currentUser) adminIds.add(currentUser.uid);
 
-    const others = filteredUsers.filter(u => !adminIds.has(u.id));
+    const others = allUsers.filter(u => !adminIds.has(u.id));
 
     return { 
         adminUser: harshAdmin ? {
@@ -73,29 +178,10 @@ export function CommunityMembersList() {
             photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
         } : null, 
         coAdminUser: atrikCoAdmin,
-        otherUsers: others
+        otherUsers: others,
+        totalMembers: allUsers.length
     };
-  }, [users, currentUser]);
-
-
-  const totalMembers = users?.length ?? 0;
-  
-  const handleStartChat = async (otherUserId: string) => {
-    if (!currentUser || !firestore) {
-        toast({ variant: 'destructive', title: 'You must be logged in to start a chat.' });
-        return;
-    }
-    setLoadingChat(otherUserId);
-    try {
-        const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUserId);
-        router.push(`/messages/${roomId}`);
-    } catch(error) {
-        console.error("Failed to start chat:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not start chat. Please try again.' });
-    } finally {
-        setLoadingChat(null);
-    }
-  };
+  }, [allUsers, currentUser]);
 
 
   if (isLoading) {
@@ -207,20 +293,9 @@ export function CommunityMembersList() {
                                     <UserProfilePopover user={user} />
                                 </PopoverContent>
                             </Popover>
-                             <Button
-                                className="w-full mt-4"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStartChat(user.id)}
-                                disabled={loadingChat === user.id}
-                            >
-                                {loadingChat === user.id ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <MessageSquare className="w-4 h-4 mr-2" />
-                                )}
-                                Chat
-                            </Button>
+                             {currentUserData && <div className="mt-4 w-full">
+                                <ActionButton currentUser={currentUserData} otherUser={user} />
+                             </div>}
                         </Card>
                     )
                 })}

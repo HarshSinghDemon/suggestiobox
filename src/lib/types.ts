@@ -12,6 +12,9 @@ export type FirebaseUser = {
   role?: 'user' | 'admin';
   publicKey?: string;
   chatRoomIds?: string[];
+  friends?: string[];
+  friendRequestsSent?: string[];
+  friendRequestsReceived?: string[];
 };
 
 export type ChatRoom = {
