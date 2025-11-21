@@ -74,9 +74,6 @@ export type Message = {
     cipherText: string; // Encrypted message content
     iv: string; // Initialization Vector for AES-GCM
     createdAt: Timestamp;
-    // Denormalized data for display in lists
-    userName?: string | null;
-    userImage?: string | null;
 };
 
 

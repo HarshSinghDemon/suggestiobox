@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -138,8 +136,8 @@ export function ChatList() {
                                     </Avatar>
                                     <div className="flex-1 overflow-hidden">
                                         <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                        <p className="text-sm truncate text-muted-foreground">
-                                            {room.lastMessage?.text || 'No messages yet.'}
+                                        <p className="text-sm italic truncate text-muted-foreground">
+                                            {room.lastMessage ? 'Encrypted message' : 'No messages yet.'}
                                         </p>
                                     </div>
                                     {room.lastMessage?.timestamp && (

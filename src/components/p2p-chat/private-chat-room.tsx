@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -78,6 +77,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [isSending, setIsSending] = useState(false);
     const [sessionKey, setSessionKey] = useState<CryptoKey | null>(null);
     const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
+    const [keyFingerprint, setKeyFingerprint] = useState<string | null>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
@@ -94,7 +94,25 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const { data: encryptedMessages } = useCollection<EncryptedMessage>(messagesQuery);
     
-    // Decrypt messages whenever the session key or encrypted messages change
+    const calculateFingerprint = async (key: CryptoKey) => {
+        const keyData = await window.crypto.subtle.exportKey('raw', key);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', keyData);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        setKeyFingerprint(hashHex.substring(0, 10)); // Use first 10 chars
+    };
+    
+    useEffect(() => {
+        if (room?.sessionKey_b64) {
+            importKey(room.sessionKey_b64)
+                .then(key => {
+                    setSessionKey(key);
+                    calculateFingerprint(key);
+                })
+                .catch(err => console.error("Failed to import session key:", err));
+        }
+    }, [room]);
+
     useEffect(() => {
         if (!sessionKey || !encryptedMessages) {
             setDecryptedMessages([]);
@@ -113,16 +131,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         decryptAll();
 
     }, [sessionKey, encryptedMessages]);
-
-
-    // Effect to import the session key when the room data is available
-    useEffect(() => {
-        if (room?.sessionKey_b64) {
-            importKey(room.sessionKey_b64)
-                .then(setSessionKey)
-                .catch(err => console.error("Failed to import session key:", err));
-        }
-    }, [room]);
     
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -149,7 +157,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             });
 
             await updateDoc(roomRef!, {
-                lastMessage: { cipherText, iv, timestamp: serverTimestamp() }
+                lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp() } // Placeholder for list view
             });
             
              if(otherUser) {
@@ -207,6 +215,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>Messages are end-to-end encrypted.</p>
+                        {keyFingerprint && <p className="mt-1 font-mono text-xs text-muted-foreground">Fingerprint: {keyFingerprint}</p>}
                     </TooltipContent>
                 </Tooltip>
             </CardHeader>

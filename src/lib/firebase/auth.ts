@@ -21,7 +21,6 @@ import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'f
 
 /**
  * Handles user sign-in and sign-up logic.
- * It stores the public key in Firestore and the private key locally.
  *
  * @param user - The Firebase User object from authentication.
  * @param details - Optional details for new user creation (e.g., year).

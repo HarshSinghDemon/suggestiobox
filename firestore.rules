@@ -4,6 +4,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    function isParticipant(roomId) {
+      return request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participants;
+    }
+
     // Users can read/write their own profile, but only read others'
     match /users/{userId} {
       allow read: if request.auth != null;
@@ -15,15 +19,16 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
     }
 
-    // Chat Rooms can be read and updated only by participants.
+    // Chat Rooms can be read only by participants.
     match /chatRooms/{roomId} {
-      allow get, list: if request.auth.uid in resource.data.participants;
+      allow get: if isParticipant(roomId);
+      allow list: if false; // Users should not be able to list all chat rooms.
       allow create: if request.auth != null && request.auth.uid in request.resource.data.participants;
-      allow update: if request.auth.uid in resource.data.participants;
+      allow update: if isParticipant(roomId);
 
       // Messages can be read and created only by participants of the chat room.
       match /messages/{messageId} {
-        allow read, create: if get(/databases/$(database)/documents/chatRooms/$(roomId)).data.participants.hasAny([request.auth.uid]);
+        allow read, create: if isParticipant(roomId);
         // Deletion is denied to preserve chat history integrity in this model.
         allow delete: if false; 
       }
