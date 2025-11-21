@@ -4,7 +4,7 @@
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message } from "@/lib/types";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { ArrowLeft, Loader2, Send, Lock, AlertCircle } from "lucide-react";
@@ -17,7 +17,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { deriveSharedKey, encryptMessage, decryptMessage, getMyPrivateKey } from "@/lib/e2ee";
-import { Alert } from "../ui/alert";
+import { Alert, AlertDescription } from "../ui/alert";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -102,9 +102,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const [sharedKey, setSharedKey] = useState<CryptoKey | null>(null);
 
-    const currentUserRef = useMemoFirebase(() => currentUser ? doc(firestore, 'users', currentUser.uid) : null, [firestore, currentUser]);
-    const { data: currentUserData, isLoading: isLoadingCurrentUser } = useDoc<FirebaseUser>(currentUserRef);
-    
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
 
@@ -122,23 +119,25 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     // Derive shared E2EE key
     useEffect(() => {
         const deriveKey = async () => {
-            if (otherUser?.publicKey && currentUserData?.publicKey) {
+            if (otherUser?.publicKey) {
                 try {
                     const privateKey = await getMyPrivateKey();
                     if (!privateKey) {
-                        toast({ variant: 'destructive', title: 'Encryption Error', description: 'Could not load your private key.' });
+                        // This case should be rare now due to automatic key generation on login.
+                        // We will disable the input rather than showing a toast.
+                        console.error("Local private key not found.");
                         return;
                     }
                     const key = await deriveSharedKey(privateKey, otherUser.publicKey);
                     setSharedKey(key);
                 } catch(e) {
                     console.error("Key derivation failed", e);
-                    toast({ variant: 'destructive', title: 'Encryption Error', description: 'Failed to establish secure connection.' });
+                    setSharedKey(null); // Explicitly set to null on failure
                 }
             }
         };
         deriveKey();
-    }, [otherUser, currentUserData, toast]);
+    }, [otherUser, toast]);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -203,7 +202,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     };
 
 
-    const isLoading = isLoadingRoom || isLoadingOtherUser || isLoadingCurrentUser;
+    const isLoading = isLoadingRoom || isLoadingOtherUser;
     
     if (isLoading) return <ChatRoomSkeleton />;
     
@@ -211,8 +210,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         return <p>Chat not found.</p>
     }
     
-    const canChat = currentUserData?.publicKey && otherUser?.publicKey;
-
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex flex-row items-center gap-4 border-b">
@@ -225,17 +222,13 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </Avatar>
                 <div>
                     <CardTitle>{otherUser.displayName}</CardTitle>
-                    {canChat ? (
-                        <div className="flex items-center gap-1.5 text-xs text-green-500">
-                            <Lock className="w-3 h-3" />
-                            <span>End-to-end encrypted</span>
-                        </div>
-                    ) : (
-                         <div className="flex items-center gap-1.5 text-xs text-amber-500">
-                            <AlertCircle className="w-3 h-3" />
-                            <span>Not secure</span>
-                        </div>
-                    )}
+                    <div className={cn(
+                        "flex items-center gap-1.5 text-xs",
+                        sharedKey ? "text-green-500" : "text-amber-500"
+                    )}>
+                        {sharedKey ? <Lock className="w-3 h-3" /> : <Loader2 className="w-3 h-3 animate-spin" />}
+                        <span>{sharedKey ? "End-to-end encrypted" : "Establishing secure connection..."}</span>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0 overflow-hidden">
@@ -243,14 +236,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <div className="flex flex-col gap-4 p-6">
                         {isLoadingMessages ? (
                             <Loader2 className="m-auto animate-spin" />
-                        ) : !canChat ? (
-                            <Alert variant="destructive">
-                                <AlertCircle className="w-4 h-4" />
-                                <CardTitle>Insecure Chat</CardTitle>
-                                <CardDescription>
-                                    End-to-end encryption cannot be established because one or both users have an outdated account without an encryption key. Please ask the user to log in again to generate their key.
-                                </CardDescription>
-                            </Alert>
                         ) : messages && messages.length > 0 ? (
                             messages.map(msg => (
                                 <ChatMessage key={msg.id} message={{...msg, senderId: msg.senderId === currentUser?.uid ? 'currentUser' : 'otherUser' }} sharedKey={sharedKey} />

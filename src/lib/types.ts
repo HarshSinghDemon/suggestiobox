@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 import type { Subject, Semester } from "./constants";
 
@@ -122,8 +121,3 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
-    
-
-    
-
-    
