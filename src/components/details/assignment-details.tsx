@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye, Trash2 } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2, AlertCircle } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 import { CommentSection } from './comment-section';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 
 function AssignmentDetailsSkeleton() {
   return (
@@ -61,8 +62,8 @@ function AssignmentDetailsSkeleton() {
 
 type AssignmentDetailsProps = {
   assignmentId: string;
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
 };
 
 export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }: AssignmentDetailsProps) {
@@ -78,13 +79,14 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
   
   const { data: assignment, isLoading } = useDoc<Assignment>(assignmentRef);
   const isOwner = user && assignment && user.uid === assignment.userId;
+  const canDeleteFile = !!(supabaseUrl && supabaseAnonKey);
   
   const handleDelete = async () => {
     if (!firestore || !assignment) return;
     
     try {
-      if(assignment.path) {
-        await deleteFileFromSupabase(assignment.path, supabaseUrl, supabaseAnonKey);
+      if(assignment.path && canDeleteFile) {
+        await deleteFileFromSupabase(assignment.path, supabaseUrl!, supabaseAnonKey!);
       }
       await deleteDoc(assignmentRef!);
       toast({
@@ -169,6 +171,15 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
         </div>
       </CardHeader>
       <CardContent>
+        {isOwner && !canDeleteFile && (
+            <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="w-4 h-4" />
+                <AlertTitle>Configuration Warning</AlertTitle>
+                <AlertDescription>
+                    Supabase is not configured. File deletion will not work if you delete this item.
+                </AlertDescription>
+            </Alert>
+        )}
         <p className="text-muted-foreground">This is an assignment file submission. Please download the file to view its contents.</p>
         
         {assignment.fileUrl && assignment.fileName && (

@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye, Trash2 } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2, AlertCircle } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 import { CommentSection } from './comment-section';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 function SuggestionDetailsSkeleton() {
   return (
@@ -61,8 +62,8 @@ function SuggestionDetailsSkeleton() {
 
 type SuggestionDetailsProps = {
   suggestionId: string;
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
 };
 
 export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }: SuggestionDetailsProps) {
@@ -78,13 +79,14 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
   
   const { data: suggestion, isLoading } = useDoc<Suggestion>(suggestionRef);
   const isOwner = user && suggestion && user.uid === suggestion.userId;
+  const canDeleteFile = !!(supabaseUrl && supabaseAnonKey);
 
   const handleDelete = async () => {
     if (!firestore || !suggestion) return;
     
     try {
-      if(suggestion.path) {
-        await deleteFileFromSupabase(suggestion.path, supabaseUrl, supabaseAnonKey);
+      if(suggestion.path && canDeleteFile) {
+        await deleteFileFromSupabase(suggestion.path, supabaseUrl!, supabaseAnonKey!);
       }
       await deleteDoc(suggestionRef!);
       toast({
@@ -168,6 +170,15 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
         </div>
       </CardHeader>
       <CardContent>
+         {isOwner && suggestion.path && !canDeleteFile && (
+            <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="w-4 h-4" />
+                <AlertTitle>Configuration Warning</AlertTitle>
+                <AlertDescription>
+                    Supabase is not configured. File deletion will not work if you delete this item.
+                </AlertDescription>
+            </Alert>
+        )}
         <p className="whitespace-pre-wrap text-base text-foreground/90">{suggestion.description}</p>
         {suggestion.fileUrl && suggestion.fileName && (
             <div className="flex items-center justify-between w-full p-4 mt-6 rounded-lg bg-muted">
