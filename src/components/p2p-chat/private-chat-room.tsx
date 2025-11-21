@@ -140,7 +140,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
 
     const processMessageQueue = useCallback(async (key: CryptoKey) => {
-        if (isProcessingQueue.current || messageQueue.current.length === 0) return;
+        if (isProcessingQueue.current || messageQueue.current.length === 0 || !currentUser || !firestore || !roomRef || !otherUser) return;
         isProcessingQueue.current = true;
 
         const messagesToSend = [...messageQueue.current];
@@ -153,22 +153,22 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 
                 const messageData = {
                     roomId,
-                    senderId: currentUser!.uid,
+                    senderId: currentUser.uid,
                     cipherText, iv,
                     createdAt: serverTimestamp(),
-                    userName: currentUser!.displayName, userImage: currentUser!.photoURL,
+                    userName: currentUser.displayName, userImage: currentUser.photoURL,
                 };
 
-                const messagesColRef = collection(firestore!, 'chatRooms', roomId, 'messages');
-                const updateLastMessagePromise = updateDoc(roomRef!, {
+                const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
+                const updateLastMessagePromise = updateDoc(roomRef, {
                     lastMessage: { text: '🔒 Encrypted message', timestamp: serverTimestamp() }
                 });
                 
-                const notificationPromise = addDoc(collection(firestore!, 'users', otherUser!.id, 'notifications'), {
-                    recipientId: otherUser!.id,
-                    senderId: currentUser!.uid,
-                    senderName: currentUser!.displayName,
-                    senderImage: currentUser!.photoURL,
+                const notificationPromise = addDoc(collection(firestore, 'users', otherUser.id, 'notifications'), {
+                    recipientId: otherUser.id,
+                    senderId: currentUser.uid,
+                    senderName: currentUser.displayName,
+                    senderImage: currentUser.photoURL,
                     type: 'private_message',
                     content: 'sent you a message.',
                     relatedId: roomId,
@@ -202,11 +202,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 try {
                     const myPrivateKey = await getMyPrivateKey();
                     if (!myPrivateKey) {
-                        console.log("Waiting for local private key to become available...");
-                        // Key generation is handled automatically on login, so we just wait.
-                        return;
+                        return; // Key generation is handled automatically, just wait.
                     }
-                    
                     const key = await deriveSharedKey(myPrivateKey, otherUser.publicKey);
                     setSharedKey(key);
                     await processMessageQueue(key);
@@ -269,6 +266,19 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         );
     }
     
+    if (!otherUser.publicKey) {
+         return (
+            <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
+                <Lock className="w-16 h-16 text-destructive" />
+                <h2 className="text-2xl font-bold">Cannot Establish Secure Chat</h2>
+                <p className="max-w-md text-muted-foreground">
+                    Could not start an encrypted conversation because <span className="font-semibold">{otherUser.displayName}</span> does not have a valid encryption key. They may need to log in again to generate one.
+                </p>
+                <Button onClick={() => router.push('/messages')}>Go back to messages</Button>
+            </div>
+        );
+    }
+    
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex flex-row items-center gap-4 border-b">
@@ -318,7 +328,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         onChange={e => setMessageText(e.target.value)}
                         disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isProcessingQueue.current}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
                         {isProcessingQueue.current ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>
@@ -326,3 +336,5 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </Card>
     );
 }
+
+    
