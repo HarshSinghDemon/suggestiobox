@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music } from 'lucide-react';
+import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Logo } from '../logo';
-import { useAuth as useFirebaseAuth } from '@/firebase';
+import { useAuth as useFirebaseAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useState } from 'react';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
@@ -25,6 +25,10 @@ import { MiniMusicPlayer } from './mini-music-player';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useAudio } from './audio-provider';
 import { Skeleton } from '../ui/skeleton';
+import { NotificationPanel } from './notification-panel';
+import type { Notification } from '@/lib/types';
+import { collection, query, where } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
@@ -42,6 +46,42 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
         </button>
     )
 }
+
+function NotificationBell() {
+    const { user } = useAuth();
+    const firestore = useFirestore();
+
+    const notificationsQuery = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return query(
+            collection(firestore, 'users', user.uid, 'notifications'),
+            where('isRead', '==', false)
+        );
+    }, [user, firestore]);
+
+    const { data: unreadNotifications, isLoading } = useCollection<Notification>(notificationsQuery);
+    const unreadCount = unreadNotifications?.length ?? 0;
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell />
+                    {unreadCount > 0 && !isLoading && (
+                        <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce-in">
+                            {unreadCount}
+                        </div>
+                    )}
+                    {isLoading && <Skeleton className="absolute top-1 right-1 w-5 h-5 rounded-full" />}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+                <NotificationPanel />
+            </PopoverContent>
+        </Popover>
+    )
+}
+
 
 export function Header() {
   const { user, loading: isAuthLoading } = useAuth();
@@ -166,7 +206,7 @@ export function Header() {
             <div className="flex items-center">
               {isAuthLoading ? (
                 <div className="flex items-center gap-2">
-                  <Skeleton className="w-24 h-10 hidden md:block" />
+                  <Skeleton className={cn("w-24 h-10", !user && "hidden md:block")} />
                   <Skeleton className="w-10 h-10 rounded-full" />
                 </div>
               ) : user ? (
@@ -182,6 +222,7 @@ export function Header() {
                             Admin
                         </Button>
                     )}
+                    <NotificationBell />
                     <div className="hidden md:flex">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
