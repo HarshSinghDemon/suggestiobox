@@ -17,12 +17,12 @@ import {
   OAuthProvider,
   unlink,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { generateAndStoreKeyPair } from '../e2ee';
 
 /**
- * Handles user sign-in and sign-up logic. On every successful login,
- * it generates a new E2EE key pair for the user, ensuring keys are always fresh.
+ * Handles user sign-in and sign-up logic. On first sign-up, or if keys are missing,
+ * it generates an E2EE key pair for the user.
  * It stores the public key in Firestore and the private key locally.
  *
  * @param user - The Firebase User object from authentication.
@@ -34,12 +34,9 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
-  // ALWAYS generate a new key pair on login for session freshness and security.
-  const { publicKeyBase64 } = await generateAndStoreKeyPair();
-  const keyVersion = Date.now();
-
   if (!userDoc.exists()) {
-    // New user: create the document with all details and the new public key.
+    // New user: generate keys and create the document.
+    const { publicKeyBase64 } = await generateAndStoreKeyPair();
     const userData: any = {
       id: user.uid,
       email: user.email,
@@ -48,7 +45,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
       createdAt: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
       encryptionPublicKey: publicKeyBase64,
-      publicKeyVersion: keyVersion,
+      publicKeyVersion: Date.now(),
       friends: [],
       friendRequestsSent: [],
       friendRequestsReceived: [],
@@ -60,14 +57,20 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
     await setDoc(userDocRef, userData);
     return true; // Indicates a new user was created
   } else {
-    // Existing user: always overwrite with the new public key for this session.
-    await setDoc(userDocRef, {
-      encryptionPublicKey: publicKeyBase64,
-      publicKeyVersion: keyVersion,
-      // Also update profile info that may have changed from social login
-      displayName: user.displayName,
-      photoURL: user.photoURL,
-    }, { merge: true });
+    // Existing user: check if they have keys. If not, generate and save them.
+    const userData = userDoc.data();
+    if (!userData.encryptionPublicKey || !localStorage.getItem('e2ee_private_key')) {
+        const { publicKeyBase64 } = await generateAndStoreKeyPair();
+        await updateDoc(userDocRef, {
+            encryptionPublicKey: publicKeyBase64,
+            publicKeyVersion: Date.now(),
+        });
+    }
+     // Also update profile info that may have changed from social login
+     await updateDoc(userDocRef, {
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+    });
   }
   return false; // Indicates user already exists
 };
@@ -121,6 +124,8 @@ export const signInWithEmail = async (
 
 export const signOut = async (auth: Auth) => {
   try {
+    // Clear the private key on sign out for security
+    localStorage.removeItem('e2ee_private_key');
     await firebaseSignOut(auth);
   } catch (error) {
     console.error('Error signing out: ', error);
