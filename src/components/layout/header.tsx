@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -19,7 +20,7 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
 import { MiniMusicPlayer } from './mini-music-player';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -50,6 +51,8 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
 function NotificationBell() {
     const { user } = useAuth();
     const firestore = useFirestore();
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const previousUnreadCount = useRef(0);
 
     const notificationsQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -61,16 +64,24 @@ function NotificationBell() {
 
     const { data: unreadNotifications, isLoading } = useCollection<Notification>(notificationsQuery);
     const unreadCount = unreadNotifications?.length ?? 0;
+    
+    useEffect(() => {
+        // If the new count is greater than the previous count, a new notification has arrived.
+        if (unreadCount > previousUnreadCount.current) {
+            setIsPanelOpen(true);
+        }
+        // Update the previous count for the next comparison.
+        previousUnreadCount.current = unreadCount;
+    }, [unreadCount]);
+
 
     return (
-        <Popover>
+        <Popover open={isPanelOpen} onOpenChange={setIsPanelOpen}>
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
                     {unreadCount > 0 && !isLoading && (
-                        <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce-in">
-                            {unreadCount}
-                        </div>
+                        <span className="absolute top-2 right-2 block h-2 w-2 rounded-full bg-amber-400 ring-2 ring-background animate-pulse" />
                     )}
                     {isLoading && <Skeleton className="absolute top-1 right-1 w-5 h-5 rounded-full" />}
                 </Button>
