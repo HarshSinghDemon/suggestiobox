@@ -23,8 +23,7 @@ export type ChatRoom = {
     participants: string[];
     sessionKey_b64: string; // Base64-encoded AES-256-GCM key
     lastMessage?: {
-        cipherText: string; // Last message is also encrypted
-        iv: string;
+        text: string; // Plaintext "Encrypted message" placeholder
         timestamp: Timestamp;
     };
     // For displaying participant info in the chat list
