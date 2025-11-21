@@ -142,7 +142,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [messages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !firestore || !messageText.trim() || !sharedKey) {
+        if (!currentUser || !firestore || !otherUser || !messageText.trim() || !sharedKey) {
              toast({ variant: 'destructive', title: "Cannot Send", description: "Secure connection not established or message is empty." });
             return;
         }
@@ -163,14 +163,30 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             };
 
             const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
-            await addDoc(messagesColRef, messageData);
+            const messageDocRef = await addDoc(messagesColRef, messageData);
             
-            await updateDoc(roomRef!, {
-                lastMessage: {
-                    text: '🔒 Encrypted message',
-                    timestamp: serverTimestamp()
-                }
-            });
+            await Promise.all([
+                updateDoc(roomRef!, {
+                    lastMessage: {
+                        text: '🔒 Encrypted message',
+                        timestamp: serverTimestamp()
+                    }
+                }),
+                // Create notification for the other user
+                addDoc(collection(firestore, 'users', otherUser.id, 'notifications'), {
+                    recipientId: otherUser.id,
+                    senderId: currentUser.uid,
+                    senderName: currentUser.displayName,
+                    senderImage: currentUser.photoURL,
+                    type: 'private_message',
+                    content: 'sent you a message.',
+                    relatedId: roomId,
+                    relatedLink: `/messages/${roomId}`,
+                    isRead: false,
+                    createdAt: serverTimestamp(),
+                })
+            ]);
+
 
             setMessageText("");
         } catch(error) {

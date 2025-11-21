@@ -94,7 +94,7 @@ export type Notification = {
     senderId: string;
     senderName: string;
     senderImage: string | null;
-    type: 'mention';
+    type: 'mention' | 'private_message';
     content: string; // e.g., 'mentioned you in a comment'
     relatedId: string; // e.g., the suggestion or messageId
     relatedLink: string; // e.g., /suggestions/suggestionId
