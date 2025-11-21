@@ -43,140 +43,12 @@ const getInitials = (name: string | null | undefined) => {
     return names.map((n) => n[0]).join('').substring(0, 2);
 };
 
-const ActionButton = ({
-    currentUser,
-    otherUser,
-}: {
-    currentUser: FirebaseUser;
-    otherUser: FirebaseUser;
-}) => {
-    const firestore = useFirestore();
-    const router = useRouter();
-    const { toast } = useToast();
-    const [loading, setLoading] = useState(false);
-
-    const isFriend = currentUser.friends?.includes(otherUser.id);
-    const requestSent = currentUser.friendRequestsSent?.includes(otherUser.id);
-    const requestReceived = currentUser.friendRequestsReceived?.includes(otherUser.id);
-
-    const handleStartChat = async () => {
-        if (!currentUser || !firestore) return;
-        setLoading(true);
-        try {
-            const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUser.id);
-            router.push(`/messages/${roomId}`);
-        } catch(error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    const handleAddFriend = async () => {
-        if (!currentUser || !firestore) return;
-        setLoading(true);
-        try {
-            await sendFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Request Sent!", description: `Friend request sent to ${otherUser.displayName}.` });
-        } catch(e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCancelRequest = async () => {
-        if (!currentUser || !firestore) return;
-        setLoading(true);
-        try {
-            await cancelFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Request Cancelled", description: `Your friend request to ${otherUser.displayName} has been cancelled.` });
-        } catch (e: any) {
-             toast({ variant: 'destructive', title: 'Error', description: e.message });
-        } finally {
-            setLoading(false);
-        }
-    }
-    
-    const handleAcceptRequest = async () => {
-        if (!currentUser || !firestore) return;
-        setLoading(true);
-        try {
-            await acceptFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Friend Added!", description: `You are now friends with ${otherUser.displayName}.` });
-        } catch(e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message });
-        } finally {
-            setLoading(false);
-        }
-    }
-    
-    const handleDeclineRequest = async () => {
-        if (!currentUser || !firestore) return;
-        setLoading(true);
-        try {
-            await declineFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Request Declined", description: `You have declined the friend request from ${otherUser.displayName}.` });
-        } catch(e: any) {
-            toast({ variant: 'destructive', title: 'Error', description: e.message });
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    if (isFriend) {
-        return (
-            <Button className="w-full" variant="outline" size="sm" onClick={handleStartChat} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />}
-                Chat
-            </Button>
-        );
-    }
-    if (requestReceived) {
-        return (
-            <div className="flex w-full gap-2">
-                <Button className="flex-1" variant="outline" size="sm" onClick={handleAcceptRequest} disabled={loading}>
-                    <Check className="w-4 h-4 mr-2"/> Accept
-                </Button>
-                <Button className="flex-1" variant="destructive" size="sm" onClick={handleDeclineRequest} disabled={loading}>
-                    <X className="w-4 h-4 mr-2"/> Decline
-                </Button>
-            </div>
-        );
-    }
-    if (requestSent) {
-        return (
-            <div className="flex w-full gap-2">
-                <Button className="flex-1" variant="outline" size="sm" disabled>
-                    <UserCheck className="w-4 h-4 mr-2" />
-                    Request Sent
-                </Button>
-                 <Button variant="destructive" size="sm" onClick={handleCancelRequest} disabled={loading}>
-                    <UserX className="w-4 h-4" />
-                </Button>
-            </div>
-        );
-    }
-    return (
-        <Button className="w-full" size="sm" onClick={handleAddFriend} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-            Add Friend
-        </Button>
-    );
-};
-
-
 export function CommunityMembersList() {
   const firestore = useFirestore();
   const { user: currentUser } = useUser();
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
   const { data: allUsers, isLoading } = useCollection<FirebaseUser>(usersQuery);
-  
-  const currentUserData = useMemo(() => {
-    return allUsers?.find(u => u.id === currentUser?.uid);
-  }, [allUsers, currentUser]);
 
   const { adminUser, coAdminUser, otherUsers, totalMembers } = useMemo(() => {
     if (!allUsers) return { adminUser: null, coAdminUser: null, otherUsers: [], totalMembers: 0 };
@@ -187,7 +59,6 @@ export function CommunityMembersList() {
     const adminIds = new Set();
     if (harshAdmin) adminIds.add(harshAdmin.id);
     if (atrikCoAdmin) adminIds.add(atrikCoAdmin.id);
-    if (currentUser) adminIds.add(currentUser.uid);
 
     const others = allUsers.filter(u => !adminIds.has(u.id));
 
@@ -200,7 +71,7 @@ export function CommunityMembersList() {
         otherUsers: others,
         totalMembers: allUsers.length
     };
-  }, [allUsers, currentUser]);
+  }, [allUsers]);
 
 
   if (isLoading) {
@@ -287,37 +158,33 @@ export function CommunityMembersList() {
 
         {otherUsers && otherUsers.length > 0 ? (
              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {otherUsers.map((user, index) => {
-                    const isSelected = selectedUserId === user.id;
-                    return (
-                        <Card 
-                            key={user.id}
-                            className={cn(
-                                "flex flex-col p-4 text-center transition-all duration-300 transform shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 opacity-0 animate-fade-in-up",
-                                isSelected && "border-primary/50 -translate-y-1.5 shadow-xl shadow-primary/20"
-                            )}
-                            style={{ animationDelay: `${index * 75}ms` }}
-                            onClick={() => setSelectedUserId(isSelected ? null : user.id)}
-                        >
-                           <div className='flex flex-col items-center flex-grow'>
-                                <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
-                                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
-                                    <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
-                                </Avatar>
-                                <div className='flex flex-col items-center gap-2'>
-                                <p className="font-semibold truncate">{user.displayName}</p>
-                                {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                {otherUsers.map((user, index) => (
+                    <Popover key={user.id}>
+                        <PopoverTrigger asChild>
+                            <Card 
+                                className={cn(
+                                    "flex flex-col p-4 text-center transition-all duration-300 transform shadow-sm group bg-card hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/20 hover:border-primary/50 opacity-0 animate-fade-in-up cursor-pointer",
+                                )}
+                                style={{ animationDelay: `${index * 75}ms` }}
+                            >
+                            <div className='flex flex-col items-center flex-grow'>
+                                    <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
+                                        <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? ''} />
+                                        <AvatarFallback className="text-3xl">{getInitials(user.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className='flex flex-col items-center gap-2'>
+                                    <p className="font-semibold truncate">{user.displayName}</p>
+                                    {user.year && <Badge variant="outline" className={getYearBadgeClass(user.year)}>{user.year} Year</Badge>}
+                                    </div>
+                                    <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
                                 </div>
-                                <p className="w-full mt-1 text-xs truncate text-muted-foreground">{user.email}</p>
-                            </div>
-                             {currentUserData && isSelected && (
-                                <div className="mt-4 w-full animate-fade-in-up animation-delay-200">
-                                    <ActionButton currentUser={currentUserData} otherUser={user} />
-                                </div>
-                             )}
-                        </Card>
-                    )
-                })}
+                            </Card>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-80'>
+                            <UserProfilePopover user={user} />
+                        </PopoverContent>
+                    </Popover>
+                ))}
             </div>
         ) : (
             <p className="py-12 text-center text-muted-foreground">
