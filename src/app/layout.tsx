@@ -37,17 +37,17 @@ export default function RootLayout({
           pressStart2P.variable
         )}
       >
-        <TooltipProvider>
-          <FirebaseClientProvider>
-            <AudioProvider>
-              <div className="relative flex min-h-dvh flex-col">
-                <Header />
-                <main className="flex-1 pb-24">{children}</main>
-              </div>
-              <Toaster />
-            </AudioProvider>
-          </FirebaseClientProvider>
-        </TooltipProvider>
+        <FirebaseClientProvider>
+          <AudioProvider>
+            <TooltipProvider>
+                <div className="relative flex min-h-dvh flex-col">
+                  <Header />
+                  <main className="flex-1 pb-24">{children}</main>
+                </div>
+                <Toaster />
+            </TooltipProvider>
+          </AudioProvider>
+        </FirebaseClientProvider>
         <Analytics />
       </body>
     </html>

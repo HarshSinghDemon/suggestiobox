@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useAudio } from './audio-provider';
+import { useAudio, type ArcadeTrack, type JokeboxTrack } from './audio-provider';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 import {
@@ -11,11 +11,15 @@ import {
   SkipBack,
   Volume2,
   Music,
+  Youtube,
+  Globe,
+  Trash2
 } from 'lucide-react';
 import { DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const SoundWave = () => (
     <div className="flex items-center justify-center gap-0.5 w-4 h-4">
@@ -29,50 +33,60 @@ const SoundWave = () => (
 
 
 export function MiniMusicPlayer() {
+  const router = useRouter();
   const {
-    currentTrack,
+    playerMode,
+    setPlayerMode,
     isPlaying,
-    playPause,
-    playNext,
-    playPrev,
-    setVolume,
     volume,
-    tracklist,
-    playTrack,
-    currentTrackIndex
+    setVolume,
+    // Arcade
+    arcadeTracklist,
+    currentArcadeTrack,
+    playPauseArcade,
+    playNextArcade,
+    playPrevArcade,
+    playArcadeTrack,
+    // Jokebox
+    jokeboxPlaylist,
+    currentJokeboxTrack,
+    playPauseJokebox,
+    playNextJokebox,
+    playPrevJokebox,
+    playJokeboxTrack,
+    removeFromJokeboxPlaylist,
   } = useAudio();
+
+  const isArcadeMode = playerMode === 'arcade';
+  const currentTrack = isArcadeMode ? currentArcadeTrack : currentJokeboxTrack;
+  const tracklist = isArcadeMode ? arcadeTracklist : jokeboxPlaylist;
+  
+  const handlePlayPause = isArcadeMode ? playPauseArcade : playPauseJokebox;
+  const handlePlayNext = isArcadeMode ? playNextArcade : playNextJokebox;
+  const handlePlayPrev = isArcadeMode ? playPrevArcade : playPrevJokebox;
   
   const getAnimationUrl = () => {
-    switch (currentTrack?.title) {
-      case 'Ben 10 Theme':
-        return "https://ik.imagekit.io/bt0k47tzc/ben10-four-arms.gif?updatedAt=1763670807759";
-      case 'Dragon Ball Z - Cha-La':
-        return "https://ik.imagekit.io/bt0k47tzc/lr-agl-super-saiyan-god-ss-goku-and-super-saiyan-god-ss-vegeta-all-out-final-battle.gif?updatedAt=1763670802637";
-      case 'Pokémon Theme':
-        return "https://ik.imagekit.io/bt0k47tzc/pikachu-haki-captain-pikachu.gif?updatedAt=1763670804016";
-      default:
-        return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
-    }
+      return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/The%20Dark%20Knight%20-%20Day%2019.gif";
   };
 
   const animationUrl = getAnimationUrl();
+  
+  const switchToJokebox = () => {
+    setPlayerMode('jokebox');
+    router.push('/jokebox');
+  };
 
-
-  if (!tracklist.length) {
-    return (
-      <div className="p-4 text-center text-muted-foreground">
-        No music available.
-      </div>
-    );
-  }
+  const switchToArcade = () => {
+    setPlayerMode('arcade');
+  };
 
   return (
     <div className="p-2 space-y-3 w-80">
-      <DropdownMenuLabel className="text-center">Arcade Mix</DropdownMenuLabel>
+      <DropdownMenuLabel className="text-center">{isArcadeMode ? 'Arcade Mix' : 'Jokebox Player'}</DropdownMenuLabel>
       <div className="relative w-40 h-40 mx-auto rounded-lg shadow-lg group">
           <Image
             src={animationUrl}
-            alt="Arcade animation"
+            alt="Music animation"
             fill
             className="object-cover rounded-lg"
             unoptimized
@@ -96,17 +110,17 @@ export function MiniMusicPlayer() {
         {currentTrack && (
           <div className="mb-2 text-center">
             <p className="font-semibold truncate text-primary">{currentTrack.title}</p>
-            <p className="text-xs text-muted-foreground">Now Playing</p>
+            <p className="text-xs text-muted-foreground">{isArcadeMode ? 'Website Track' : (currentTrack as JokeboxTrack).channel}</p>
           </div>
         )}
         <div className="flex items-center justify-center gap-2">
-          <Button variant="ghost" size="icon" onClick={playPrev} className="transition-transform active:scale-90">
+          <Button variant="ghost" size="icon" onClick={handlePlayPrev} className="transition-transform active:scale-90">
             <SkipBack className="w-5 h-5" />
           </Button>
-          <Button variant="outline" size="icon" onClick={playPause} className="w-12 h-12 rounded-full shadow-lg transition-transform active:scale-90">
+          <Button variant="outline" size="icon" onClick={handlePlayPause} className="w-12 h-12 rounded-full shadow-lg transition-transform active:scale-90">
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 pl-1" />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={playNext} className="transition-transform active:scale-90">
+          <Button variant="ghost" size="icon" onClick={handlePlayNext} className="transition-transform active:scale-90">
             <SkipForward className="w-5 h-5" />
           </Button>
         </div>
@@ -121,24 +135,51 @@ export function MiniMusicPlayer() {
         </div>
       </div>
       <DropdownMenuSeparator />
+      <div className="px-2">
+        {isArcadeMode ? (
+            <Button variant="outline" className="w-full" onClick={switchToJokebox}>
+                <Globe className="w-4 h-4 mr-2" />
+                Play from Internet
+            </Button>
+        ) : (
+            <Button variant="outline" className="w-full" onClick={switchToArcade}>
+                <Music className="w-4 h-4 mr-2" />
+                Listen to Website Tracks
+            </Button>
+        )}
+      </div>
       <ScrollArea className="h-48">
         <div className="px-2 space-y-1">
             {tracklist.map((track, index) => (
-            <button
-                key={index}
-                onClick={() => playTrack(index)}
+            <div
+                key={isArcadeMode ? (track as ArcadeTrack).url : (track as JokeboxTrack).id}
                 className={cn(
-                    "w-full text-left p-2 rounded-md text-sm flex items-center gap-3 transition-all duration-200",
-                    currentTrackIndex === index ? "bg-primary/20 text-primary-foreground" : "hover:bg-accent/50"
+                    "w-full text-left p-2 rounded-md text-sm flex items-center gap-3 transition-all duration-200 group",
+                    (isArcadeMode && currentArcadeTrack?.url === (track as ArcadeTrack).url) || (!isArcadeMode && currentJokeboxTrack?.id === (track as JokeboxTrack).id) ? "bg-primary/20 text-primary-foreground" : "hover:bg-accent/50",
+                    "cursor-pointer"
                 )}
+                 onClick={() => isArcadeMode ? playArcadeTrack(index) : playJokeboxTrack(track as JokeboxTrack)}
             >
-                {currentTrackIndex === index && isPlaying ? (
+                {((isArcadeMode && currentArcadeTrack?.url === (track as ArcadeTrack).url) || (!isArcadeMode && currentJokeboxTrack?.id === (track as JokeboxTrack).id)) && isPlaying ? (
                     <SoundWave />
                 ) : (
                     <Music className="w-4 h-4 text-muted-foreground" />
                 )}
                 <span className="flex-1 truncate">{track.title}</span>
-            </button>
+                 {!isArcadeMode && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-6 h-6 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromJokeboxPlaylist((track as JokeboxTrack).id);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                )}
+            </div>
             ))}
         </div>
       </ScrollArea>
