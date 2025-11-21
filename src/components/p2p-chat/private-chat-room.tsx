@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { deriveSharedKey, encryptMessage, decryptMessage, getMyPrivateKey } from "@/lib/e2ee";
+import { getMyPrivateKey, deriveSharedKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -102,6 +102,7 @@ function ChatRoomSkeleton() {
     );
 }
 
+
 export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
@@ -129,7 +130,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const { data: dbMessages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
     
-    // This state holds both confirmed and optimistic messages
     const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
 
     useEffect(() => {
@@ -182,10 +182,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     updateLastMessagePromise,
                     notificationPromise
                 ]);
+                
+                 // Update optimistic message status
+                setOptimisticMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isSending: false } : m));
+
 
             } catch (error) {
                 console.error("Failed to send queued message:", error);
-                // Optionally, add the message back to the queue or mark it as failed in the UI
+                 setOptimisticMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isSending: false, text: `${m.text} (Failed)` } : m));
             }
         }
 
@@ -196,12 +200,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         const deriveAndProcessKey = async () => {
             if (otherUser?.publicKey && !sharedKey) {
                 try {
-                    const privateKey = await getMyPrivateKey();
-                    if (!privateKey) {
-                         console.log("Waiting for private key to become available...");
-                         return; // Wait for key generation
+                    const myPrivateKey = await getMyPrivateKey();
+                    if (!myPrivateKey) {
+                        console.log("Waiting for local private key to become available...");
+                        // Key generation is handled automatically on login, so we just wait.
+                        return;
                     }
-                    const key = await deriveSharedKey(privateKey, otherUser.publicKey);
+                    
+                    const key = await deriveSharedKey(myPrivateKey, otherUser.publicKey);
                     setSharedKey(key);
                     await processMessageQueue(key);
                 } catch (e) {
@@ -228,24 +234,22 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         const textToSend = messageText.trim();
         setMessageText("");
         
-        // Optimistically update UI
         const optimisticMsg: OptimisticMessage = {
             id: `local-${Date.now()}`,
             roomId,
             senderId: currentUser.uid,
-            text: textToSend, // Keep plaintext for optimistic display and later encryption
-            cipherText: '', // Will be filled later
-            iv: '',         // Will be filled later
+            text: textToSend,
+            cipherText: '',
+            iv: '',
             isSending: true,
-            createdAt: new Date() as any, // Temporary timestamp
+            createdAt: new Date() as any,
             userName: currentUser.displayName,
             userImage: currentUser.photoURL,
         };
 
         setOptimisticMessages(prev => [...prev, optimisticMsg]);
         messageQueue.current.push(optimisticMsg);
-
-        // Trigger background processing
+        
         if (sharedKey) {
             processMessageQueue(sharedKey);
         }
@@ -277,12 +281,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </Avatar>
                 <div>
                     <CardTitle>{otherUser.displayName}</CardTitle>
-                    <div className={cn(
+                     <div className={cn(
                         "flex items-center gap-1.5 text-xs",
                         sharedKey ? "text-green-500" : "text-amber-500 animate-pulse"
                     )}>
                         <Lock className="w-3 h-3" />
-                        <span>Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)</span>
+                         <span>{sharedKey ? "Signal-Grade End-to-End Encryption (X25519 + AES-256-GCM)" : "Establishing secure connection..."}</span>
                     </div>
                 </div>
             </CardHeader>
@@ -314,7 +318,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         onChange={e => setMessageText(e.target.value)}
                         disabled={!currentUser}
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isProcessingQueue.current}>
                         {isProcessingQueue.current ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>

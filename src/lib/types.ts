@@ -65,16 +65,15 @@ export type Assignment = {
 };
 
 export type Message = {
-  id: string;
-  roomId: string;
-  senderId: string;
-  cipherText: string; // Base64 encoded ciphertext
-  iv: string; // Base64 encoded Initialization Vector
-  createdAt: Timestamp;
-  // Denormalized data for display
-  userName?: string | null;
-  userImage?: string | null;
-  text?: string; // Only used for optimistic UI, not stored in DB
+    id: string;
+    roomId: string;
+    senderId: string;
+    cipherText: string; // Base64 encoded ciphertext
+    iv: string;         // Base64 encoded Initialization Vector
+    createdAt: Timestamp;
+    // Denormalized data for display in lists if needed (should also be encrypted)
+    userName?: string | null;
+    userImage?: string | null;
 };
 
 
