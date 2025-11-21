@@ -19,11 +19,17 @@ export type FirebaseUser = {
 export type ChatRoom = {
     id: string;
     participants: string[];
-    sessionKey_b64: string; // Base64-encoded AES-256-GCM key
+    sessionKey_b64: string;
     lastMessage?: {
-        text: string; // Plaintext "Encrypted message" placeholder
+        text: string;
         timestamp: Timestamp;
     };
+    typing?: {
+        [key: string]: boolean;
+    };
+    lastRead?: {
+        [key: string]: Timestamp;
+    }
     // For displaying participant info in the chat list
     participantDetails?: {
         id: string;
@@ -64,13 +70,28 @@ export type Assignment = {
   fileType: string;
 };
 
+export type Reaction = {
+  emoji: string;
+  userId: string;
+  userName: string;
+}
+
+export type Reply = {
+  messageId: string;
+  text: string;
+  senderName: string;
+}
+
 export type Message = {
     id: string;
     roomId: string;
     senderId: string;
-    cipherText: string; // Encrypted message content
-    iv: string; // Initialization Vector for AES-GCM
+    cipherText: string;
+    iv: string;
     createdAt: Timestamp;
+    reactions?: Reaction[];
+    replyTo?: Reply | null;
+    isRead?: boolean;
 };
 
 

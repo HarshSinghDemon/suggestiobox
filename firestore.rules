@@ -28,7 +28,7 @@ service cloud.firestore {
 
       // Messages can be read and created only by participants of the chat room.
       match /messages/{messageId} {
-        allow read, create: if isParticipant(roomId);
+        allow read, create, update: if isParticipant(roomId);
         // Deletion is denied to preserve chat history integrity in this model.
         allow delete: if false; 
       }
