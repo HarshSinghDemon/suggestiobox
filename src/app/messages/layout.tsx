@@ -14,7 +14,7 @@ export default function MessagesLayout({
                 <div className="absolute bottom-0 right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(255,0,182,.15),rgba(255,255,255,0))]"></div>
             </div>
             <div className="relative z-10 h-full p-4">
-                <div className="h-full border rounded-lg overflow-hidden bg-card/50 backdrop-blur-xl">
+                <div className="h-full rounded-lg overflow-hidden glass-pane">
                     {children}
                 </div>
             </div>

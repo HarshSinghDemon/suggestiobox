@@ -109,6 +109,10 @@
 }
 
 @layer utilities {
+    .glass-pane {
+        @apply bg-card/50 backdrop-blur-xl border border-white/10;
+        box-shadow: inset 0 1px 1px 0 hsl(var(--border) / 0.1);
+    }
     @keyframes music-glow {
       0%, 100% {
         color: hsl(var(--primary));
