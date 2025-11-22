@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Loader2, Play } from 'lucide-react';
+import { Loader2, Play, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Textarea } from '../ui/textarea';
+import { CodeBuddy } from './code-buddy';
 
 
 const languageOptions = [
@@ -206,19 +207,31 @@ export function CodeEditor() {
                         </SelectContent>
                     </Select>
                 </div>
-                <Button onClick={handleRunCode} disabled={isLoading} className="w-full sm:w-auto">
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Executing...
-                        </>
-                    ) : (
-                        <>
-                            <Play className="w-4 h-4 mr-2" />
-                            Run Code
-                        </>
-                    )}
-                </Button>
+                <div className="flex w-full gap-2 sm:w-auto">
+                    <Button onClick={handleRunCode} disabled={isLoading} className="flex-1 w-full sm:w-auto">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Executing...
+                            </>
+                        ) : (
+                            <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Run Code
+                            </>
+                        )}
+                    </Button>
+                     <CodeBuddy 
+                        codeToAnalyze={code} 
+                        language={typeof language === 'number' ? languageIdToName[language] : 'plaintext'}
+                        triggerButton={
+                             <Button variant="outline" className="flex-1 w-full sm:w-auto">
+                                <BrainCircuit className="w-4 h-4 mr-2" />
+                                Ask AI
+                            </Button>
+                        } 
+                    />
+                </div>
             </div>
             
             <div className="border rounded-lg bg-card overflow-hidden">
