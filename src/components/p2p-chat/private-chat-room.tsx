@@ -98,7 +98,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
     return (
         <div 
             className={cn(
-                "flex items-end gap-2 max-w-[80%] group", 
+                "flex items-end gap-2 w-full group", 
                 isCurrentUserSender ? "self-end flex-row-reverse" : "self-start"
             )}
             onMouseEnter={() => setShowActions(true)}
@@ -111,9 +111,9 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </Avatar>
              )}
             
-            <div className="relative">
+            <div className={cn("relative max-w-[75%]", isCurrentUserSender ? "ml-auto" : "mr-auto")}>
                 <div className={cn(
-                    "p-3 rounded-2xl w-full",
+                    "p-3 rounded-2xl w-fit",
                     isCurrentUserSender 
                         ? "bg-primary text-primary-foreground rounded-br-none" 
                         : "bg-muted rounded-bl-none"
@@ -129,7 +129,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                                 </div>
                         </div>
                     )}
-                    {message.text && <p className="text-sm break-words">{message.text}</p>}
+                    {message.text && <p className="text-sm break-all">{message.text}</p>}
                     <div className={cn(
                         "text-xs mt-1.5 flex items-center gap-1.5",
                         isCurrentUserSender ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"
@@ -258,7 +258,15 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
                 await addDoc(messagesColRef, {
-                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [], fileUrl: msg.fileUrl || null, fileName: msg.fileName || null, fileType: msg.fileType || null,
+                    roomId,
+                    senderId: currentUser.uid,
+                    cipherText,
+                    iv,
+                    createdAt: serverTimestamp(),
+                    reactions: [],
+                    fileUrl: msg.fileUrl || null,
+                    fileName: msg.fileName || null,
+                    fileType: msg.fileType || null,
                 });
                 
                 const lastMessageText = msg.fileName ? `Sent a file: ${msg.fileName}` : 'Encrypted message';
@@ -386,8 +394,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <p className="font-semibold">{otherUser.displayName}</p>
                     <p className="text-xs text-muted-foreground"> {isTyping ? <span className="italic text-primary">typing...</span> : "Online"} </p>
                 </div>
-                <Button variant="ghost" size="icon"><Phone className="w-5 h-5"/></Button>
-                <Button variant="ghost" size="icon"><Video className="w-5 h-5"/></Button>
                 <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
             </header>
             <div className="flex-1 min-h-0">
@@ -408,28 +414,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             )}
             <footer className="p-2 border-t shrink-0 sm:p-4 border-border/50">
                 <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                    <Popover open={isAttachmentMenuOpen} onOpenChange={setIsAttachmentMenuOpen}>
-                        <PopoverTrigger asChild>
-                             <Button variant="ghost" size="icon" type="button"> <Paperclip className="w-5 h-5"/> </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-2 mb-2" side="top" align="start">
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('image/*')}>
-                                    <ImageIcon className="w-6 h-6"/><span>Photos</span>
-                                </Button>
-                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('audio/*')}>
-                                    <Music className="w-6 h-6"/><span>Music</span>
-                                </Button>
-                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('image/gif,video/*')}>
-                                    <Film className="w-6 h-6"/><span>GIFs & Video</span>
-                                </Button>
-                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('*/*')}>
-                                    <FileText className="w-6 h-6"/><span>Files</span>
-                                </Button>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="text-base h-11 rounded-full bg-input" />
                     <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11 shrink-0"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
                 </form>
