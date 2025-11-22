@@ -28,7 +28,7 @@ function WelcomePanel() {
         <div className="flex flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale">
             <div className="relative w-56 h-56 animate-pulse-slow">
                 <Image 
-                    src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/website-images/undraw_chatting_re_j55r.svg"
+                    src="https://ik.imagekit.io/bt0k47tzc/undraw_chatting_re_j55r.svg?updatedAt=1764125345759"
                     alt="Select a chat"
                     fill
                     className="object-contain"
