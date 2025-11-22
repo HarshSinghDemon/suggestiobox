@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { UserInfoPanel } from "@/components/p2p-chat/user-info-panel";
+import { cn } from "@/lib/utils";
 
 type PrivateChatPageProps = {
     params: {
@@ -34,7 +35,7 @@ export default function PrivateChatPage({ params }: PrivateChatPageProps) {
         <AuthWrapper>
             <div className="flex flex-col h-full">
                 <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className={cn("hidden lg:block", params.roomId ? "lg:block" : "hidden")}>
                          <Suspense fallback={<ChatListSkeleton />}>
                             <ChatList selectedRoomId={params.roomId} />
                         </Suspense>

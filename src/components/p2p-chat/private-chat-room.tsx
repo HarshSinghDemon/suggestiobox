@@ -377,7 +377,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     return (
         <div className="flex flex-col h-full bg-transparent">
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0 border-border">
-                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => router.push('/messages')}> <ArrowLeft className="w-5 h-5" /> </Button>
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}> <ArrowLeft className="w-5 h-5" /> </Button>
                 <Avatar className="w-10 h-10"> <AvatarImage src={otherUser.photoURL ?? undefined} /> <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback> </Avatar>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>

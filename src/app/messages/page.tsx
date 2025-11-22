@@ -10,13 +10,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 
 function ListSkeleton() {
     return (
-        <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
+        <div className="space-y-2 p-2">
+            {[...Array(8)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-3 rounded-lg">
                     <Skeleton className="w-12 h-12 rounded-full" />
                     <div className="flex-1 space-y-2">
                         <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-48" />
+                        <Skeleton className="h-3 w-32" />
                     </div>
                 </div>
             ))}
@@ -26,7 +26,7 @@ function ListSkeleton() {
 
 function WelcomePanel() {
     return (
-        <div className="relative flex flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale overflow-hidden">
+        <div className="relative flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale overflow-hidden hidden md:flex">
             
             {/* Animated GIFs */}
             
@@ -69,7 +69,12 @@ function WelcomePanel() {
 export default function MessagesPage() {
     return (
         <AuthWrapper>
-            <ResizablePanelGroup direction="horizontal" className="h-full">
+            <div className="md:hidden h-full">
+                <Suspense fallback={<ListSkeleton />}>
+                    <ChatList />
+                </Suspense>
+            </div>
+            <ResizablePanelGroup direction="horizontal" className="h-full hidden md:flex">
                 <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
                     <Suspense fallback={<ListSkeleton />}>
                         <ChatList />
