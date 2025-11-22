@@ -3,7 +3,7 @@
 
 import { useUser } from "@/firebase";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Bot, Sparkles, User, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Bot, Sparkles, User, Users, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -13,7 +13,7 @@ import { pookieAi } from "@/ai/flows/pookie-ai-flow";
 import { Input } from "../ui/input";
 import Markdown from 'react-markdown';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
-import { Card, CardContent } from "../ui/card";
+import { Card } from "../ui/card";
 
 type ChatMessage = {
     sender: 'user' | 'pookie';
@@ -23,7 +23,7 @@ type ChatMessage = {
 
 type PookieGender = 'male' | 'female' | 'neutral';
 
-function ChatBubble({ message, aiName }: { message: ChatMessage; aiName: string; }) {
+function ChatBubble({ message }: { message: ChatMessage; }) {
     const isPookie = message.sender === 'pookie';
 
     return (
@@ -46,14 +46,14 @@ function ChatBubble({ message, aiName }: { message: ChatMessage; aiName: string;
     )
 }
 
-function GenderSelectionModal({ isOpen, onSelect }: { isOpen: boolean, onSelect: (gender: PookieGender, name: string) => void }) {
+function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boolean, onOpenChange: (isOpen: boolean) => void, onSelect: (gender: PookieGender, name: string) => void }) {
     return (
-        <Dialog open={isOpen}>
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Choose Your AI's Persona</DialogTitle>
                     <DialogDescription>
-                        Select the name and gender for your AI friend. This can't be changed later.
+                        Select a name and gender for your AI friend. This will reset your current chat.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-3">
@@ -83,7 +83,7 @@ export function PookieAiChatRoom() {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const viewportRef = useRef<HTMLDivElement>(null);
-    const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
+    const [isPersonaModalOpen, setIsPersonaModalOpen] = useState(false);
     const [pookieGender, setPookieGender] = useState<PookieGender | null>(null);
     const [pookieName, setPookieName] = useState<string>('Pookie');
     
@@ -94,11 +94,9 @@ export function PookieAiChatRoom() {
             setPookieGender(storedGender as PookieGender);
             setPookieName(storedName);
         } else {
-            if (pookieGender === null) {
-                setIsGenderModalOpen(true);
-            }
+            setIsPersonaModalOpen(true);
         }
-    }, [pookieGender]);
+    }, []);
 
     useEffect(() => {
         if (viewportRef.current) {
@@ -106,12 +104,13 @@ export function PookieAiChatRoom() {
         }
     }, [messages]);
     
-    const handleGenderSelect = (gender: PookieGender, name: string) => {
+    const handlePersonaSelect = (gender: PookieGender, name: string) => {
         localStorage.setItem('pookieGender', gender);
         localStorage.setItem('pookieName', name);
         setPookieGender(gender);
         setPookieName(name);
-        setIsGenderModalOpen(false);
+        setMessages([]); // Reset chat history
+        setIsPersonaModalOpen(false);
     }
 
     const handleSendMessage = async () => {
@@ -163,26 +162,31 @@ export function PookieAiChatRoom() {
 
     return (
          <div className="flex flex-col h-full bg-card">
-            <GenderSelectionModal isOpen={isGenderModalOpen} onSelect={handleGenderSelect} />
+            <PersonaSelectionModal isOpen={isPersonaModalOpen} onOpenChange={setIsPersonaModalOpen} onSelect={handlePersonaSelect} />
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <Avatar className="w-10 h-10 border-2 border-primary">
-                    <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
-                    <AvatarFallback><Bot /></AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <p className="font-semibold">{pookieName} (AI)</p>
-                    <p className="text-xs text-muted-foreground">
-                        {isLoading ? <span className="italic text-primary">{pookieName} is typing...</span> : "Online"}
-                    </p>
-                </div>
+                <button className="flex items-center flex-1 gap-3 text-left rounded-md hover:bg-accent p-1 -m-1" onClick={() => setIsPersonaModalOpen(true)}>
+                    <Avatar className="w-10 h-10 border-2 border-primary">
+                        <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                        <AvatarFallback><Bot /></AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                        <p className="font-semibold">{pookieName} (AI)</p>
+                        <p className="text-xs text-muted-foreground">
+                            {isLoading ? <span className="italic text-primary">{pookieName} is typing...</span> : "Online"}
+                        </p>
+                    </div>
+                </button>
+                <Button variant="ghost" size="icon" onClick={() => setIsPersonaModalOpen(true)}>
+                    <Settings className="w-5 h-5" />
+                </Button>
             </header>
             <ScrollArea className="flex-1" viewportRef={viewportRef}>
                  <div className="flex flex-col gap-4 p-6">
                     {messages.length > 0 ? (
-                        messages.map(msg => <ChatBubble key={msg.id} message={msg} aiName={pookieName} />)
+                        messages.map(msg => <ChatBubble key={msg.id} message={msg} />)
                     ) : (
                          <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
                             <Sparkles className="w-16 h-16 text-primary/50" />
