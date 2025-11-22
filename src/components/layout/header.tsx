@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -133,13 +132,21 @@ export function Header() {
   const hasUnreadMessages = useMemo(() => {
     if (!chatRooms || !user?.uid) return false;
     return chatRooms.some(room => {
-        const lastRead = room.lastRead?.[user.uid];
         const lastMessageTimestamp = room.lastMessage?.timestamp;
+        // No last message means no unread messages.
         if (!lastMessageTimestamp) return false;
-        if (!lastRead) return true; // If never read, it's unread
-        return lastMessageTimestamp > lastRead;
+        
+        // If the current user sent the last message, it's not "unread" for them.
+        if (room.lastMessage.senderId === user.uid) return false;
+
+        const lastReadTimestamp = room.lastRead?.[user.uid];
+        // If the user has never read this chat, it's unread.
+        if (!lastReadTimestamp) return true;
+
+        // Compare timestamps. If last message is newer than last read, it's unread.
+        return lastMessageTimestamp.toMillis() > lastReadTimestamp.toMillis();
     });
-  }, [chatRooms, user?.uid]);
+}, [chatRooms, user?.uid]);
 
 
   const handleSignOut = async () => {

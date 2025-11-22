@@ -23,6 +23,7 @@ export type ChatRoom = {
     lastMessage?: {
         text: string;
         timestamp: Timestamp;
+        senderId: string;
     };
     typing?: {
         [key: string]: boolean;

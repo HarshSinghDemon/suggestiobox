@@ -298,7 +298,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 });
                 
                 await updateDoc(roomRef, {
-                    lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp() }
+                    lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp(), senderId: currentUser.uid }
                 });
             } catch (error) {
                 console.error("Failed to send a pending message:", error);
