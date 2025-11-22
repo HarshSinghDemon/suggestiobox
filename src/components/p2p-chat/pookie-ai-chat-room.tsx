@@ -183,7 +183,7 @@ export function PookieAiChatRoom() {
                     <Settings className="w-5 h-5" />
                 </Button>
             </header>
-            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+            <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
                  <div className="flex flex-col gap-4 p-6">
                     {messages.length > 0 ? (
                         messages.map(msg => <ChatBubble key={msg.id} message={msg} />)
