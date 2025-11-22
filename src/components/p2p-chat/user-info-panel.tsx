@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -45,7 +44,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
 
-    const displayKey = otherUser?.publicKey || 'BwEaRml...placeholder...key_not_found';
+    const displayKey = otherUser?.publicKey || 'BwEaRml...key_not_found';
 
     const copyKeyToClipboard = () => {
         if (displayKey) {
