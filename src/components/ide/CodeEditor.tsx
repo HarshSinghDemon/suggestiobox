@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+
 
 const languageOptions = [
   { value: 71, label: 'Python (General Purpose)', category: 'General' },
@@ -16,7 +18,7 @@ const languageOptions = [
   { value: 54, label: 'C++', category: 'General' },
   { value: 50, label: 'C', category: 'General' },
   { value: 51, label: 'C#', category: 'General' },
-  { value: 'coming_soon', label: 'Python (Data Science) - Coming Soon', category: 'Data Science', disabled: true },
+  { value: 'coming_soon', label: 'Python (Data Science)', category: 'Data Science', disabled: true },
 ];
 
 const languageTemplates: Record<string, string> = {
@@ -128,11 +130,26 @@ export function CodeEditor() {
                             <SelectValue placeholder="Select Language" />
                         </SelectTrigger>
                         <SelectContent>
-                            {languageOptions.map(opt => (
-                                <SelectItem key={opt.value} value={String(opt.value)} disabled={opt.disabled}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
+                            {languageOptions.map(opt => 
+                                opt.disabled ? (
+                                    <TooltipProvider key={opt.value}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="relative flex w-full cursor-not-allowed select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm text-muted-foreground outline-none">
+                                                    {opt.label}
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>This environment does not support third-party libraries like Numpy or Matplotlib yet.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <SelectItem key={opt.value} value={String(opt.value)}>
+                                        {opt.label}
+                                    </SelectItem>
+                                )
+                            )}
                         </SelectContent>
                     </Select>
                 </div>
