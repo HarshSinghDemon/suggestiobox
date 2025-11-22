@@ -8,12 +8,13 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { FindFriendsList } from "./find-friends-list";
+import { FriendsList } from "./friends-list";
 
 function ChatListSkeleton() {
     return (
@@ -111,9 +112,10 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
             </div>
             <Tabs defaultValue="chats" className="flex flex-col flex-1 min-h-0">
                 <div className="p-4 border-b">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="chats"><MessagesSquare className="w-4 h-4 mr-2" />Chats</TabsTrigger>
-                        <TabsTrigger value="find"><UserPlus className="w-4 h-4 mr-2" />Find Friends</TabsTrigger>
+                        <TabsTrigger value="friends"><Users className="w-4 h-4 mr-2" />Friends</TabsTrigger>
+                        <TabsTrigger value="find"><UserPlus className="w-4 h-4 mr-2" />Find</TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="chats" className="flex-1 m-0 overflow-hidden">
@@ -169,6 +171,9 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                             <p className="text-sm">Start a new chat by finding a friend.</p>
                         </div>
                     )}
+                </TabsContent>
+                 <TabsContent value="friends" className="flex-1 m-0 overflow-y-auto">
+                    <FriendsList />
                 </TabsContent>
                 <TabsContent value="find" className="flex-1 m-0 overflow-y-auto">
                     <FindFriendsList />
