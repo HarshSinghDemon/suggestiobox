@@ -63,7 +63,7 @@ function AdminCard({ adminUser, title }: { adminUser: FirebaseUser | null, title
     
     if (!adminUser) {
         return (
-            <Card className="flex flex-col items-center justify-center p-6 text-center">
+            <Card className="flex flex-col items-center justify-center p-6 text-center bg-card">
                 <Skeleton className="w-24 h-24 rounded-full" />
                 <Skeleton className="w-32 h-6 mt-4" />
                 <Skeleton className="w-24 h-4 mt-2" />
@@ -74,13 +74,13 @@ function AdminCard({ adminUser, title }: { adminUser: FirebaseUser | null, title
     const isSelf = currentUser?.uid === adminUser.id;
 
     return (
-        <Card className="flex flex-col items-center p-6 text-center transition-all duration-300 transform shadow-lg group bg-card hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20">
+        <Card className="flex flex-col items-center p-6 text-center transition-all duration-300 transform shadow-lg group bg-gradient-to-br from-card to-primary/10 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20">
             <div className='relative'>
                 <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
                     <AvatarImage src={adminUser.photoURL ?? undefined} alt={adminUser.displayName ?? ''} />
                     <AvatarFallback className="text-3xl">{getInitials(adminUser.displayName)}</AvatarFallback>
                 </Avatar>
-                <Badge className="absolute top-0 right-0 px-2 py-1 text-xs font-semibold tracking-wider text-yellow-800 bg-yellow-300 border-2 border-background animate-pulse">
+                <Badge className="absolute top-0 right-0 px-2 py-1 text-xs font-semibold tracking-wider text-yellow-800 bg-yellow-300 border-2 border-background animate-pulse-slow">
                     {title}
                 </Badge>
             </div>
