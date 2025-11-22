@@ -29,7 +29,7 @@ function WelcomePanel() {
         <div className="relative flex flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale overflow-hidden">
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center">
-                <div className="relative w-56 h-56 animate-pulse-slow">
+                <div className="relative w-56 h-56">
                     <Image 
                         src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Contact%20us.gif"
                         alt="Select a chat"
