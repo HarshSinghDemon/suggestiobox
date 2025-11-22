@@ -120,6 +120,11 @@ export function Header() {
   const { isPlaying } = useAudio();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Unread messages logic
   const chatRoomsQuery = useMemoFirebase(() => {
@@ -205,7 +210,7 @@ export function Header() {
                     <button className="relative flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
                       Community
                       <ChevronDown className="w-4 h-4" />
-                       {hasUnreadMessages && !isLoadingChatRooms && <GoldenDot />}
+                       {isClient && hasUnreadMessages && !isLoadingChatRooms && <GoldenDot />}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -216,7 +221,7 @@ export function Header() {
                      <DropdownMenuItem onClick={() => router.push('/messages')} className="relative">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Private Messages
-                      {hasUnreadMessages && <GoldenDot />}
+                      {isClient && hasUnreadMessages && <GoldenDot />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/community-members')}>
                       <Users className="w-4 h-4 mr-2" />
@@ -395,7 +400,7 @@ export function Header() {
                                 <div className="relative flex items-center w-full">
                                     <MessageSquare className="w-5 h-5 mr-3" />
                                     Private Messages
-                                    {hasUnreadMessages && <GoldenDot />}
+                                    {isClient && hasUnreadMessages && <GoldenDot />}
                                 </div>
                             </NavLink>
                             <NavLink href="/community-members" onNavigate={() => setIsSheetOpen(false)}>
@@ -447,3 +452,5 @@ export function Header() {
     </header>
   );
 }
+
+    
