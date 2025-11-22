@@ -9,7 +9,7 @@ export default function HangmanPage() {
     <AuthWrapper>
       <div className="container py-8 mx-auto">
         <div className="flex items-start justify-center">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-4xl">
             <CardHeader className="text-center">
               <CardTitle>Hangman</CardTitle>
               <CardDescription>Guess the word before the man is hanged!</CardDescription>

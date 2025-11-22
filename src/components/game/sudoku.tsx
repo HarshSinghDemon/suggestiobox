@@ -11,17 +11,17 @@ import { Leaderboard } from './leaderboard';
 import { useToast } from '@/hooks/use-toast';
 import sudoku from 'sudoku';
 
-type Level = 'noob' | 'rookie' | 'amateur' | 'veteran';
+type Level = 'rookie' | 'amateur' | 'pro' | 'legend';
 
 const difficultySettings: Record<Level, { removal: number, scoreMultiplier: number }> = {
-    noob: { removal: 30, scoreMultiplier: 1 },
-    rookie: { removal: 40, scoreMultiplier: 1.5 },
-    amateur: { removal: 50, scoreMultiplier: 2 },
-    veteran: { removal: 55, scoreMultiplier: 3 },
+    rookie: { removal: 30, scoreMultiplier: 1 },
+    amateur: { removal: 40, scoreMultiplier: 1.5 },
+    pro: { removal: 50, scoreMultiplier: 2 },
+    legend: { removal: 55, scoreMultiplier: 3 },
 };
 
 export function SudokuGame() {
-    const [level, setLevel] = useState<Level>('noob');
+    const [level, setLevel] = useState<Level>('rookie');
     const [puzzle, setPuzzle] = useState<number[][] | null>(null);
     const [solution, setSolution] = useState<number[][] | null>(null);
     const [playerBoard, setPlayerBoard] = useState<number[][] | null>(null);
@@ -203,10 +203,10 @@ export function SudokuGame() {
                  <Select value={level} onValueChange={(val: Level) => createNewPuzzle(val)} disabled={!isGameOver && startTime !== null}>
                     <SelectTrigger><SelectValue placeholder="Difficulty" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="noob">Noob</SelectItem>
                         <SelectItem value="rookie">Rookie</SelectItem>
                         <SelectItem value="amateur">Amateur</SelectItem>
-                        <SelectItem value="veteran">Veteran</SelectItem>
+                        <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="legend">Legend</SelectItem>
                     </SelectContent>
                 </Select>
                  <Button onClick={() => createNewPuzzle(level)} className="w-full">

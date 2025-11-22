@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 type Player = 'X' | 'O';
 type Square = Player | null;
 type GameMode = 'friend' | 'ai';
-type Difficulty = 'easy' | 'veteran';
+type Difficulty = 'rookie' | 'amateur' | 'pro' | 'legend';
 
 const calculateWinner = (squares: Square[]): {winner: Player | null, line: number[] | null} => {
   const lines = [
@@ -48,7 +47,7 @@ export function TicTacToeGame() {
   const [board, setBoard] = useState<Square[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const [difficulty, setDifficulty] = useState<Difficulty>('rookie');
 
   const { winner, line: winningLine } = calculateWinner(board);
   const isDraw = !winner && isBoardFull(board);
@@ -102,14 +101,20 @@ export function TicTacToeGame() {
   const aiMove = (currentBoard: Square[]) => {
     const newBoard = currentBoard.slice();
     let move: number | undefined;
+    const emptySquares = newBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null) as number[];
+    if (emptySquares.length === 0) return;
 
-    if (difficulty === 'veteran') {
+    if (difficulty === 'legend' || difficulty === 'pro') {
         move = minimax(newBoard, 'O').index;
-    } else { // easy
-        const emptySquares = newBoard.map((sq, i) => sq === null ? i : null).filter(i => i !== null) as number[];
-        if (emptySquares.length > 0) {
+    } else if (difficulty === 'amateur') {
+        // 50% chance of making a perfect move
+        if (Math.random() > 0.5) {
+            move = minimax(newBoard, 'O').index;
+        } else {
             move = emptySquares[Math.floor(Math.random() * emptySquares.length)];
         }
+    } else { // rookie
+        move = emptySquares[Math.floor(Math.random() * emptySquares.length)];
     }
     
     if (move !== undefined) {
@@ -157,18 +162,6 @@ export function TicTacToeGame() {
           </div>
       );
   }
-  
-  if (gameMode === 'ai' && difficulty === null) {
-      return (
-           <div className="flex flex-col items-center justify-center gap-4 p-8">
-              <h3 className="text-xl font-semibold">Choose Difficulty</h3>
-              <div className="flex gap-4">
-                  <Button onClick={() => setDifficulty('easy')} size="lg">Easy</Button>
-                  <Button onClick={() => setDifficulty('veteran')} size="lg" variant="destructive"><BrainCircuit className="mr-2"/>Veteran</Button>
-              </div>
-          </div>
-      )
-  }
 
   let status;
   if (winner) {
@@ -208,8 +201,10 @@ export function TicTacToeGame() {
                     <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="veteran">Veteran (Unbeatable)</SelectItem>
+                    <SelectItem value="rookie">Rookie</SelectItem>
+                    <SelectItem value="amateur">Amateur</SelectItem>
+                    <SelectItem value="pro">Pro (Unbeatable)</SelectItem>
+                    <SelectItem value="legend">Legend (Unbeatable)</SelectItem>
                 </SelectContent>
             </Select>
         </div>

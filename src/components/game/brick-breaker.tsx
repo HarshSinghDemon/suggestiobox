@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type Particle = {
     x: number;
@@ -17,15 +18,21 @@ type Particle = {
     life: number;
 };
 
-type Difficulty = 'slow' | 'fast';
+type Difficulty = 'rookie' | 'amateur' | 'pro' | 'legend';
 
+const difficultySettings: Record<Difficulty, { speed: number, points: number }> = {
+    rookie: { speed: 2, points: 10 },
+    amateur: { speed: 3, points: 20 },
+    pro: { speed: 4, points: 30 },
+    legend: { speed: 5, points: 40 },
+};
 
 export function BrickBreakerGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [gameState, setGameState] = useState<'start' | 'playing' | 'gameOver' | 'won'>('start');
   const [score, setScore] = useState(0);
   const [hasSubmittedScore, setHasSubmittedScore] = useState(false);
-  const [difficulty, setDifficulty] = useState<Difficulty>('slow');
+  const [difficulty, setDifficulty] = useState<Difficulty>('rookie');
 
   const { user } = useUser();
   const firestore = useFirestore();
@@ -91,8 +98,8 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = difficulty === 'fast' ? 3 : 2;
-    const pointsPerBrick = difficulty === 'fast' ? 20 : 10;
+    const baseSpeed = difficultySettings[difficulty].speed;
+    const pointsPerBrick = difficultySettings[difficulty].points;
     
     let speedMultiplier = 1;
     let dx = (Math.random() - 0.5) * baseSpeed * 1.5;
@@ -286,7 +293,7 @@ export function BrickBreakerGame() {
         drawPaddle();
         collisionDetection();
 
-        speedMultiplier = 1 + (localScore / (difficulty === 'fast' ? 2500 : 5000));
+        speedMultiplier = 1 + (localScore / (difficulty === 'legend' || difficulty === 'pro' ? 2500 : 5000));
         const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
         const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
 
@@ -345,9 +352,17 @@ export function BrickBreakerGame() {
                 <h2 className="text-3xl font-bold">{gameState === 'won' ? 'You Win!' : gameState === 'gameOver' ? 'Game Over' : 'Brick Breaker'}</h2>
                 <p className='text-muted-foreground'>Your Score: {score}</p>
                 {gameState === 'start' ? (
-                  <div className='flex gap-4'>
-                    <Button onClick={() => startGame('slow')}>Start Slow</Button>
-                    <Button onClick={() => startGame('fast')} variant="destructive">Start Fast</Button>
+                  <div className='flex flex-col gap-4 w-48'>
+                    <Select value={difficulty} onValueChange={(val: Difficulty) => setDifficulty(val)}>
+                        <SelectTrigger><SelectValue placeholder="Difficulty" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="rookie">Rookie</SelectItem>
+                            <SelectItem value="amateur">Amateur</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="legend">Legend</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={() => startGame(difficulty)}>Start Game</Button>
                   </div>
                 ) : (
                   <Button onClick={resetGame}>Play Again</Button>

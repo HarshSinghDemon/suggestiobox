@@ -17,13 +17,13 @@ const wordsByLength = {
     veryLong: ["DEVELOPER", "JAVASCRIPT", "TYPESCRIPT", "COMPONENT", "PROTOTYPE"],
 };
 
-type Level = 'noob' | 'rookie' | 'amateur' | 'veteran';
+type Level = 'rookie' | 'amateur' | 'pro' | 'legend';
 
 const difficultySettings: Record<Level, { mistakes: number, wordLengths: (keyof typeof wordsByLength)[] }> = {
-    noob: { mistakes: 8, wordLengths: ['short'] },
-    rookie: { mistakes: 7, wordLengths: ['short', 'medium'] },
-    amateur: { mistakes: 6, wordLengths: ['medium', 'long'] },
-    veteran: { mistakes: 5, wordLengths: ['long', 'veryLong'] },
+    rookie: { mistakes: 8, wordLengths: ['short'] },
+    amateur: { mistakes: 7, wordLengths: ['short', 'medium'] },
+    pro: { mistakes: 6, wordLengths: ['medium', 'long'] },
+    legend: { mistakes: 5, wordLengths: ['long', 'veryLong'] },
 };
 
 
@@ -206,10 +206,10 @@ export function HangmanGame() {
                  <Select value={level} onValueChange={(val: Level) => restartGame(val)} disabled={!isGameOver && mistakes > 0}>
                     <SelectTrigger><SelectValue placeholder="Difficulty" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="noob">Noob</SelectItem>
                         <SelectItem value="rookie">Rookie</SelectItem>
                         <SelectItem value="amateur">Amateur</SelectItem>
-                        <SelectItem value="veteran">Veteran</SelectItem>
+                        <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="legend">Legend</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
