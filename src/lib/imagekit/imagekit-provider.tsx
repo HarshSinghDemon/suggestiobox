@@ -15,7 +15,6 @@ interface ImageKitContextType {
 const ImageKitContext = createContext<ImageKitContextType | undefined>(undefined);
 
 export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
-    const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
 
     const ikInstance = useMemo(() => {
@@ -43,13 +42,42 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
             return Promise.reject(error);
         }
 
-        // Pre-flight check to the authentication endpoint
         try {
-            const authCheck = await fetch('/api/imagekit-auth');
-            if (!authCheck.ok) {
-                const errorData = await authCheck.json();
+            // 1. Fetch authentication parameters from your server
+            const authCheckResponse = await fetch('/api/imagekit-auth');
+            if (!authCheckResponse.ok) {
+                const errorData = await authCheckResponse.json();
                 throw new Error(errorData.error || 'Failed to authenticate with ImageKit server.');
             }
+            const authParams = await authCheckResponse.json();
+
+            // 2. Use the fetched parameters to upload the file
+            return new Promise((resolve, reject) => {
+                ikInstance.upload({
+                    file,
+                    ...options,
+                    token: authParams.token,
+                    signature: authParams.signature,
+                    expire: authParams.expire,
+                }, (err, result) => {
+                    if (err) {
+                        console.error("ImageKit Upload Error:", err);
+                        const errorMessage = (err as any)?.message || 'Could not upload the file.';
+                        toast({
+                            variant: 'destructive',
+                            title: 'Upload Failed',
+                            description: errorMessage
+                        });
+                        reject(new Error(errorMessage));
+                    } else if (result) {
+                        toast({
+                            title: 'Upload Successful',
+                            description: `${result.name} has been uploaded.`,
+                        });
+                        resolve(result);
+                    }
+                });
+            });
         } catch (authError: any) {
             toast({
                 variant: 'destructive',
@@ -58,33 +86,6 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
             });
             return Promise.reject(authError);
         }
-
-        setIsUploading(true);
-
-        return new Promise((resolve, reject) => {
-            ikInstance.upload({
-                file,
-                ...options,
-            }, (err, result) => {
-                setIsUploading(false);
-                if (err) {
-                    console.error("ImageKit Upload Error:", err);
-                    const errorMessage = (err as any)?.message || 'Could not upload the file.';
-                    toast({
-                        variant: 'destructive',
-                        title: 'Upload Failed',
-                        description: errorMessage
-                    });
-                    reject(new Error(errorMessage));
-                } else if (result) {
-                    toast({
-                        title: 'Upload Successful',
-                        description: `${result.name} has been uploaded.`,
-                    });
-                    resolve(result);
-                }
-            });
-        });
     };
     
     const value = { ikInstance, upload };
