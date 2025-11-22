@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock, Users, Bot } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -37,7 +37,7 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
-function PookieAIChatListItem({ isSelected }: { isSelected: boolean }) {
+function PookieAIChatListItem({ isSelected, aiName }: { isSelected: boolean; aiName: string }) {
     return (
         <Link href="/messages/pookie-ai" className="block">
             <div className={cn(
@@ -49,7 +49,7 @@ function PookieAIChatListItem({ isSelected }: { isSelected: boolean }) {
                     <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
-                    <p className="font-semibold">Pookie (AI)</p>
+                    <p className="font-semibold">{aiName} (AI)</p>
                     <p className="text-sm italic truncate text-muted-foreground">Your friendly neighborhood chatbot.</p>
                 </div>
             </div>
@@ -61,6 +61,14 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
+    const [pookieName, setPookieName] = useState('Pookie');
+
+    useEffect(() => {
+        const storedName = localStorage.getItem('pookieName');
+        if (storedName) {
+            setPookieName(storedName);
+        }
+    }, []);
 
     const userDocRef = useMemoFirebase(() => {
         if (!currentUser || !firestore) return null;
@@ -115,7 +123,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     }, [chatRooms, currentUser, usersMap]);
 
     const filteredChatRooms = useMemo(() => {
-        const pookieMatches = 'pookie (ai)'.includes(searchQuery.toLowerCase());
+        const pookieMatches = pookieName.toLowerCase().includes(searchQuery.toLowerCase());
         const filteredP2PChats = enrichedChatRooms.filter(room => 
             room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -125,7 +133,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
             p2pChats: filteredP2PChats
         };
 
-    }, [enrichedChatRooms, searchQuery]);
+    }, [enrichedChatRooms, searchQuery, pookieName]);
 
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
@@ -159,7 +167,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     ) : (
                         <div className="p-2 space-y-1">
                             {filteredChatRooms.pookieVisible && (
-                                <PookieAIChatListItem isSelected={selectedRoomId === 'pookie-ai'} />
+                                <PookieAIChatListItem isSelected={selectedRoomId === 'pookie-ai'} aiName={pookieName} />
                             )}
                             {filteredChatRooms.p2pChats.length > 0 ? (
                                 filteredChatRooms.p2pChats.map(room => {

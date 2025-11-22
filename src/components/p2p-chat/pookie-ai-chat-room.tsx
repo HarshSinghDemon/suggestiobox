@@ -23,7 +23,7 @@ type ChatMessage = {
 
 type PookieGender = 'male' | 'female' | 'neutral';
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({ message, aiName }: { message: ChatMessage; aiName: string; }) {
     const isPookie = message.sender === 'pookie';
 
     return (
@@ -46,28 +46,28 @@ function ChatBubble({ message }: { message: ChatMessage }) {
     )
 }
 
-function GenderSelectionModal({ isOpen, onSelect }: { isOpen: boolean, onSelect: (gender: PookieGender) => void }) {
+function GenderSelectionModal({ isOpen, onSelect }: { isOpen: boolean, onSelect: (gender: PookieGender, name: string) => void }) {
     return (
         <Dialog open={isOpen}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Choose Pookie's Gender</DialogTitle>
+                    <DialogTitle>Choose Your AI's Persona</DialogTitle>
                     <DialogDescription>
-                        Select the personality you'd like to chat with. This can't be changed later.
+                        Select the name and gender for your AI friend. This can't be changed later.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-3">
-                    <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('male')}>
+                    <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('male', 'Alex')}>
                         <User className="w-12 h-12 mb-2 text-blue-500" />
-                        <p className="font-semibold">Male</p>
+                        <p className="font-semibold">Alex (Male)</p>
                     </Card>
-                     <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('female')}>
+                     <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('female', 'Mia')}>
                         <User className="w-12 h-12 mb-2 text-pink-500" />
-                        <p className="font-semibold">Female</p>
+                        <p className="font-semibold">Mia (Female)</p>
                     </Card>
-                     <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('neutral')}>
+                     <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('neutral', 'Pookie')}>
                         <Users className="w-12 h-12 mb-2 text-purple-500" />
-                        <p className="font-semibold">Neutral</p>
+                        <p className="font-semibold">Pookie (Neutral)</p>
                     </Card>
                 </div>
             </DialogContent>
@@ -85,13 +85,15 @@ export function PookieAiChatRoom() {
     const viewportRef = useRef<HTMLDivElement>(null);
     const [isGenderModalOpen, setIsGenderModalOpen] = useState(false);
     const [pookieGender, setPookieGender] = useState<PookieGender | null>(null);
+    const [pookieName, setPookieName] = useState<string>('Pookie');
     
     useEffect(() => {
         const storedGender = localStorage.getItem('pookieGender');
-        if (storedGender) {
+        const storedName = localStorage.getItem('pookieName');
+        if (storedGender && storedName) {
             setPookieGender(storedGender as PookieGender);
+            setPookieName(storedName);
         } else {
-            // Only open the modal if we haven't determined the gender yet.
             if (pookieGender === null) {
                 setIsGenderModalOpen(true);
             }
@@ -104,9 +106,11 @@ export function PookieAiChatRoom() {
         }
     }, [messages]);
     
-    const handleGenderSelect = (gender: PookieGender) => {
+    const handleGenderSelect = (gender: PookieGender, name: string) => {
         localStorage.setItem('pookieGender', gender);
+        localStorage.setItem('pookieName', name);
         setPookieGender(gender);
+        setPookieName(name);
         setIsGenderModalOpen(false);
     }
 
@@ -133,6 +137,7 @@ export function PookieAiChatRoom() {
             const response = await pookieAi({
                 message: input,
                 userName: user.displayName || "friend",
+                aiName: pookieName,
                 chatHistory: chatHistory,
                 gender: pookieGender
             });
@@ -168,20 +173,20 @@ export function PookieAiChatRoom() {
                     <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                    <p className="font-semibold">Pookie (AI)</p>
+                    <p className="font-semibold">{pookieName} (AI)</p>
                     <p className="text-xs text-muted-foreground">
-                        {isLoading ? <span className="italic text-primary">Pookie is typing...</span> : "Online"}
+                        {isLoading ? <span className="italic text-primary">{pookieName} is typing...</span> : "Online"}
                     </p>
                 </div>
             </header>
             <ScrollArea className="flex-1" viewportRef={viewportRef}>
                  <div className="flex flex-col gap-4 p-6">
                     {messages.length > 0 ? (
-                        messages.map(msg => <ChatBubble key={msg.id} message={msg} />)
+                        messages.map(msg => <ChatBubble key={msg.id} message={msg} aiName={pookieName} />)
                     ) : (
                          <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
                             <Sparkles className="w-16 h-16 text-primary/50" />
-                            <h3 className="text-xl font-semibold">Say hi to Pookie!</h3>
+                            <h3 className="text-xl font-semibold">Say hi to {pookieName}!</h3>
                             <p>This is your personal AI chatbot. Ask it for study tips, jokes, or just chat about your day.</p>
                         </div>
                     )}
@@ -204,7 +209,7 @@ export function PookieAiChatRoom() {
                     onSubmit={e => { e.preventDefault(); handleSendMessage(); }}
                 >
                     <Input 
-                        placeholder="Chat with Pookie..."
+                        placeholder={`Chat with ${pookieName}...`}
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         disabled={!user || isLoading || !pookieGender}
