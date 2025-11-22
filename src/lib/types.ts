@@ -10,6 +10,7 @@ export type FirebaseUser = {
   photoURL: string | null;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
+  publicKey?: string;
   chatRoomIds?: string[];
   friends?: string[];
   friendRequestsSent?: string[];

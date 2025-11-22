@@ -8,6 +8,9 @@ import { useMemo } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { Separator } from "../ui/separator";
+import { Button } from "../ui/button";
+import { Copy, KeyRound } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -30,6 +33,7 @@ function UserInfoSkeleton() {
 export function UserInfoPanel({ roomId }: { roomId: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -40,6 +44,16 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     const { data: otherUser, isLoading: isLoadingOtherUser } = useDoc<FirebaseUser>(otherUserRef);
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
+
+    const copyKeyToClipboard = () => {
+        if (otherUser?.publicKey) {
+            navigator.clipboard.writeText(otherUser.publicKey);
+            toast({
+                title: "Public Key Copied!",
+                description: "The user's public key has been copied to your clipboard.",
+            });
+        }
+    };
 
     if (isLoading) {
         return <UserInfoSkeleton />;
@@ -62,6 +76,23 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                 </div>
             </div>
 
+            <Separator className="my-6" />
+
+            {otherUser.publicKey && (
+                 <div>
+                    <h4 className="flex items-center gap-2 mb-2 font-semibold">
+                        <KeyRound className="w-4 h-4" />
+                        Public Key
+                    </h4>
+                    <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-muted">
+                        <p className="flex-1 font-mono text-xs text-muted-foreground">{otherUser.publicKey}</p>
+                        <Button variant="ghost" size="icon" className="shrink-0" onClick={copyKeyToClipboard}>
+                            <Copy className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+            
             <Separator className="my-6" />
 
             <div>

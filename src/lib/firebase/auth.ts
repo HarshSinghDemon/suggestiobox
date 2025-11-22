@@ -18,6 +18,7 @@ import {
   unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { generateAndExportKeyPair } from '../e2e';
 
 /**
  * Handles user sign-in and sign-up logic.
@@ -26,13 +27,20 @@ import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'f
  * @param details - Optional details for new user creation (e.g., year).
  * @returns {Promise<boolean>} True if a new user document was created.
  */
-export const handleUserSignIn = async (user: User, details?: { year?: string }) => {
+export const handleUserSignIn = async (user: User, details?: { year?: string; publicKey?: string; }) => {
   const db = getFirestore(user.auth.app);
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
   if (!userDoc.exists()) {
     // New user: create the document.
+    let publicKey = details?.publicKey;
+    if (!publicKey) {
+      // Generate keys if not provided (e.g., social login)
+      const { publicKeyBase64 } = await generateAndExportKeyPair();
+      publicKey = publicKeyBase64;
+    }
+
     const userData: any = {
       id: user.uid,
       uid: user.uid,
@@ -45,6 +53,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string }) 
       friendRequestsSent: [],
       friendRequestsReceived: [],
       chatRoomIds: [],
+      publicKey: publicKey, // Store public key
     };
     if (details?.year) {
       userData.year = details.year;
@@ -70,6 +79,7 @@ export const signUpWithEmail = async (
   year: string
 ) => {
   try {
+    const { publicKeyBase64 } = await generateAndExportKeyPair();
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -80,7 +90,7 @@ export const signUpWithEmail = async (
     await updateProfile(user, { displayName, photoURL });
     await sendEmailVerification(user);
 
-    await handleUserSignIn(user, { year });
+    await handleUserSignIn(user, { year, publicKey: publicKeyBase64 });
 
     return user;
   } catch (error) {
