@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -82,7 +83,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
             <div>
                 <h4 className="flex items-center gap-2 mb-2 font-semibold">
                     <KeyRound className="w-4 h-4" />
-                    Public Key
+                    Encryption Key
                 </h4>
                 <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-muted">
                     <p className="flex-1 font-mono text-xs text-muted-foreground">{displayKey}</p>
