@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -179,7 +178,7 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
             </Link>
           </Button>
            <div className="flex items-center gap-2">
-            <StudyBuddy contentToAnalyze={suggestion.description} />
+            <StudyBuddy contentToAnalyze={suggestion.description} fileUrl={suggestion.fileUrl}/>
             {isOwner && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>

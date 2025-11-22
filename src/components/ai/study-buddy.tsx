@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,15 +16,29 @@ import { studyBuddy } from '@/ai/flows/study-buddy-flow';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileCheck2 } from 'lucide-react';
 
 interface StudyBuddyProps {
   contentToAnalyze: string;
+  fileUrl?: string | null;
   triggerButton?: React.ReactNode;
 }
 
+const blobToDataURI = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
+
 export function StudyBuddy({
   contentToAnalyze,
+  fileUrl,
   triggerButton,
 }: StudyBuddyProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,8 +46,29 @@ export function StudyBuddy({
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [fileDataUri, setFileDataUri] = useState<string | null>(null);
+  const [isFetchingFile, setIsFetchingFile] = useState(false);
   
   const quickActions = ["Summarize the key points", "Explain this like I'm a beginner", "Create 3 practice questions based on this"];
+
+  useEffect(() => {
+    if (isOpen && fileUrl && !fileDataUri) {
+        setIsFetchingFile(true);
+        setError(null);
+        fetch(fileUrl)
+            .then(res => {
+                if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
+                return res.blob();
+            })
+            .then(blob => blobToDataURI(blob))
+            .then(dataUri => setFileDataUri(dataUri))
+            .catch(e => {
+                console.error("Failed to load PDF for AI:", e);
+                setError("Could not load the associated file for the AI to read. The AI can only see the description.");
+            })
+            .finally(() => setIsFetchingFile(false));
+    }
+  }, [isOpen, fileUrl, fileDataUri]);
 
   const handleQuery = async (userQuery: string) => {
     if (!userQuery.trim()) return;
@@ -45,6 +80,7 @@ export function StudyBuddy({
       const result = await studyBuddy({
         content: contentToAnalyze,
         query: userQuery,
+        fileDataUri: fileDataUri || undefined,
       });
       setAiResponse(result.response);
     } catch (e: any) {
@@ -60,6 +96,8 @@ export function StudyBuddy({
     setQuery(action);
     handleQuery(action);
   }
+  
+  const isLoadingAnything = isLoading || isFetchingFile;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -81,7 +119,20 @@ export function StudyBuddy({
             Ask questions, get summaries, or generate practice questions based on the content.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 min-h-0">
+        {fileUrl && (
+            <div className='px-6'>
+                <Alert variant={fileDataUri ? "default" : isFetchingFile ? "default" : "destructive"}>
+                    {isFetchingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCheck2 className="w-4 h-4" />}
+                    <AlertTitle>
+                        {isFetchingFile ? "Analyzing File..." : fileDataUri ? "File Ready for AI" : "File Error"}
+                    </AlertTitle>
+                    <AlertDescription>
+                        {isFetchingFile ? "The AI is preparing to read the attached file." : fileDataUri ? "The AI will now use the attached file as its primary source of information." : "Could not load the file. The AI will only use the text description."}
+                    </AlertDescription>
+                </Alert>
+            </div>
+        )}
+        <div className="flex-1 min-h-0 px-6">
             <ScrollArea className="h-full p-4 border rounded-md">
                 {isLoading && !aiResponse && (
                     <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
@@ -89,7 +140,7 @@ export function StudyBuddy({
                         <p>Thinking...</p>
                     </div>
                 )}
-                {error && (
+                {error && !isFetchingFile && (
                      <Alert variant="destructive">
                         <AlertCircle className="w-4 h-4" />
                         <AlertTitle>AI Error</AlertTitle>
@@ -103,7 +154,7 @@ export function StudyBuddy({
                         {aiResponse}
                     </div>
                 )}
-                 {!aiResponse && !isLoading && !error && (
+                 {!aiResponse && !isLoading && !isFetchingFile && (
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-center text-muted-foreground">
                         <Sparkles className="w-12 h-12 text-primary/50" />
                         <h3 className='text-lg font-semibold'>Ready to help!</h3>
@@ -112,10 +163,10 @@ export function StudyBuddy({
                 )}
             </ScrollArea>
         </div>
-        <DialogFooter className="flex flex-col gap-2">
+        <DialogFooter className="flex flex-col gap-2 pt-4">
             <div className="flex flex-wrap gap-2">
                 {quickActions.map(action => (
-                    <Button key={action} variant="outline" size="sm" onClick={() => handleQuickAction(action)} disabled={isLoading}>
+                    <Button key={action} variant="outline" size="sm" onClick={() => handleQuickAction(action)} disabled={isLoadingAnything}>
                        {action}
                     </Button>
                 ))}
@@ -131,12 +182,12 @@ export function StudyBuddy({
               placeholder="Ask a question about the content..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoadingAnything}
               rows={1}
               className='text-base'
             />
-            <Button type="submit" disabled={isLoading || !query.trim()}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ask'}
+            <Button type="submit" disabled={isLoadingAnything || !query.trim()}>
+              {isLoadingAnything ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ask'}
             </Button>
           </form>
         </DialogFooter>
