@@ -77,7 +77,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
             </div>
 
             <Separator className="my-6" />
-
+            
             {otherUser.publicKey && (
                  <div>
                     <h4 className="flex items-center gap-2 mb-2 font-semibold">
