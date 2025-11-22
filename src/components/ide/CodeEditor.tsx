@@ -10,17 +10,20 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 
 const languageOptions = [
-  { value: 71, label: 'Python' },
-  { value: 62, label: 'Java' },
-  { value: 54, label: 'C++' },
-  { value: 50, label: 'C' },
-  { value: 63, label: 'JavaScript' },
-  { value: 51, label: 'C#' },
+  { value: 71, label: 'Python (General Purpose)', category: 'General' },
+  { value: 63, label: 'JavaScript (Node.js)', category: 'General' },
+  { value: 62, label: 'Java', category: 'General' },
+  { value: 54, label: 'C++', category: 'General' },
+  { value: 50, label: 'C', category: 'General' },
+  { value: 51, label: 'C#', category: 'General' },
+  { value: 'coming_soon', label: 'Python (Data Science) - Coming Soon', category: 'Data Science', disabled: true },
 ];
 
 const languageTemplates: Record<string, string> = {
   python: `def main():
     print("Hello from Python!")
+    # Standard libraries like 'math' or 'collections' are available.
+    # Third-party libraries like numpy or matplotlib are not.
 
 if __name__ == "__main__":
     main()`,
@@ -64,13 +67,14 @@ const languageIdToName: Record<number, string> = {
 
 export function CodeEditor() {
     const [language, setLanguage] = useState(languageOptions[0].value);
-    const [code, setCode] = useState(languageTemplates[languageIdToName[languageOptions[0].value]]);
+    const [code, setCode] = useState(languageTemplates[languageIdToName[languageOptions[0].value as number]]);
     const [output, setOutput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const outputRef = useRef<HTMLDivElement>(null);
 
     const handleLanguageChange = (value: string) => {
+        if(value === 'coming_soon') return;
         const langId = parseInt(value, 10);
         const langName = languageIdToName[langId];
         setLanguage(langId);
@@ -125,7 +129,7 @@ export function CodeEditor() {
                         </SelectTrigger>
                         <SelectContent>
                             {languageOptions.map(opt => (
-                                <SelectItem key={opt.value} value={String(opt.value)}>
+                                <SelectItem key={opt.value} value={String(opt.value)} disabled={opt.disabled}>
                                     {opt.label}
                                 </SelectItem>
                             ))}
@@ -150,7 +154,7 @@ export function CodeEditor() {
             <div className="border rounded-lg bg-card overflow-hidden">
                 <Editor
                     height="50vh"
-                    language={languageIdToName[language]}
+                    language={typeof language === 'number' ? languageIdToName[language] : 'plaintext'}
                     value={code}
                     onChange={(value) => setCode(value || '')}
                     theme="vs-dark"
