@@ -452,5 +452,3 @@ export function Header() {
     </header>
   );
 }
-
-    
