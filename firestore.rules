@@ -32,10 +32,6 @@ service cloud.firestore {
         // Deletion is denied to preserve chat history integrity in this model.
         allow delete: if false; 
       }
-      // Shared code can be read and written only by participants
-      match /sharedCode/live {
-        allow read, write: if isParticipant(roomId);
-      }
     }
 
     // Suggestions can be read by anyone, but only created/modified/deleted by the owner

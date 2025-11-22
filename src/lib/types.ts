@@ -1,3 +1,4 @@
+
 import type { Timestamp } from "firebase/firestore";
 import type { Subject, Semester } from "./constants";
 
@@ -15,12 +16,6 @@ export type FirebaseUser = {
   friendRequestsReceived?: string[];
   pinnedSuggestions?: string[];
   pinnedAssignments?: string[];
-};
-
-export type SharedCode = {
-    content: string;
-    lastEditorId: string;
-    updatedAt: Timestamp;
 };
 
 export type ChatRoom = {
