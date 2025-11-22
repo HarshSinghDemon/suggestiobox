@@ -399,7 +399,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }
     
     return (
-        <div className="flex flex-col h-full bg-card">
+        <div className="flex flex-col h-full bg-background border-l">
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
@@ -486,5 +486,3 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
-
-    

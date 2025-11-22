@@ -30,16 +30,14 @@ function ChatListSkeleton() {
 export default function PrivateChatPage({ params }: PrivateChatPageProps) {
     return (
         <AuthWrapper>
-            <div className="h-[calc(100vh-4rem)]">
-                 <div className="h-full border rounded-lg md:grid md:grid-cols-[350px_1fr]">
-                    <div className="h-full hidden md:col-span-1 md:border-r md:block">
-                        <Suspense fallback={<ChatListSkeleton />}>
-                            <ChatList selectedRoomId={params.roomId} />
-                        </Suspense>
-                    </div>
-                    <div className="h-full md:col-span-1">
-                        <PrivateChatRoom roomId={params.roomId} />
-                    </div>
+            <div className="h-[calc(100vh-4rem)] md:grid md:grid-cols-[350px_1fr]">
+                <div className="h-full hidden md:col-span-1 md:border-r md:block">
+                    <Suspense fallback={<ChatListSkeleton />}>
+                        <ChatList selectedRoomId={params.roomId} />
+                    </Suspense>
+                </div>
+                <div className="h-full md:col-span-1 flex flex-col">
+                    <PrivateChatRoom roomId={params.roomId} />
                 </div>
             </div>
         </AuthWrapper>
