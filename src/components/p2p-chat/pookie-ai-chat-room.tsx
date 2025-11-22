@@ -63,7 +63,7 @@ function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boo
                         <p className="font-semibold">Alex (Male)</p>
                     </Card>
                      <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('female', 'Mia')}>
-                         <Image src="https://api.dicebear.com/7.x/miniavs/svg?seed=Mia" alt="Mia" width={64} height={64} className="w-16 h-16 mb-2 rounded-full" />
+                         <Image src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Girl's%20face.gif" alt="Mia" width={64} height={64} className="w-16 h-16 mb-2 rounded-full" unoptimized />
                         <p className="font-semibold">Mia (Female)</p>
                     </Card>
                      <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('neutral', 'Pookie')}>
@@ -116,7 +116,7 @@ export function PookieAiChatRoom() {
     
     const pookieAvatarUrl = useMemo(() => {
         if (pookieGender === 'male') return "https://api.dicebear.com/7.x/micah/svg?seed=Alex&backgroundColor=b6e3f4";
-        if (pookieGender === 'female') return "https://api.dicebear.com/7.x/miniavs/svg?seed=Mia";
+        if (pookieGender === 'female') return "https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Girl's%20face.gif";
         return "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50";
     }, [pookieGender]);
 
