@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ChessGame } from '@/components/game/chess';
@@ -11,7 +12,7 @@ export default function ChessGamePage() {
         <Card className="w-full max-w-xl">
           <CardHeader className="text-center">
             <CardTitle>Chess</CardTitle>
-            <CardDescription>A classic game of strategy. Play against a simple AI.</CardDescription>
+            <CardDescription>A classic game of strategy. Play against the AI with adjustable difficulty.</CardDescription>
           </CardHeader>
           <CardContent>
             <ChessGame />

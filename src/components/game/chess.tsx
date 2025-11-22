@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -5,13 +6,19 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { RotateCcw } from 'lucide-react';
 import { Chess } from 'chess.js';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type Player = 'w' | 'b';
 type Piece = { type: string, color: Player };
+type Difficulty = 'rookie' | 'amateur' | 'pro' | 'legend';
 
 const pieceUnicode: Record<string, string> = {
     p: '♙', r: '♖', n: '♘', b: '♗', q: '♕', k: '♔',
     P: '♟', R: '♜', N: '♞', B: '♝', Q: '♛', K: '♚',
+};
+
+const pieceValues: Record<string, number> = {
+    p: 1, n: 3, b: 3, r: 5, q: 9, k: 0
 };
 
 const getPieceCode = (piece: Piece) => {
@@ -26,6 +33,7 @@ export function ChessGame() {
     const [isGameOver, setIsGameOver] = useState(false);
     const [status, setStatus] = useState("White's turn");
     const [isClient, setIsClient] = useState(false);
+    const [difficulty, setDifficulty] = useState<Difficulty>('rookie');
 
     useEffect(() => {
         setIsClient(true);
@@ -47,16 +55,64 @@ export function ChessGame() {
             }
         }
     }, [game]);
+    
+    const evaluateBoard = (board: (Piece | null)[][]): number => {
+        let total = 0;
+        board.forEach(row => {
+            row.forEach(piece => {
+                if(piece) {
+                    total += pieceValues[piece.type] * (piece.color === 'w' ? 1 : -1);
+                }
+            });
+        });
+        return total;
+    }
 
-    const makeRandomMove = useCallback(() => {
+    const getBestMove = (gameInstance: Chess, isMaximizingPlayer: boolean): string | null => {
+        const moves = gameInstance.moves();
+        if (moves.length === 0) return null;
+
+        let bestMove = null;
+        let bestValue = isMaximizingPlayer ? -Infinity : Infinity;
+
+        for(const move of moves) {
+            gameInstance.move(move);
+            const boardValue = evaluateBoard(gameInstance.board());
+            gameInstance.undo();
+            
+            if (isMaximizingPlayer) {
+                if (boardValue > bestValue) {
+                    bestValue = boardValue;
+                    bestMove = move;
+                }
+            } else {
+                if (boardValue < bestValue) {
+                    bestValue = boardValue;
+                    bestMove = move;
+                }
+            }
+        }
+        return bestMove || moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    const makeAIMove = useCallback(() => {
         const moves = game.moves();
         if (moves.length > 0) {
-            const move = moves[Math.floor(Math.random() * moves.length)];
-            game.move(move);
+            let move;
+            if (difficulty === 'legend' || difficulty === 'pro') {
+                move = getBestMove(game, false); // false for black (minimizing player)
+            } else if (difficulty === 'amateur') {
+                move = Math.random() < 0.5 ? getBestMove(game, false) : moves[Math.floor(Math.random() * moves.length)];
+            } else { // rookie
+                move = moves[Math.floor(Math.random() * moves.length)];
+            }
+            
+            if(move) game.move(move);
+            
             setBoard(game.board());
             updateStatus();
         }
-    }, [game, updateStatus]);
+    }, [game, updateStatus, difficulty]);
 
     const handleSquareClick = (square: string, piece: Piece | null) => {
         if (isGameOver || game.turn() !== 'w') return;
@@ -75,7 +131,7 @@ export function ChessGame() {
                     setSelectedSquare(null);
                     setPossibleMoves([]);
                     
-                    setTimeout(() => makeRandomMove(), 500);
+                    setTimeout(() => makeAIMove(), 500);
 
                 } else {
                     // Invalid move, maybe select new piece?
@@ -132,7 +188,22 @@ export function ChessGame() {
                     );
                 }))}
             </div>
-            <Button onClick={restartGame} variant="outline"><RotateCcw className="w-4 h-4 mr-2" />New Game</Button>
+            <div className="flex items-center gap-4">
+                <Button onClick={restartGame} variant="outline"><RotateCcw className="w-4 h-4 mr-2" />New Game</Button>
+                <div className='w-48'>
+                    <Select value={difficulty} onValueChange={(d: Difficulty) => { setDifficulty(d); restartGame(); }}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="rookie">Rookie</SelectItem>
+                            <SelectItem value="amateur">Amateur</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="legend">Legend</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
     );
 }
