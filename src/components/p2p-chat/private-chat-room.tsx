@@ -406,7 +406,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                     <Popover open={isAttachmentMenuOpen} onOpenChange={setIsAttachmentMenuOpen}>
                         <PopoverTrigger asChild>
-                             <Button variant="ghost" size="icon" type="button"> <Paperclip/> </Button>
+                             <Button variant="ghost" size="icon" type="button" className="hidden"> <Paperclip/> </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-2 mb-2" side="top" align="start">
                             <div className="grid grid-cols-2 gap-2">
@@ -432,3 +432,5 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
+
+    
