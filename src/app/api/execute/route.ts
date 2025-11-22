@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -53,4 +54,6 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error('API Route Error:', error);
-        return NextResponse
+        return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
+    }
+}
