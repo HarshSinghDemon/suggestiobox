@@ -60,6 +60,20 @@ export function NotificationPanel() {
             console.error("Failed to mark notification as read", e);
         }
     };
+    
+    const scheduleDeletion = (notificationId: string) => {
+        setTimeout(async () => {
+            if (!user || !firestore) return;
+            const notifRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
+            try {
+                await deleteDoc(notifRef);
+            } catch (e) {
+                // Fail silently, as this is a background task.
+                console.error("Failed to auto-delete notification:", e);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    };
+
 
     const handleAccept = async (notification: Notification) => {
         if (!user || !firestore) return;
@@ -97,6 +111,7 @@ export function NotificationPanel() {
 
         if (!notification.isRead) {
             await markAsRead(notification.id);
+            scheduleDeletion(notification.id);
         }
     };
     
