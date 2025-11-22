@@ -18,6 +18,35 @@ const PacManIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 12a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z"/><path d="M12 12 8 8"/></svg>
 );
 
+const PongIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect x="2" y="4" width="2" height="16" />
+        <rect x="20" y="4" width="2" height="16" />
+    </svg>
+);
+
+const CheckersIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <circle cx="8" cy="8" r="3" />
+        <circle cx="16" cy="16" r="3" />
+        <path d="M3 3h18v18H3z" />
+    </svg>
+);
+
+const ChessIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M15 21h-6a2 2 0 0 1-2-2v-2h10v2a2 2 0 0 1-2 2z" />
+        <path d="M7 15h10" />
+        <path d="M7.5 15a4.5 4.5 0 0 0 9 0" />
+        <path d="M9 12h6" />
+        <path d="M9 9h6" />
+        <path d="M11 9a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z" />
+        <path d="M12 6.5V5" />
+        <path d="M11 3h2" />
+        <path d="M12 3v2" />
+    </svg>
+);
+
 
 const games = [
     {
@@ -96,6 +125,27 @@ const games = [
         href: '/community-games/connect-four',
         icon: Grip,
         variant: 'ocean',
+    },
+    {
+        name: 'Pong',
+        description: 'The classic two-paddle arcade game.',
+        href: '/community-games/pong',
+        icon: PongIcon,
+        variant: 'fiery',
+    },
+    {
+        name: 'Checkers',
+        description: 'A classic strategy board game.',
+        href: '/community-games/checkers',
+        icon: CheckersIcon,
+        variant: 'ocean',
+    },
+    {
+        name: 'Chess',
+        description: 'The ultimate strategy board game.',
+        href: '/community-games/chess',
+        icon: ChessIcon,
+        variant: 'fiery',
     },
 ];
 
