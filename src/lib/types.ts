@@ -101,7 +101,6 @@ export type Message = {
     createdAt: Timestamp;
     reactions?: Reaction[];
     replyTo?: Reply | null;
-    isRead?: boolean;
 };
 
 
