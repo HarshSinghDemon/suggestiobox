@@ -437,7 +437,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </TooltipContent>
                 </Tooltip>
             </header>
-            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+            <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
                 <div className="flex flex-col gap-4 p-6">
                     {!sessionKey && (
                         <div className="flex items-center justify-center gap-2 p-4 text-sm rounded-md text-muted-foreground bg-muted">
@@ -486,3 +486,5 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
+
+    
