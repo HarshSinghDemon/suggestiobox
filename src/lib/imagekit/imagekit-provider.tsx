@@ -19,11 +19,14 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
 
     const ikInstance = useMemo(() => {
+        const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY;
         const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-        if (typeof window !== 'undefined' && urlEndpoint) {
+
+        if (typeof window !== 'undefined' && publicKey && urlEndpoint) {
             return new IK({
-                urlEndpoint: urlEndpoint,
-                authenticationEndpoint: '/api/imagekit-auth', // This is still used by the SDK internally
+                publicKey,
+                urlEndpoint,
+                authenticationEndpoint: '/api/imagekit-auth',
             });
         }
         return null;
@@ -31,7 +34,13 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
 
     const upload = async (file: File, options: { fileName: string; folder?: string }): Promise<UploadResponse> => {
         if (!ikInstance) {
-            throw new Error("ImageKit is not initialized.");
+            const error = new Error("ImageKit is not initialized. Please check your environment variables.");
+            toast({
+                variant: 'destructive',
+                title: 'Configuration Error',
+                description: error.message
+            });
+            return Promise.reject(error);
         }
 
         // Pre-flight check to the authentication endpoint
