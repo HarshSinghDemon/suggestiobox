@@ -114,8 +114,8 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 <div className={cn(
                     "p-3 rounded-2xl",
                     isCurrentUserSender 
-                        ? "bg-primary text-primary-foreground rounded-br-none" 
-                        : "bg-muted rounded-bl-none"
+                        ? "bg-primary/80 text-primary-foreground rounded-br-none" 
+                        : "bg-muted/80 backdrop-blur-sm rounded-bl-none"
                 )}>
                     {message.fileUrl && (
                         <div className="mb-2">
@@ -432,5 +432,3 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
-
-    

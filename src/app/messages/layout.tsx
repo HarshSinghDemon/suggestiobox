@@ -15,7 +15,7 @@ export default function MessagesLayout({
             <div className="fixed inset-0 bg-chat-background -z-10" />
             <div className="relative z-10 h-full flex flex-col p-4">
                 <ChatHeader />
-                <div className="flex-1 min-h-0 rounded-b-2xl overflow-hidden glass-pane border-t-0 rounded-t-none">
+                <div className="flex-1 min-h-0 rounded-b-2xl overflow-hidden glass-pane border-t-0 rounded-t-none bg-transparent">
                     {children}
                 </div>
             </div>
