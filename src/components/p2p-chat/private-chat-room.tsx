@@ -370,7 +370,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         setPendingMessages(prev => [...prev, pendingMsg]);
     };
     
-    const handleReaction = async (messageId: string, emoji: string) => {
+    const handleReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!currentUser || !firestore) return;
         const messageRef = doc(firestore, 'chatRooms', roomId, 'messages', messageId);
         
@@ -382,7 +382,11 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             const newReaction: Reaction = { emoji, userId: currentUser.uid, userName: currentUser.displayName || 'User' };
             await updateDoc(messageRef, { reactions: arrayUnion(newReaction) });
         }
-    };
+    }, [currentUser, firestore, roomId, decryptedMessages]);
+
+    const handleReply = useCallback((message: DecryptedMessage) => {
+        setReplyingTo(message);
+    }, []);
 
 
     const isLoading = isLoadingRoom || isLoadingOtherUser;
@@ -399,7 +403,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }
     
     return (
-        <div className="flex flex-col h-full bg-background border-l">
+        <div className="flex flex-col h-full bg-background">
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
@@ -447,7 +451,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     )}
                     {allMessages.length > 0 ? (
                         allMessages.map(msg => (
-                            <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={setReplyingTo} onReact={handleReaction} />
+                            <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={handleReply} onReact={handleReaction} />
                         ))
                     ) : (
                          <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted">
