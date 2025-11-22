@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useMemo, ReactNode, useState } from 'react';
@@ -22,7 +23,7 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window !== 'undefined' && urlEndpoint) {
             return new IK({
                 urlEndpoint: urlEndpoint,
-                authenticationEndpoint: '/api/imagekit-auth',
+                authenticationEndpoint: '/api/imagekit-auth', // This is still used by the SDK internally
             });
         }
         return null;
@@ -32,6 +33,23 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
         if (!ikInstance) {
             throw new Error("ImageKit is not initialized.");
         }
+
+        // Pre-flight check to the authentication endpoint
+        try {
+            const authCheck = await fetch('/api/imagekit-auth');
+            if (!authCheck.ok) {
+                const errorData = await authCheck.json();
+                throw new Error(errorData.error || 'Failed to authenticate with ImageKit server.');
+            }
+        } catch (authError: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: authError.message
+            });
+            return Promise.reject(authError);
+        }
+
         setIsUploading(true);
 
         return new Promise((resolve, reject) => {
@@ -42,12 +60,13 @@ export const ImageKitProvider = ({ children }: { children: ReactNode }) => {
                 setIsUploading(false);
                 if (err) {
                     console.error("ImageKit Upload Error:", err);
+                    const errorMessage = (err as any)?.message || 'Could not upload the file.';
                     toast({
                         variant: 'destructive',
                         title: 'Upload Failed',
-                        description: err.message || 'Could not upload the file.'
+                        description: errorMessage
                     });
-                    reject(err);
+                    reject(new Error(errorMessage));
                 } else if (result) {
                     toast({
                         title: 'Upload Successful',

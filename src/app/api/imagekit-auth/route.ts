@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import ImageKit from 'imagekit';
 
@@ -7,7 +8,10 @@ export async function GET(request: Request) {
     const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
     if (!publicKey || !privateKey || !urlEndpoint) {
-        return NextResponse.json({ error: 'ImageKit environment variables are not configured.' }, { status: 500 });
+        console.error("ImageKit environment variables are not configured on the server.");
+        return NextResponse.json({ 
+            error: 'Server-side configuration error. The ImageKit private key or other credentials are not set.' 
+        }, { status: 500 });
     }
 
     const imagekit = new ImageKit({
@@ -20,7 +24,7 @@ export async function GET(request: Request) {
         const authenticationParameters = imagekit.getAuthenticationParameters();
         return NextResponse.json(authenticationParameters);
     } catch (error) {
-        console.error("ImageKit Auth Error:", error);
-        return NextResponse.json({ error: 'Failed to get ImageKit authentication parameters.' }, { status: 500 });
+        console.error("ImageKit Auth Generation Error:", error);
+        return NextResponse.json({ error: 'Failed to generate ImageKit authentication parameters.' }, { status: 500 });
     }
 }
