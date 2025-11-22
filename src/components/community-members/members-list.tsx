@@ -3,7 +3,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { Badge } from '../ui/badge';
@@ -11,15 +11,13 @@ import { cn } from '@/lib/utils';
 import type { FirebaseUser } from '@/lib/types';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { UserProfilePopover } from '../chat/user-profile-popover';
-import { Card } from '../ui/card';
-import { useMemo, useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import { Card, CardContent } from '../ui/card';
+import { useMemo, useState } from 'react';
 import { Button } from '../ui/button';
-import { MessageSquare, Loader2, UserPlus, UserCheck, UserX, Check, X } from 'lucide-react';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { findOrCreateChat } from '@/lib/chat';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, sendFriendRequest } from '@/lib/friends';
 
 function MemberListSkeleton() {
   return (
@@ -43,9 +41,64 @@ const getInitials = (name: string | null | undefined) => {
     return names.map((n) => n[0]).join('').substring(0, 2);
 };
 
+function AdminCard({ adminUser, title }: { adminUser: FirebaseUser | null, title: string }) {
+    const { user: currentUser } = useUser();
+    const firestore = useFirestore();
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleStartChat = async () => {
+        if (!currentUser || !adminUser) return;
+        setIsLoading(true);
+        try {
+            const roomId = await findOrCreateChat(firestore, currentUser.uid, adminUser.id);
+            router.push(`/messages/${roomId}`);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    if (!adminUser) {
+        return (
+            <Card className="flex flex-col items-center justify-center p-6 text-center">
+                <Skeleton className="w-24 h-24 rounded-full" />
+                <Skeleton className="w-32 h-6 mt-4" />
+                <Skeleton className="w-24 h-4 mt-2" />
+            </Card>
+        );
+    }
+
+    const isSelf = currentUser?.uid === adminUser.id;
+
+    return (
+        <Card className="flex flex-col items-center p-6 text-center transition-all duration-300 transform shadow-lg group bg-card hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/20">
+            <div className='relative'>
+                <Avatar className="w-24 h-24 mb-4 border-4 border-transparent group-hover:border-primary/50 transition-all duration-300 group-hover:scale-105">
+                    <AvatarImage src={adminUser.photoURL ?? undefined} alt={adminUser.displayName ?? ''} />
+                    <AvatarFallback className="text-3xl">{getInitials(adminUser.displayName)}</AvatarFallback>
+                </Avatar>
+                <Badge className="absolute top-0 right-0 px-2 py-1 text-xs font-semibold tracking-wider text-yellow-800 bg-yellow-300 border-2 border-background animate-pulse">
+                    {title}
+                </Badge>
+            </div>
+            <p className="text-lg font-semibold">{adminUser.displayName}</p>
+            <p className="text-sm text-muted-foreground">{adminUser.email}</p>
+            {!isSelf && (
+                <Button className="mt-4" size="sm" onClick={handleStartChat} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                    Message
+                </Button>
+            )}
+        </Card>
+    )
+}
+
+
 export function CommunityMembersList() {
   const firestore = useFirestore();
-  const { user: currentUser } = useUser();
   
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('displayName', 'asc')) : null, [firestore]);
   const { data: allUsers, isLoading } = useCollection<FirebaseUser>(usersQuery);
@@ -56,7 +109,7 @@ export function CommunityMembersList() {
     const harshAdmin = allUsers.find(u => u.email === 'harshroop100@gmail.com');
     const atrikCoAdmin = allUsers.find(u => u.email === '15mondalatrik@gmail.com');
     
-    const adminIds = new Set();
+    const adminIds = new Set<string>();
     if (harshAdmin) adminIds.add(harshAdmin.id);
     if (atrikCoAdmin) adminIds.add(atrikCoAdmin.id);
 
@@ -67,7 +120,7 @@ export function CommunityMembersList() {
             ...harshAdmin,
             photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
         } : null, 
-        coAdminUser: atrikCoAdmin,
+        coAdminUser: atrikCoAdmin || null,
         otherUsers: others,
         totalMembers: allUsers.length
     };
@@ -91,58 +144,6 @@ export function CommunityMembersList() {
                 Total Members: <span className="text-primary">{totalMembers}</span>
             </h3>
         </div>
-
-        <Card className="relative w-full max-w-2xl mx-auto mb-12 overflow-hidden border-0 rounded-xl group aspect-[2/1] animate-tilt">
-            <Image 
-                src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/624974.jpg"
-                alt="Site Administrators"
-                fill
-                objectFit="cover"
-                className="transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-white md:p-6">
-                <div className="flex items-end justify-between">
-                    {adminUser ? (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <div className='cursor-pointer' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
-                                    <h2 className="text-lg font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-400 animate-text-shine">Admin</h2>
-                                    <p className="text-xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
-                                </div>
-                            </PopoverTrigger>
-                            <PopoverContent className='w-80'>
-                                <UserProfilePopover user={adminUser} />
-                            </PopoverContent>
-                        </Popover>
-                    ) : (
-                        <div style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
-                            <h2 className="text-lg font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-400 animate-text-shine">Admin</h2>
-                            <p className="text-xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-400 animate-text-shine [animation-delay:0.5s]">Harsh</p>
-                        </div>
-                    )}
-                    {coAdminUser ? (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <div className='text-right cursor-pointer' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
-                                    <h2 className="text-lg font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-slate-100 to-slate-300 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                                    <p className="text-xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-orange-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
-                                </div>
-                            </PopoverTrigger>
-                            <PopoverContent className='w-80'>
-                                <UserProfilePopover user={coAdminUser} />
-                            </PopoverContent>
-                        </Popover>
-                    ) : (
-                         <div className='text-right' style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
-                            <h2 className="text-lg font-bold md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-slate-100 to-slate-300 animate-text-shine [animation-delay:0.2s]">Co-Admin</h2>
-                            <p className="text-xl font-black md:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-orange-400 animate-text-shine [animation-delay:0.7s]">Atrik</p>
-                        </div>
-                    )}
-                </div>
-                <p className="mt-2 text-xs text-center text-white/80 md:text-sm" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.6)' }}>The creators and maintainers of this platform.</p>
-            </div>
-        </Card>
         
         <div className='my-8 text-center'>
             <div className="relative">
@@ -150,7 +151,24 @@ export function CommunityMembersList() {
                     <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center">
-                    <span className="px-3 text-lg font-medium bg-background text-muted-foreground">Community Rockstars</span>
+                    <span className="px-3 text-lg font-medium uppercase bg-background text-muted-foreground tracking-widest">Admins</span>
+                </div>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">The creators and maintainers of this platform. Contact for any issues.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 mb-12 sm:grid-cols-2 max-w-2xl mx-auto">
+            <AdminCard adminUser={adminUser} title="Admin" />
+            <AdminCard adminUser={coAdminUser} title="Co-Admin" />
+        </div>
+        
+        <div className='my-8 text-center'>
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                    <span className="px-3 text-lg font-medium uppercase bg-background text-muted-foreground tracking-widest">Community Rockstars</span>
                 </div>
             </div>
         </div>
