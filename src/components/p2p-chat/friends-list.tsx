@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -13,6 +12,7 @@ import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { findOrCreateChat } from "@/lib/chat";
 import { useRouter } from "next/navigation";
+import { ScrollArea } from "../ui/scroll-area";
 
 function ListSkeleton() {
     return (
@@ -118,21 +118,23 @@ export function FriendsList() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            {isLoading ? (
-                <ListSkeleton />
-            ) : filteredFriends && filteredFriends.length > 0 ? (
-                <div className="space-y-2 p-2">
-                    {filteredFriends.map(friend => (
-                        <FriendItem key={friend.id} friend={friend} />
-                    ))}
-                </div>
-            ) : (
-                <div className="py-16 text-center text-muted-foreground">
-                    <Users className="w-12 h-12 mx-auto mb-4" />
-                    <p className="font-semibold">No friends yet.</p>
-                    <p className="text-sm">Use the 'Find' tab to add friends.</p>
-                </div>
-            )}
+             <ScrollArea className="h-[350px]">
+                {isLoading ? (
+                    <ListSkeleton />
+                ) : filteredFriends && filteredFriends.length > 0 ? (
+                    <div className="space-y-2 p-2">
+                        {filteredFriends.map(friend => (
+                            <FriendItem key={friend.id} friend={friend} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-16 text-center text-muted-foreground">
+                        <Users className="w-12 h-12 mx-auto mb-4" />
+                        <p className="font-semibold">No friends yet.</p>
+                        <p className="text-sm">Use the 'Find' tab to add friends.</p>
+                    </div>
+                )}
+            </ScrollArea>
         </div>
     );
 }

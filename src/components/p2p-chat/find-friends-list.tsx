@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -14,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, sendFriendRequest } from "@/lib/friends";
 import { findOrCreateChat } from "@/lib/chat";
 import { useRouter } from "next/navigation";
+import { ScrollArea } from "../ui/scroll-area";
 
 function ListSkeleton() {
     return (
@@ -202,33 +202,35 @@ export function FindFriendsList() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            {isLoading ? (
-                <ListSkeleton />
-            ) : filteredUsers && filteredUsers.length > 0 ? (
-                <div className="space-y-2 p-2">
-                    {filteredUsers.map(user => (
-                        <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="w-12 h-12">
-                                    <AvatarImage src={user.photoURL ?? undefined} />
-                                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{user.displayName}</p>
-                                    <p className="text-sm text-muted-foreground">{user.year} Year</p>
+             <ScrollArea className="h-[350px]">
+                {isLoading ? (
+                    <ListSkeleton />
+                ) : filteredUsers && filteredUsers.length > 0 ? (
+                    <div className="space-y-2 p-2">
+                        {filteredUsers.map(user => (
+                            <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent">
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="w-12 h-12">
+                                        <AvatarImage src={user.photoURL ?? undefined} />
+                                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user.displayName}</p>
+                                        <p className="text-sm text-muted-foreground">{user.year} Year</p>
+                                    </div>
                                 </div>
+                            <ActionButton otherUser={user} />
                             </div>
-                           <ActionButton otherUser={user} />
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="py-16 text-center text-muted-foreground">
-                    <Users className="w-12 h-12 mx-auto mb-4" />
-                    <p className="font-semibold">No users found.</p>
-                    <p className="text-sm">Either everyone is your friend, or your search came up empty.</p>
-                </div>
-            )}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="py-16 text-center text-muted-foreground">
+                        <Users className="w-12 h-12 mx-auto mb-4" />
+                        <p className="font-semibold">No users found.</p>
+                        <p className="text-sm">Either everyone is your friend, or your search came up empty.</p>
+                    </div>
+                )}
+            </ScrollArea>
         </div>
     );
 }
