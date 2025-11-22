@@ -8,11 +8,21 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, Plus, Bot } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, Bot } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FriendsList } from "./friends-list";
+import { FindFriendsList } from "./find-friends-list";
 
 function ChatListSkeleton() {
     return (
@@ -115,9 +125,30 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
              <div className="p-4 border-b shrink-0">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold">Chat</h2>
-                    <Button variant="ghost" size="icon">
-                        <Plus className="w-5 h-5"/>
-                    </Button>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <UserPlus className="w-5 h-5"/>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="p-0 border-0 max-w-md">
+                            <Tabs defaultValue="friends" className="w-full">
+                                <DialogHeader className="p-4 border-b">
+                                    <DialogTitle>Manage Friends</DialogTitle>
+                                    <TabsList className="grid w-full grid-cols-2 mt-2">
+                                        <TabsTrigger value="friends">Friends</TabsTrigger>
+                                        <TabsTrigger value="find">Find</TabsTrigger>
+                                    </TabsList>
+                                </DialogHeader>
+                                <TabsContent value="friends" className="m-0">
+                                    <FriendsList />
+                                </TabsContent>
+                                <TabsContent value="find" className="m-0">
+                                    <FindFriendsList />
+                                </TabsContent>
+                            </Tabs>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                  <div className="relative mt-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
