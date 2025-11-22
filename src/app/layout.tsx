@@ -1,4 +1,6 @@
 
+'use client';
+
 import type { Metadata } from 'next';
 import { Inter, Press_Start_2P } from 'next/font/google';
 import './globals.css';
@@ -9,6 +11,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Analytics } from '@vercel/analytics/react';
 import { AudioProvider } from '@/components/layout/audio-provider';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const pressStart2P = Press_Start_2P({
@@ -17,17 +20,22 @@ const pressStart2P = Press_Start_2P({
   variable: '--font-press-start-2p',
 });
 
+// Metadata is defined in a function to be accessible in the component
+export function generateMetadata(): Metadata {
+  return {
+    title: 'The Suggestion Box | StudyShare',
+    description: 'Upload and browse study materials, suggestions, and assignments.',
+  };
+}
 
-export const metadata: Metadata = {
-  title: 'The Suggestion Box | StudyShare',
-  description: 'Upload and browse study materials, suggestions, and assignments.',
-};
-
-export default function RootLayout({
+function RootLayoutContent({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isChatPage = pathname.startsWith('/messages');
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -42,7 +50,9 @@ export default function RootLayout({
             <TooltipProvider>
                 <div className="relative flex min-h-dvh flex-col">
                   <Header />
-                  <main className="flex-1 pb-24">{children}</main>
+                  <main className={cn('flex-1', !isChatPage && 'pb-24')}>
+                    {children}
+                  </main>
                 </div>
                 <Toaster />
             </TooltipProvider>
@@ -51,5 +61,20 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
+  );
+}
+
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  // Since usePathname is a client hook, we need to wrap the layout in a client component.
+  // We can't put 'use client' in the root layout directly as it would de-optimize the entire app.
+  return (
+    <RootLayoutContent>
+        {children}
+    </RootLayoutContent>
   );
 }
