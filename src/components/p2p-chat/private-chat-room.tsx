@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction, Reply } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -203,16 +203,16 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const handleTyping = (text: string) => {
         setMessageText(text);
-        if (!isCurrentlyTyping) {
+        if (!isCurrentlyTyping && roomRef && currentUser) {
             setIsCurrentlyTyping(true);
-            updateDoc(roomRef!, { [`typing.${currentUser!.uid}`]: true });
+            updateDoc(roomRef, { [`typing.${currentUser.uid}`]: true });
         }
     };
     
     useEffect(() => {
         if (!isCurrentlyTyping) return;
-        if (debouncedTyping === false) {
-             updateDoc(roomRef!, { [`typing.${currentUser!.uid}`]: false });
+        if (debouncedTyping === false && roomRef && currentUser) {
+             updateDoc(roomRef, { [`typing.${currentUser.uid}`]: false });
              setIsCurrentlyTyping(false);
         }
     }, [debouncedTyping, isCurrentlyTyping, roomRef, currentUser]);
@@ -229,7 +229,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         if (lastMessage.senderId !== currentUser.uid && (!lastReadTimestamp || lastMessage.createdAt > lastReadTimestamp)) {
              updateDoc(roomRef, { [`lastRead.${currentUser.uid}`]: serverTimestamp() });
         }
-    }, [encryptedMessages, currentUser, roomRef, room?.lastRead]);
+    }, [encryptedMessages, currentUser, roomRef, room]);
 
 
     const calculateFingerprint = async (key: CryptoKey) => {
@@ -246,7 +246,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         await updateDoc(roomRef, { sessionKey_b64: newKeyB64 });
         const key = await importKey(newKeyB64);
         setSessionKey(key);
-        calculateFingerprint(key);
+        await calculateFingerprint(key);
     }, [roomRef]);
     
     useEffect(() => {
@@ -335,7 +335,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             setDecryptedMessages(newDecryptedMessages);
         };
         decryptAll();
-    }, [sessionKey, encryptedMessages, room?.lastRead, otherUserId, currentUser?.uid]);
+    }, [sessionKey, encryptedMessages, room, otherUserId, currentUser?.uid]);
     
     const allMessages = useMemo(() => [...decryptedMessages, ...pendingMessages], [decryptedMessages, pendingMessages]);
     
@@ -346,12 +346,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [allMessages]);
 
     const handleSendMessage = async () => {
-        if (!currentUser || !messageText.trim()) return;
+        if (!currentUser || !messageText.trim() || !roomRef) return;
         
         const textToSend = messageText.trim();
         setMessageText("");
         setIsCurrentlyTyping(false); // Stop typing status on send
-        updateDoc(roomRef!, { [`typing.${currentUser.uid}`]: false });
+        updateDoc(roomRef, { [`typing.${currentUser.uid}`]: false });
 
         const pendingMsg: DecryptedMessage = {
             id: `pending-${Date.now()}`,
@@ -440,21 +440,22 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             <div className="flex-1 min-h-0 overflow-hidden">
                  <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-4 p-6">
+                        {!sessionKey && (
+                            <div className="flex items-center justify-center gap-2 p-4 text-sm rounded-md text-muted-foreground bg-muted">
+                                <Loader2 className="w-4 h-4 animate-spin"/>
+                                <p>Establishing secure connection...</p>
+                            </div>
+                        )}
                         {allMessages.length > 0 ? (
                             allMessages.map(msg => (
                                 <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={setReplyingTo} onReact={handleReaction} />
                             ))
                         ) : (
-                            <p className="py-12 text-sm text-center text-muted-foreground">
-                                No messages yet. Say hello!
-                            </p>
-                        )}
-                         {!sessionKey && (
-                            <div className="flex items-center justify-center gap-2 p-4 text-sm text-muted-foreground">
-                                <Loader2 className="w-4 h-4 animate-spin"/>
-                                <p>Establishing secure connection...</p>
+                             <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted">
+                                <Lock className="w-4 h-4 shrink-0" />
+                                <p>Messages are end-to-end encrypted. No one outside of this chat, not even The Suggestion Box, can read them.</p>
                             </div>
-                         )}
+                        )}
                     </div>
                 </ScrollArea>
             </div>

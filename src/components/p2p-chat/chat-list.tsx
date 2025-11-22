@@ -8,7 +8,7 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, MessageSquarePlus } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -105,7 +105,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full bg-background">
             <div className="p-4 border-b">
                 <h2 className="text-xl font-bold">Messages</h2>
             </div>
@@ -147,9 +147,10 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                             </Avatar>
                                             <div className="flex-1 overflow-hidden">
                                                 <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                                <p className="text-sm italic truncate text-muted-foreground">
-                                                    {room.lastMessage ? 'Encrypted message' : 'No messages yet.'}
-                                                </p>
+                                                <div className="flex items-center gap-1 text-sm italic truncate text-muted-foreground">
+                                                    <Lock className="w-3 h-3 shrink-0" />
+                                                    <span>{room.lastMessage ? 'Encrypted message' : 'No messages yet.'}</span>
+                                                </div>
                                             </div>
                                             {room.lastMessage?.timestamp && (
                                                 <p className="text-xs text-muted-foreground self-start">
