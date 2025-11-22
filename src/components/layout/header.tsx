@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogIn, LogOut, PlusCircle, Upload, Shield, Info, Users, Compass, MessageSquare, Trophy, ChevronDown, Gamepad2, Menu, X, Music, Bell, Code2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from '@/lib/firebase/auth';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
@@ -118,6 +118,7 @@ export function Header() {
   const firebaseAuth = useFirebaseAuth();
   const { isPlaying } = useAudio();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -125,6 +126,10 @@ export function Header() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  if (pathname.startsWith('/messages')) {
+    return null; // Don't render header on chat pages
+  }
 
   const handleSignOut = async () => {
     await signOut(firebaseAuth);
