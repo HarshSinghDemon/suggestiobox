@@ -44,7 +44,12 @@ Actions could include:
 - Generating practice questions.
 - Simplifying complex parts.
 
-Provide a clear, concise, and helpful response directly addressing the user's query.
+**IMPORTANT FORMATTING RULES:**
+- Structure your response using Markdown.
+- Use headings (#, ##), bullet points (* or -), and bold text (**) to make the information clear and easy to read.
+- For summaries or explanations, start with a main heading.
+- For lists or practice questions, use numbered or bulleted lists.
+- Do not just output a single block of unformatted text.
 
 Here is the text content:
 ---
