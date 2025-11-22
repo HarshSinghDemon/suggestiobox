@@ -4,7 +4,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, Download, X } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, X, Image as ImageIcon, Music, Film, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -167,6 +167,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { upload } = useImageKit();
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
 
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
@@ -312,6 +313,14 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         }
     };
     
+    const triggerFilePicker = (accept: string) => {
+        if (fileInputRef.current) {
+            fileInputRef.current.accept = accept;
+            fileInputRef.current.click();
+            setIsAttachmentMenuOpen(false);
+        }
+    };
+
     const handleReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!currentUser || !firestore) return;
         const messageRef = doc(firestore, 'chatRooms', roomId, 'messages', messageId);
@@ -360,7 +369,27 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             <footer className="p-2 border-t shrink-0 sm:p-4 border-border">
                 <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-                    <Button variant="ghost" size="icon" type="button" onClick={() => fileInputRef.current?.click()}> <Paperclip/> </Button>
+                    <Popover open={isAttachmentMenuOpen} onOpenChange={setIsAttachmentMenuOpen}>
+                        <PopoverTrigger asChild>
+                             <Button variant="ghost" size="icon" type="button"> <Paperclip/> </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2 mb-2" side="top" align="start">
+                            <div className="grid grid-cols-2 gap-2">
+                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('image/*')}>
+                                    <ImageIcon className="w-6 h-6"/><span>Photos</span>
+                                </Button>
+                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('audio/*')}>
+                                    <Music className="w-6 h-6"/><span>Music</span>
+                                </Button>
+                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('image/gif,video/*')}>
+                                    <Film className="w-6 h-6"/><span>GIFs & Video</span>
+                                </Button>
+                                <Button variant="outline" className="flex-col w-24 h-24 gap-2" onClick={() => triggerFilePicker('*/*')}>
+                                    <FileText className="w-6 h-6"/><span>Files</span>
+                                </Button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="text-base h-11 rounded-full bg-input" />
                     <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
                 </form>
