@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, Download, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -16,6 +15,8 @@ import { importKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
+import { useImageKit } from "@/lib/imagekit/imagekit-provider";
+import Image from "next/image";
 
 type DecryptedMessage = {
     id: string;
@@ -25,6 +26,9 @@ type DecryptedMessage = {
     status?: 'sent' | 'pending';
     reactions?: Reaction[];
     isRead?: boolean;
+    fileUrl?: string;
+    fileName?: string;
+    fileType?: string;
 }
 
 const getInitials = (name: string | null | undefined) => {
@@ -61,6 +65,8 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact }: { messag
 
     const timeAgo = sentAtDate ? sentAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
 
+    const isImage = message.fileType?.startsWith('image/');
+
     return (
         <div 
             className={cn("flex items-end gap-3 max-w-xl w-fit group", isCurrentUserSender ? "self-end flex-row-reverse" : "self-start")}
@@ -81,7 +87,24 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact }: { messag
                         ? "bg-primary text-primary-foreground rounded-br-none" 
                         : "bg-muted rounded-bl-none"
                 )}>
-                    <p className="text-sm">{message.text}</p>
+                    {message.fileUrl && (
+                        <div className="mb-2">
+                            {isImage ? (
+                                <div className="relative w-64 h-48 rounded-lg overflow-hidden">
+                                     <Image src={message.fileUrl} alt={message.fileName || 'Uploaded image'} layout="fill" className="object-cover" />
+                                </div>
+                            ) : (
+                                <a href={message.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30">
+                                    <FileIcon className="w-8 h-8"/>
+                                    <div>
+                                        <p className="font-semibold truncate">{message.fileName}</p>
+                                        <p className="text-xs">Click to download</p>
+                                    </div>
+                                </a>
+                            )}
+                        </div>
+                    )}
+                    {message.text && <p className="text-sm">{message.text}</p>}
                     <div className={cn(
                         "text-xs mt-1.5 flex items-center gap-1.5",
                         isCurrentUserSender ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"
@@ -141,6 +164,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
     const [pendingMessages, setPendingMessages] = useState<DecryptedMessage[]>([]);
     const viewportRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { upload } = useImageKit();
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -205,10 +232,11 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
                 await addDoc(messagesColRef, {
-                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [],
+                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [], fileUrl: msg.fileUrl, fileName: msg.fileName, fileType: msg.fileType,
                 });
                 
-                await updateDoc(roomRef, { lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp(), senderId: currentUser.uid } });
+                const lastMessageText = msg.fileName ? `Sent a file: ${msg.fileName}` : 'Encrypted message';
+                await updateDoc(roomRef, { lastMessage: { text: lastMessageText, timestamp: serverTimestamp(), senderId: currentUser.uid } });
             } catch (error) { console.error("Failed to send a pending message:", error); }
         }
         setIsSending(false);
@@ -247,17 +275,41 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         }
     }, [allMessages]);
 
-    const handleSendMessage = async () => {
-        if (!currentUser || !messageText.trim() || !roomRef) return;
+    const handleSendMessage = async ({ file }: { file?: { url: string; name: string; type: string } } = {}) => {
+        if (!currentUser || (!messageText.trim() && !file) || !roomRef) return;
+
         const textToSend = messageText.trim();
         setMessageText("");
         setIsCurrentlyTyping(false);
         updateDoc(roomRef, { [`typing.${currentUser.uid}`]: false });
 
         const pendingMsg: DecryptedMessage = {
-            id: `pending-${Date.now()}`, senderId: currentUser.uid, text: textToSend, createdAt: new Date(), status: 'pending'
+            id: `pending-${Date.now()}`,
+            senderId: currentUser.uid,
+            text: textToSend,
+            createdAt: new Date(),
+            status: 'pending',
+            fileUrl: file?.url,
+            fileName: file?.name,
+            fileType: file?.type,
         };
         setPendingMessages(prev => [...prev, pendingMsg]);
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadProgress(0); // Start progress indication
+        try {
+            const result = await upload(file, { fileName: file.name, folder: `chats/${roomId}` });
+            await handleSendMessage({ file: { url: result.url, name: result.name, type: result.fileType } });
+        } catch (error) {
+            console.error("File upload failed", error);
+        } finally {
+            setUploadProgress(null);
+            if(fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
     
     const handleReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -297,11 +349,20 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </div>
                 </ScrollArea>
             </div>
+            {uploadProgress !== null && (
+                <div className="px-4 pb-2">
+                    <div className="flex items-center gap-2 p-2 text-sm border rounded-md bg-muted">
+                        <Loader2 className="w-4 h-4 animate-spin"/>
+                        <span>Uploading file...</span>
+                    </div>
+                </div>
+            )}
             <footer className="p-2 border-t shrink-0 sm:p-4 border-border">
                 <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
-                    <Button variant="ghost" size="icon"> <Paperclip/> </Button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                    <Button variant="ghost" size="icon" type="button" onClick={() => fileInputRef.current?.click()}> <Paperclip/> </Button>
                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="text-base h-11 rounded-full bg-input" />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
+                    <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
                 </form>
             </footer>
         </div>

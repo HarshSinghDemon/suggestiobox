@@ -102,6 +102,10 @@ export type Message = {
     createdAt: Timestamp;
     reactions?: Reaction[];
     replyTo?: Reply | null;
+    // For file attachments
+    fileUrl?: string;
+    fileName?: string;
+    fileType?: string;
 };
 
 
