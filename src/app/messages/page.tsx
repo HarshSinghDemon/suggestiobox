@@ -77,15 +77,6 @@ function WelcomePanel() {
                     unoptimized
                  />
             </div>
-             <div className="absolute bottom-1/2 left-20 w-20 h-20 opacity-60 animate-bounce [animation-delay:1s]">
-                 <Image 
-                    src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Cat%20is%20sleeping%20and%20rolling.gif"
-                    alt="Cat sleeping"
-                    fill
-                    className="object-contain"
-                    unoptimized
-                 />
-            </div>
         </div>
     )
 }
