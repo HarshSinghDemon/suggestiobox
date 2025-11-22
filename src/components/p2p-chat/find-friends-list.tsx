@@ -6,12 +6,14 @@ import { collection, query, orderBy, where, doc } from "firebase/firestore";
 import type { FirebaseUser } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Users, Search, Loader2, UserPlus, UserCheck, Check, X } from "lucide-react";
+import { Users, Search, Loader2, UserPlus, UserCheck, Check, X, MessageSquare, UserX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, sendFriendRequest } from "@/lib/friends";
+import { findOrCreateChat } from "@/lib/chat";
+import { useRouter } from "next/navigation";
 
 function ListSkeleton() {
     return (
@@ -37,6 +39,7 @@ const getInitials = (name: string | null | undefined) => {
 function ActionButton({ otherUser }: { otherUser: FirebaseUser }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -53,6 +56,18 @@ function ActionButton({ otherUser }: { otherUser: FirebaseUser }) {
     const isFriend = currentUserData.friends?.includes(otherUser.id);
     const requestSent = currentUserData.friendRequestsSent?.includes(otherUser.id);
     const requestReceived = currentUserData.friendRequestsReceived?.includes(otherUser.id);
+
+    const handleStartChat = async () => {
+        setIsLoading(true);
+        try {
+            const roomId = await findOrCreateChat(firestore, currentUser.uid, otherUser.id);
+            router.push(`/messages/${roomId}`);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleAddFriend = async () => {
         setIsLoading(true);
@@ -94,7 +109,7 @@ function ActionButton({ otherUser }: { otherUser: FirebaseUser }) {
         setIsLoading(true);
         try {
             await declineFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Request Declined", description: `Friend request from ${otherUser.displayName} declined.` });
+            toast({ title: "Request Declined", description: `Friend request from ${otherUser.displayName} declined.`});
         } catch (e: any) {
             toast({ variant: 'destructive', title: 'Error', description: e.message });
         } finally {
@@ -104,9 +119,9 @@ function ActionButton({ otherUser }: { otherUser: FirebaseUser }) {
     
     if (isFriend) {
         return (
-            <Button variant="outline" size="sm" disabled>
-                <UserCheck className="w-4 h-4 mr-2" />
-                Friends
+            <Button size="sm" onClick={handleStartChat} disabled={isLoading}>
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                Chat
             </Button>
         );
     }
@@ -167,8 +182,8 @@ export function FindFriendsList() {
 
     return (
         <div className="space-y-4">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative p-4 border-b">
+                <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                     placeholder="Search for people..."
                     className="pl-9"
@@ -179,7 +194,7 @@ export function FindFriendsList() {
             {isLoading ? (
                 <ListSkeleton />
             ) : filteredUsers && filteredUsers.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2 p-2">
                     {filteredUsers.map(user => (
                         <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent">
                             <div className="flex items-center gap-4">

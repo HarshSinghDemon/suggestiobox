@@ -1,4 +1,6 @@
 
+'use client';
+
 import { Firestore, collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import type { FirebaseUser } from "./types";
 import { generateAndExportKey } from "./e2ee";

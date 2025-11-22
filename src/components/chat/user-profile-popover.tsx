@@ -128,7 +128,7 @@ function ActionButtons({ otherUser }: { otherUser: FirebaseUser }) {
         setIsLoading(true);
         try {
             await declineFriendRequest(firestore, currentUser.uid, otherUser.id);
-            toast({ title: "Request Declined", description: `Friend request from ${otherUser.displayName} declined.` });
+            toast({ title: "Request Declined", description: `Friend request from ${otherUser.displayName} declined.`});
         } catch (e: any) {
             toast({ variant: 'destructive', title: 'Error', description: e.message });
         } finally {
