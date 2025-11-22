@@ -4,7 +4,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, MessageSquare, Briefcase } from 'lucide-react';
+import { Bell, MessageSquare, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { NotificationPanel } from '../layout/notification-panel';
@@ -101,7 +101,7 @@ export function ChatHeader() {
             <Link href="/" className="flex items-center gap-2 group">
                 <SoundwaveIcon />
                 <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-pink-500">
-                    HyperSpce
+                    Private Space
                 </span>
             </Link>
 
@@ -112,10 +112,10 @@ export function ChatHeader() {
                         Chat
                     </Button>
                 </Link>
-                <Link href="/browse" prefetch={false}>
+                <Link href="/" prefetch={false}>
                      <Button variant="ghost" size="sm" className="gap-2 rounded-full">
-                        <Briefcase className="w-4 h-4" />
-                        Crypto
+                        <LogOut className="w-4 h-4" />
+                        Exit
                     </Button>
                 </Link>
             </nav>
