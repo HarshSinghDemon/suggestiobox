@@ -61,7 +61,7 @@ function WelcomePanel() {
             </div>
 
             {/* Animated GIFs */}
-            <div className="absolute top-10 left-10 w-24 h-24 opacity-80 animate-spin-slow">
+            <div className="absolute bottom-10 left-10 w-24 h-24 opacity-80 animate-spin-slow">
                  <Image 
                     src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Bird%20pair%20love%20and%20flying%20sky%20(1).gif"
                     alt="Birds flying"
@@ -100,4 +100,3 @@ export default function MessagesPage() {
         </AuthWrapper>
     );
 }
-
