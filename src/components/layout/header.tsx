@@ -207,11 +207,11 @@ export function Header() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="relative flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                    <div className="relative flex items-center gap-1 font-medium transition-colors cursor-pointer text-foreground/60 hover:text-foreground/80 focus:outline-none">
                       Community
                       <ChevronDown className="w-4 h-4" />
                        {isClient && hasUnreadMessages && !isLoadingChatRooms && <GoldenDot />}
-                    </button>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={() => router.push('/community-chat')}>
@@ -254,10 +254,10 @@ export function Header() {
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                    <div className="flex items-center gap-1 font-medium transition-colors cursor-pointer text-foreground/60 hover:text-foreground/80 focus:outline-none">
                       About
                       <ChevronDown className="w-4 h-4" />
-                    </button>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem onClick={() => router.push('/about-site')}>
