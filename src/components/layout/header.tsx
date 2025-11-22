@@ -29,6 +29,7 @@ import { NotificationPanel } from './notification-panel';
 import type { Notification, ChatRoom } from '@/lib/types';
 import { collection, query, where } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import { CommunityDropdown } from './community-dropdown';
 
 const ADMIN_EMAILS = ['harshroop100@gmail.com', '15mondalatrik@gmail.com'];
 
@@ -115,9 +116,8 @@ function NotificationBell() {
 export function Header() {
   const { user, loading: isAuthLoading } = useAuth();
   const firebaseAuth = useFirebaseAuth();
-  const firestore = useFirestore();
-  const router = useRouter();
   const { isPlaying } = useAudio();
+  const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -125,34 +125,6 @@ export function Header() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Unread messages logic
-  const chatRoomsQuery = useMemoFirebase(() => {
-    if (!user?.uid || !firestore) return null;
-    return query(collection(firestore, 'chatRooms'), where('participants', 'array-contains', user.uid));
-  }, [user?.uid, firestore]);
-
-  const { data: chatRooms, isLoading: isLoadingChatRooms } = useCollection<ChatRoom>(chatRoomsQuery);
-  
-  const hasUnreadMessages = useMemo(() => {
-    if (!chatRooms || !user?.uid) return false;
-    return chatRooms.some(room => {
-        const lastMessageTimestamp = room.lastMessage?.timestamp;
-        // No last message means no unread messages.
-        if (!lastMessageTimestamp) return false;
-        
-        // If the current user sent the last message, it's not "unread" for them.
-        if (room.lastMessage.senderId === user.uid) return false;
-
-        const lastReadTimestamp = room.lastRead?.[user.uid];
-        // If the user has never read this chat, it's unread.
-        if (!lastReadTimestamp) return true;
-
-        // Compare timestamps. If last message is newer than last read, it's unread.
-        return lastMessageTimestamp.toMillis() > lastReadTimestamp.toMillis();
-    });
-}, [chatRooms, user?.uid]);
-
 
   const handleSignOut = async () => {
     await signOut(firebaseAuth);
@@ -205,38 +177,7 @@ export function Header() {
                     Browse
                 </Link>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="relative flex items-center gap-1 font-medium transition-colors cursor-pointer text-foreground/60 hover:text-foreground/80 focus:outline-none">
-                      Community
-                      <ChevronDown className="w-4 h-4" />
-                       {isClient && hasUnreadMessages && !isLoadingChatRooms && <GoldenDot />}
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => router.push('/community-chat')}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Community Chat
-                    </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => router.push('/messages')} className="relative">
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Private Messages
-                      {isClient && hasUnreadMessages && <GoldenDot />}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/community-members')}>
-                      <Users className="w-4 h-4 mr-2" />
-                      Community Members
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/community-game')}>
-                      <Gamepad2 className="w-4 h-4 mr-2" />
-                      Community Games
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/jokebox')}>
-                        <Music className="w-4 h-4 mr-2" />
-                        Jokebox
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <CommunityDropdown />
 
                 <Link
                     href="/pookie-contributors"
@@ -291,7 +232,7 @@ export function Header() {
                             Admin
                         </Button>
                     )}
-                    <NotificationBell />
+                    {isClient && <NotificationBell />}
                     <div className="hidden md:flex">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -400,7 +341,7 @@ export function Header() {
                                 <div className="relative flex items-center w-full">
                                     <MessageSquare className="w-5 h-5 mr-3" />
                                     Private Messages
-                                    {isClient && hasUnreadMessages && <GoldenDot />}
+                                    {isClient && <GoldenDot />}
                                 </div>
                             </NavLink>
                             <NavLink href="/community-members" onNavigate={() => setIsSheetOpen(false)}>
