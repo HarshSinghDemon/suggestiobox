@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -176,4 +177,11 @@ export function CodeEditor() {
                         ) : output ? (
                             <pre>{output}</pre>
                         ) : (
-                            <span className="text-gray-500">Output
+                            <span className="text-gray-500">Output will be displayed here.</span>
+                        )}
+                    </div>
+                </ScrollArea>
+            </div>
+        </div>
+    );
+}

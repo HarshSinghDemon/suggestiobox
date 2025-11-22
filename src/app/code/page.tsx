@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CodeEditor } from '@/components/ide/CodeEditor';
@@ -43,4 +44,6 @@ export default function CodePage() {
                     </CardContent>
                 </Card>
             </div>
-        </AuthWrapper
+        </AuthWrapper>
+    );
+}
