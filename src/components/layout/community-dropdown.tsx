@@ -57,15 +57,19 @@ export function CommunityDropdown() {
     
     return chatRooms.some((room) => {
       const lastMessage = room.lastMessage;
+      // No unread message if there's no message, or if the user sent the last one.
       if (!lastMessage || lastMessage.senderId === user.uid) {
         return false;
       }
       
       const lastReadTimestamp = room.lastRead?.[user.uid];
+      
+      // If the user has never read the room, any message from another user is unread.
       if (!lastReadTimestamp) {
-        return true; // Never read this room
+        return true; 
       }
 
+      // If the last message is newer than the last time the user read it, it's unread.
       return lastMessage.timestamp.toMillis() > lastReadTimestamp.toMillis();
     });
   }, [chatRooms, user?.uid]);
