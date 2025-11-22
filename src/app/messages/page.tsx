@@ -1,4 +1,5 @@
 
+
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { MessageSquare, Users, Lock } from "lucide-react";
@@ -30,16 +31,17 @@ function WelcomePanel() {
             <div className="relative z-10 flex flex-col items-center justify-center">
                 <div className="relative w-56 h-56 animate-pulse-slow">
                     <Image 
-                        src="https://ik.imagekit.io/bt0k47tzc/undraw_chatting_re_j55r.svg?updatedAt=1764125345759"
+                        src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Contact%20us.gif"
                         alt="Select a chat"
                         fill
                         className="object-contain"
+                        unoptimized
                     />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-2xl font-bold">Welcome to Your Private Space</h2>
+                    <h2 className="text-2xl font-bold">Select a Chat</h2>
                     <p className="max-w-xs mx-auto text-muted-foreground">
-                        Select a conversation or start a new one to begin chatting with your friends.
+                        Select a conversation from the list to start chatting. Your messages are end-to-end encrypted.
                     </p>
                 </div>
                  <div className="flex items-center gap-8 pt-4 text-muted-foreground">
@@ -98,3 +100,4 @@ export default function MessagesPage() {
         </AuthWrapper>
     );
 }
+
