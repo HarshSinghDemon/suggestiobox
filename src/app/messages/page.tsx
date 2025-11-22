@@ -59,26 +59,6 @@ function WelcomePanel() {
                     </div>
                 </div>
             </div>
-
-            {/* Animated GIFs */}
-            <div className="absolute bottom-10 left-10 w-24 h-24 opacity-80 animate-spin-slow">
-                 <Image 
-                    src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Bird%20pair%20love%20and%20flying%20sky%20(1).gif"
-                    alt="Birds flying"
-                    fill
-                    className="object-contain"
-                    unoptimized
-                 />
-            </div>
-            <div className="absolute bottom-10 right-10 w-32 h-32 opacity-80 animate-pulse-slow [animation-delay:0.5s]">
-                 <Image 
-                    src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/Cute%20Doggie.gif"
-                    alt="Cute dog"
-                    fill
-                    className="object-contain"
-                    unoptimized
-                 />
-            </div>
         </div>
     )
 }
