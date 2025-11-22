@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, X, Image as ImageIcon, Music, Film, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, X, Image as ImageIcon, Music, Film, FileText, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -22,6 +23,7 @@ type DecryptedMessage = {
     id: string;
     senderId: string;
     text: string;
+    iv?: string; // IV is needed for file decryption
     createdAt: EncryptedMessage['createdAt'] | Date;
     status?: 'sent' | 'pending';
     reactions?: Reaction[];
@@ -53,7 +55,29 @@ const ReactionPicker = ({ onSelect, onClose }: { onSelect: (emoji: string) => vo
     );
 };
 
-function ChatMessage({ message, isCurrentUserSender, author, onReact }: { message: DecryptedMessage; isCurrentUserSender: boolean; author?: FirebaseUser; onReact: (messageId: string, emoji: string) => void; }) {
+async function downloadAndDecryptFile(fileUrl: string, fileType: string, fileName: string, sessionKey: CryptoKey, ivB64: string) {
+    try {
+        const response = await fetch(fileUrl);
+        const encryptedBlob = await response.blob();
+        const encryptedBuffer = await encryptedBlob.arrayBuffer();
+
+        const decryptedBuffer = await decryptMessage(sessionKey, btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer))), ivB64);
+
+        const decryptedBlob = new Blob([new TextEncoder().encode(decryptedBuffer)], { type: fileType });
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(decryptedBlob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (e) {
+        console.error("Failed to download or decrypt file:", e);
+    }
+}
+
+
+function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey }: { message: DecryptedMessage; isCurrentUserSender: boolean; author?: FirebaseUser; onReact: (messageId: string, emoji: string) => void; sessionKey: CryptoKey | null }) {
     const [showActions, setShowActions] = useState(false);
     
     let sentAtDate;
@@ -66,6 +90,12 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact }: { messag
     const timeAgo = sentAtDate ? sentAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
 
     const isImage = message.fileType?.startsWith('image/');
+    
+    const handleDownload = () => {
+        if (message.fileUrl && message.fileName && message.iv && sessionKey) {
+            downloadAndDecryptFile(message.fileUrl, message.fileType || 'application/octet-stream', message.fileName, sessionKey, message.iv);
+        }
+    };
 
     return (
         <div 
@@ -89,19 +119,13 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact }: { messag
                 )}>
                     {message.fileUrl && (
                         <div className="mb-2">
-                            {isImage ? (
-                                <div className="relative w-64 h-48 rounded-lg overflow-hidden">
-                                     <Image src={message.fileUrl} alt={message.fileName || 'Uploaded image'} layout="fill" className="object-cover" />
-                                </div>
-                            ) : (
-                                <a href={message.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30">
-                                    <FileIcon className="w-8 h-8"/>
+                             <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
+                                    <Download className="w-8 h-8"/>
                                     <div>
                                         <p className="font-semibold truncate">{message.fileName}</p>
-                                        <p className="text-xs">Click to download</p>
+                                        <p className="text-xs">Click to download encrypted file</p>
                                     </div>
-                                </a>
-                            )}
+                                </div>
                         </div>
                     )}
                     {message.text && <p className="text-sm">{message.text}</p>}
@@ -229,7 +253,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
         for (const msg of messagesToSend) {
             try {
-                const { cipherText, iv } = await encryptMessage(key, msg.text);
+                const { cipherText, iv } = await encryptMessage(key, msg.text || '');
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
                 await addDoc(messagesColRef, {
@@ -276,7 +300,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         }
     }, [allMessages]);
 
-    const handleSendMessage = async ({ file }: { file?: { url: string; name: string; type: string } } = {}) => {
+    const handleSendMessage = async ({ file }: { file?: { url: string; name: string; type: string, iv: string } } = {}) => {
         if (!currentUser || (!messageText.trim() && !file) || !roomRef) return;
 
         const textToSend = messageText.trim();
@@ -288,6 +312,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             id: `pending-${Date.now()}`,
             senderId: currentUser.uid,
             text: textToSend,
+            iv: file?.iv,
             createdAt: new Date(),
             status: 'pending',
             fileUrl: file?.url,
@@ -299,14 +324,24 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadProgress(0); // Start progress indication
+        if (!file || !sessionKey) return;
+    
+        setUploadProgress(0);
         try {
-            const result = await upload(file, { fileName: file.name, folder: `chats/${roomId}` });
-            await handleSendMessage({ file: { url: result.url, name: result.name, type: result.fileType } });
+            const fileBuffer = await file.arrayBuffer();
+            const { cipherText, iv } = await encryptMessage(sessionKey, btoa(String.fromCharCode(...new Uint8Array(fileBuffer))));
+            const encryptedBlob = new Blob([atob(cipherText)], { type: 'application/octet-stream' });
+            const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
+            
+            setUploadProgress(50);
+            
+            const result = await upload(encryptedFile, { fileName: file.name, folder: `chats/${roomId}` });
+            
+            setUploadProgress(100);
+
+            await handleSendMessage({ file: { url: result.url, name: file.name, type: file.type, iv: iv } });
         } catch (error) {
-            console.error("File upload failed", error);
+            console.error("File encryption or upload failed", error);
         } finally {
             setUploadProgress(null);
             if(fileInputRef.current) fileInputRef.current.value = "";
@@ -353,7 +388,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-6 p-6">
-                        {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} />)
+                        {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} sessionKey={sessionKey} />)
                         : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
                     </div>
                 </ScrollArea>
