@@ -25,8 +25,8 @@ function ListSkeleton() {
 
 function WelcomePanel() {
     return (
-        <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <div className="relative w-48 h-48">
+        <div className="flex flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale">
+            <div className="relative w-56 h-56 animate-pulse-slow">
                 <Image 
                     src="https://ik.imagekit.io/bt0k47tzc/undraw_chatting_re_j55r_1.svg?updatedAt=1764121287955"
                     alt="Select a chat"
@@ -34,10 +34,26 @@ function WelcomePanel() {
                     className="object-contain"
                 />
             </div>
-            <h2 className="text-2xl font-bold">Your Private Messenger</h2>
-            <p className="max-w-xs text-muted-foreground">
-                Select a conversation from the list to start chatting. Your messages are end-to-end encrypted.
-            </p>
+            <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Welcome to Your Private Space</h2>
+                <p className="max-w-xs mx-auto text-muted-foreground">
+                    Select a conversation or start a new one to begin chatting with your friends.
+                </p>
+            </div>
+             <div className="flex items-center gap-8 pt-4 text-muted-foreground">
+                <div className="flex flex-col items-center gap-2">
+                    <MessageSquare className="w-6 h-6"/>
+                    <span className="text-xs">Private Chat</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <Users className="w-6 h-6"/>
+                    <span className="text-xs">Connect</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <Lock className="w-6 h-6 text-emerald-400"/>
+                    <span className="text-xs text-emerald-400">E2E Encrypted</span>
+                </div>
+            </div>
         </div>
     )
 }
