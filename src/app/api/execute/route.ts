@@ -15,7 +15,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Source code and language ID are required.' }, { status: 400 });
         }
 
-        const response = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true', {
+        const response = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=true', {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
                 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
             },
             body: JSON.stringify({
-                source_code,
+                source_code: btoa(source_code),
                 language_id,
             }),
         });
