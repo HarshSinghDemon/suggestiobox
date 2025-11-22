@@ -294,8 +294,8 @@ export function BrickBreakerGame() {
         collisionDetection();
 
         speedMultiplier = 1 + (localScore / (difficulty === 'legend' || difficulty === 'pro' ? 2500 : 5000));
-        const currentDx = dx > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
-        const currentDy = dy > 0 ? baseSpeed * speedMultiplier : -baseSpeed * speedMultiplier;
+        let currentDx = dx;
+        let currentDy = dy;
 
 
         if(x + currentDx > canvas.width-ballRadius || x + currentDx < ballRadius) dx = -dx;
@@ -303,6 +303,9 @@ export function BrickBreakerGame() {
             dy = -dy;
         } else if(y + currentDy > canvas.height-ballRadius) {
             if(x > paddleX && x < paddleX + paddleWidth) {
+                // Change angle based on where it hit the paddle
+                const hitPos = (x - (paddleX + paddleWidth / 2)) / (paddleWidth / 2); // -1 to 1
+                dx = hitPos * baseSpeed * 1.5; // Max horizontal speed is 1.5x base
                 dy = -dy;
                 paddleHitFlash = 10;
             }
@@ -316,8 +319,8 @@ export function BrickBreakerGame() {
         if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 7;
         else if(leftPressed && paddleX > 0) paddleX -= 7;
 
-        x += currentDx;
-        y += currentDy;
+        x += dx * speedMultiplier;
+        y += dy * speedMultiplier;
         animationFrameId = requestAnimationFrame(draw);
     }
     
@@ -372,3 +375,5 @@ export function BrickBreakerGame() {
     </div>
   );
 }
+
+    
