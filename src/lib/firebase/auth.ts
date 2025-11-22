@@ -18,7 +18,7 @@ import {
   unlink,
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { generateAndExportKeyPair } from '../e2e';
+import { generateAndExportKey } from '../e2ee';
 
 /**
  * Handles user sign-in and sign-up logic.
@@ -37,8 +37,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string; pu
     let publicKey = details?.publicKey;
     if (!publicKey) {
       // Generate keys if not provided (e.g., social login)
-      const { publicKeyBase64 } = await generateAndExportKeyPair();
-      publicKey = publicKeyBase64;
+      publicKey = await generateAndExportKey();
     }
 
     const userData: any = {
@@ -79,7 +78,7 @@ export const signUpWithEmail = async (
   year: string
 ) => {
   try {
-    const { publicKeyBase64 } = await generateAndExportKeyPair();
+    const publicKeyBase64 = await generateAndExportKey();
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,

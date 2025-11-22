@@ -12,7 +12,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { importKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
+import { importKey, decryptMessage, encryptBuffer } from "@/lib/e2ee";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
@@ -253,7 +253,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
         for (const msg of messagesToSend) {
             try {
-                const { cipherText, iv } = await encryptMessage(key, msg.text || '');
+                const { cipherText, iv } = await encryptBuffer(key, new TextEncoder().encode(msg.text || ''));
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
                 await addDoc(messagesColRef, {
@@ -329,7 +329,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         setUploadProgress(0);
         try {
             const fileBuffer = await file.arrayBuffer();
-            const { cipherText, iv } = await encryptMessage(sessionKey, btoa(String.fromCharCode(...new Uint8Array(fileBuffer))));
+            const { cipherText, iv } = await encryptBuffer(sessionKey, fileBuffer);
             const encryptedBlob = new Blob([atob(cipherText)], { type: 'application/octet-stream' });
             const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
             
@@ -341,7 +341,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
 
             await handleSendMessage({ file: { url: result.url, name: file.name, type: file.type, iv: iv } });
         } catch (error) {
-            console.error("File encryption or upload failed", error);
+            console.error("File upload failed", error);
         } finally {
             setUploadProgress(null);
             if(fileInputRef.current) fileInputRef.current.value = "";

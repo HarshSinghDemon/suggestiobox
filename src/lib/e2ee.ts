@@ -62,19 +62,30 @@ export async function generateAndExportKey(): Promise<string> {
  * @returns {Promise<{ cipherText: string, iv: string }>} Base64 encoded ciphertext and IV.
  */
 export async function encryptMessage(key: CryptoKey, plaintext: string): Promise<{ cipherText: string, iv: string }> {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encodedPlaintext = new TextEncoder().encode(plaintext);
+  const { cipherText, iv } = await encryptBuffer(key, encodedPlaintext.buffer);
+  return { cipherText, iv };
+}
 
-  const ciphertext = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encodedPlaintext
-  );
+/**
+ * Encrypts an ArrayBuffer using AES-GCM. Ideal for files.
+ * @param key - The shared AES CryptoKey.
+ * @param data - The ArrayBuffer to encrypt.
+ * @returns {Promise<{ cipherText: string, iv: string }>} Base64 encoded ciphertext and IV.
+ */
+export async function encryptBuffer(key: CryptoKey, data: ArrayBuffer): Promise<{ cipherText: string, iv: string }> {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-  return {
-    cipherText: b64(ciphertext),
-    iv: b64(iv.buffer),
-  };
+    const ciphertext = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      data
+    );
+
+    return {
+        cipherText: b64(ciphertext),
+        iv: b64(iv.buffer),
+    };
 }
 
 
