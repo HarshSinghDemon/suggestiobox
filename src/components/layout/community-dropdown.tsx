@@ -24,9 +24,9 @@ import { useRouter } from 'next/navigation';
 
 function GoldenDot() {
   return (
-    <span className="absolute top-0 right-0 flex w-2.5 h-2.5">
+    <span className="absolute top-0 right-0 flex w-2 h-2">
       <span className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-amber-400"></span>
-      <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+      <span className="relative inline-flex w-2 h-2 rounded-full bg-amber-500"></span>
     </span>
   );
 }
@@ -57,17 +57,15 @@ export function CommunityDropdown() {
     
     return chatRooms.some((room) => {
       const lastMessage = room.lastMessage;
-      // Condition 1: There must be a last message.
-      if (!lastMessage) return false;
-
-      // Condition 2: The last message must not be from the current user.
-      if (lastMessage.senderId === user.uid) return false;
-
-      const lastReadTimestamp = room.lastRead?.[user.uid];
-      // Condition 3: If the user has never read this room, it's unread.
-      if (!lastReadTimestamp) return true;
+      if (!lastMessage || lastMessage.senderId === user.uid) {
+        return false;
+      }
       
-      // Condition 4: If the last message timestamp is after the last read timestamp.
+      const lastReadTimestamp = room.lastRead?.[user.uid];
+      if (!lastReadTimestamp) {
+        return true; // Never read this room
+      }
+
       return lastMessage.timestamp.toMillis() > lastReadTimestamp.toMillis();
     });
   }, [chatRooms, user?.uid]);

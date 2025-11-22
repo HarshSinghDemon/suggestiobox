@@ -50,9 +50,9 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
 
 function GoldenDot() {
     return (
-        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+        <span className="absolute top-1 right-1 flex h-2 w-2">
             <span className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-amber-400"></span>
-            <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span className="relative inline-flex w-2 h-2 rounded-full bg-amber-500"></span>
         </span>
     );
 }
