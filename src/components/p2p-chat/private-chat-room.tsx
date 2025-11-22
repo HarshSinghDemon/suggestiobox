@@ -437,28 +437,26 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </TooltipContent>
                 </Tooltip>
             </header>
-            <div className="flex-1 min-h-0 overflow-hidden">
-                 <ScrollArea className="h-full" viewportRef={viewportRef}>
-                    <div className="flex flex-col gap-4 p-6">
-                        {!sessionKey && (
-                            <div className="flex items-center justify-center gap-2 p-4 text-sm rounded-md text-muted-foreground bg-muted">
-                                <Loader2 className="w-4 h-4 animate-spin"/>
-                                <p>Establishing secure connection...</p>
-                            </div>
-                        )}
-                        {allMessages.length > 0 ? (
-                            allMessages.map(msg => (
-                                <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={setReplyingTo} onReact={handleReaction} />
-                            ))
-                        ) : (
-                             <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted">
-                                <Lock className="w-4 h-4 shrink-0" />
-                                <p>Messages are end-to-end encrypted. No one outside of this chat, not even The Suggestion Box, can read them.</p>
-                            </div>
-                        )}
-                    </div>
-                </ScrollArea>
-            </div>
+            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+                <div className="flex flex-col gap-4 p-6">
+                    {!sessionKey && (
+                        <div className="flex items-center justify-center gap-2 p-4 text-sm rounded-md text-muted-foreground bg-muted">
+                            <Loader2 className="w-4 h-4 animate-spin"/>
+                            <p>Establishing secure connection...</p>
+                        </div>
+                    )}
+                    {allMessages.length > 0 ? (
+                        allMessages.map(msg => (
+                            <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={setReplyingTo} onReact={handleReaction} />
+                        ))
+                    ) : (
+                         <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted">
+                            <Lock className="w-4 h-4 shrink-0" />
+                            <p>Messages are end-to-end encrypted. No one outside of this chat, not even The Suggestion Box, can read them.</p>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
             <footer className="p-2 border-t shrink-0 sm:p-4">
                 {replyingTo && (
                     <div className="flex items-center justify-between p-2 mb-2 rounded-md bg-muted">
