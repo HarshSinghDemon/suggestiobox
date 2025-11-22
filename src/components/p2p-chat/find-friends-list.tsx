@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -162,23 +161,34 @@ export function FindFriendsList() {
     const { user: currentUser } = useUser();
     const [searchQuery, setSearchQuery] = useState('');
 
+    const currentUserDocRef = useMemoFirebase(() => {
+        if (!currentUser || !firestore) return null;
+        return doc(firestore, 'users', currentUser.uid);
+    }, [currentUser, firestore]);
+    const { data: currentUserData, isLoading: isLoadingCurrentUser } = useDoc<FirebaseUser>(currentUserDocRef);
+
     const usersQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'users'), orderBy('displayName', 'asc'));
     }, [firestore]);
     
-    const { data: users, isLoading } = useCollection<FirebaseUser>(usersQuery);
+    const { data: users, isLoading: isLoadingUsers } = useCollection<FirebaseUser>(usersQuery);
 
     const filteredUsers = useMemo(() => {
-        if (!users) return [];
+        if (!users || !currentUserData) return [];
         
-        const otherUsers = users.filter(u => u.id !== currentUser?.uid);
+        const friendIds = new Set(currentUserData.friends || []);
+
+        const otherUsers = users.filter(u => u.id !== currentUser?.uid && !friendIds.has(u.id));
+
         if (!searchQuery.trim()) return otherUsers;
         
         return otherUsers.filter(user => 
             user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [users, searchQuery, currentUser]);
+    }, [users, searchQuery, currentUser, currentUserData]);
+
+    const isLoading = isLoadingUsers || isLoadingCurrentUser;
 
     return (
         <div className="space-y-4">
@@ -215,6 +225,7 @@ export function FindFriendsList() {
                 <div className="py-16 text-center text-muted-foreground">
                     <Users className="w-12 h-12 mx-auto mb-4" />
                     <p className="font-semibold">No users found.</p>
+                    <p className="text-sm">Either everyone is your friend, or your search came up empty.</p>
                 </div>
             )}
         </div>
