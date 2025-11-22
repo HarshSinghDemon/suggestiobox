@@ -32,23 +32,25 @@ function ChatListSkeleton() {
 export default function PrivateChatPage({ params }: PrivateChatPageProps) {
     return (
         <AuthWrapper>
-            <ResizablePanelGroup direction="horizontal" className="h-full">
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
-                     <Suspense fallback={<ChatListSkeleton />}>
-                        <ChatList selectedRoomId={params.roomId} />
-                    </Suspense>
-                </ResizablePanel>
-                <ResizableHandle withHandle className="hidden lg:flex"/>
-                <ResizablePanel defaultSize={50} minSize={30}>
-                    <PrivateChatRoom roomId={params.roomId} />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden md:block">
-                     <Suspense fallback={<p>Loading info...</p>}>
-                        <UserInfoPanel roomId={params.roomId} />
-                    </Suspense>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+            <div className="flex flex-col h-full">
+                <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
+                         <Suspense fallback={<ChatListSkeleton />}>
+                            <ChatList selectedRoomId={params.roomId} />
+                        </Suspense>
+                    </ResizablePanel>
+                    <ResizableHandle withHandle className="hidden lg:flex"/>
+                    <ResizablePanel defaultSize={50} minSize={30}>
+                        <PrivateChatRoom roomId={params.roomId} />
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden md:block">
+                         <Suspense fallback={<p>Loading info...</p>}>
+                            <UserInfoPanel roomId={params.roomId} />
+                        </Suspense>
+                    </ResizablePanel>
+                </ResizablePanelGroup>
+            </div>
         </AuthWrapper>
     )
 }

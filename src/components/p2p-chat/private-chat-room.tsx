@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction, Reply } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, X, Paperclip, Phone, Video } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, X, Paperclip } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -317,15 +317,16 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <p className="font-semibold">{otherUser.displayName}</p>
                     <p className="text-xs text-muted-foreground"> {isTyping ? <span className="italic text-primary">typing...</span> : "Online"} </p>
                 </div>
-                <Button variant="ghost" size="icon"> <Phone className="w-5 h-5"/> </Button>
-                <Button variant="ghost" size="icon"> <Video className="w-5 h-5"/> </Button>
+                <Button variant="ghost" size="icon"> <Info className="w-5 h-5"/> </Button>
             </header>
-            <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
-                <div className="flex flex-col gap-6 p-6">
-                    {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={handleReply} onReact={handleReaction} />)
-                    : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
-                </div>
-            </ScrollArea>
+            <div className="flex-1 min-h-0">
+                <ScrollArea className="h-full" viewportRef={viewportRef}>
+                    <div className="flex flex-col gap-6 p-6">
+                        {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={handleReply} onReact={handleReaction} />)
+                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
+                    </div>
+                </ScrollArea>
+            </div>
             <footer className="p-2 border-t shrink-0 sm:p-4 border-border">
                 <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
                     <Button variant="ghost" size="icon"> <Paperclip/> </Button>
