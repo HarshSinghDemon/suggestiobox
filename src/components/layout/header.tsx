@@ -1,6 +1,5 @@
 
 
-
 'use client';
 
 import Link from 'next/link';
@@ -54,6 +53,7 @@ function NotificationBell() {
     const firestore = useFirestore();
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const previousUnreadCount = useRef(0);
+    const isInitialLoad = useRef(true);
 
     const notificationsQuery = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -67,13 +67,23 @@ function NotificationBell() {
     const unreadCount = unreadNotifications?.length ?? 0;
     
     useEffect(() => {
-        // If the new count is greater than the previous count, a new notification has arrived.
+        if (isLoading) return;
+
+        // On initial load, just set the count and do nothing.
+        if (isInitialLoad.current) {
+            previousUnreadCount.current = unreadCount;
+            isInitialLoad.current = false;
+            return;
+        }
+
+        // If a new notification has arrived after the initial load, open the panel.
         if (unreadCount > previousUnreadCount.current) {
             setIsPanelOpen(true);
         }
-        // Update the previous count for the next comparison.
+        
+        // Always update the previous count for the next comparison.
         previousUnreadCount.current = unreadCount;
-    }, [unreadCount]);
+    }, [unreadCount, isLoading]);
 
 
     return (
