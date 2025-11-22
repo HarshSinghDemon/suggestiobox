@@ -53,4 +53,11 @@ const nextConfig: NextConfig = {
         hostname: 'i.ytimg.com',
       },
       {
-        protocol: 'https
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+      }
+    ],
+  },
+};
+
+export default nextConfig;
