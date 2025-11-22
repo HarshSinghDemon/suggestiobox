@@ -45,9 +45,11 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
 
+    const displayKey = otherUser?.publicKey || 'BwEaRml...placeholder...key_not_found';
+
     const copyKeyToClipboard = () => {
-        if (otherUser?.publicKey) {
-            navigator.clipboard.writeText(otherUser.publicKey);
+        if (displayKey) {
+            navigator.clipboard.writeText(displayKey);
             toast({
                 title: "Public Key Copied!",
                 description: "The user's public key has been copied to your clipboard.",
@@ -78,20 +80,18 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
 
             <Separator className="my-6" />
             
-            {otherUser.publicKey && (
-                 <div>
-                    <h4 className="flex items-center gap-2 mb-2 font-semibold">
-                        <KeyRound className="w-4 h-4" />
-                        Public Key
-                    </h4>
-                    <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-muted">
-                        <p className="flex-1 font-mono text-xs text-muted-foreground">{otherUser.publicKey}</p>
-                        <Button variant="ghost" size="icon" className="shrink-0" onClick={copyKeyToClipboard}>
-                            <Copy className="w-4 h-4" />
-                        </Button>
-                    </div>
+            <div>
+                <h4 className="flex items-center gap-2 mb-2 font-semibold">
+                    <KeyRound className="w-4 h-4" />
+                    Public Key
+                </h4>
+                <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-muted">
+                    <p className="flex-1 font-mono text-xs text-muted-foreground">{displayKey}</p>
+                    <Button variant="ghost" size="icon" className="shrink-0" onClick={copyKeyToClipboard}>
+                        <Copy className="w-4 h-4" />
+                    </Button>
                 </div>
-            )}
+            </div>
             
             <Separator className="my-6" />
 
