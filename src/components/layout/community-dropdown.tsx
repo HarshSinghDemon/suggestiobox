@@ -54,25 +54,27 @@ export function CommunityDropdown() {
 
   const hasUnreadMessages = useMemo(() => {
     if (!chatRooms || !user?.uid) return false;
-    
+
     return chatRooms.some((room) => {
       const lastMessage = room.lastMessage;
-      // No unread message if there's no message, or if the user sent the last one.
+      
+      // Condition 1: There must be a last message and it must be from someone else.
       if (!lastMessage || lastMessage.senderId === user.uid) {
         return false;
       }
-      
-      const lastReadTimestamp = room.lastRead?.[user.uid];
-      
-      // If the user has never read the room, any message from another user is unread.
-      if (!lastReadTimestamp) {
-        return true; 
-      }
 
-      // If the last message is newer than the last time the user read it, it's unread.
+      const lastReadTimestamp = room.lastRead?.[user.uid];
+
+      // Condition 2: If the user has never read this chat, it's unread.
+      if (!lastReadTimestamp) {
+        return true;
+      }
+      
+      // Condition 3: The last message must be newer than when the user last read the chat.
       return lastMessage.timestamp.toMillis() > lastReadTimestamp.toMillis();
     });
   }, [chatRooms, user?.uid]);
+
 
   return (
     <DropdownMenu>
