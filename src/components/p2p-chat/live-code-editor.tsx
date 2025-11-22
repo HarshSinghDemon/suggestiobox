@@ -47,8 +47,11 @@ export function LiveCodeEditor({ roomId }: { roomId: string }) {
             if (codeData.lastEditorId !== user?.uid) {
                 setLocalCode(codeData.content);
             }
+        } else if (!codeData && !isLoadingCode) {
+            // If no data exists, initialize local state
+            setLocalCode("");
         }
-    }, [codeData, isFocused, user?.uid]);
+    }, [codeData, isFocused, user?.uid, isLoadingCode]);
 
     // Write to Firestore when debounced local code changes
     useEffect(() => {
