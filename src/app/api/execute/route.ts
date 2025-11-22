@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -9,7 +8,7 @@ export async function POST(request: Request) {
     }
 
     try {
-        const { source_code, language_id } = await request.json();
+        const { source_code, language_id, stdin } = await request.json();
 
         if (!source_code || !language_id) {
             return NextResponse.json({ error: 'Source code and language ID are required.' }, { status: 400 });
@@ -25,6 +24,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
                 source_code: btoa(source_code),
                 language_id,
+                stdin: stdin ? btoa(stdin) : undefined,
             }),
         });
 

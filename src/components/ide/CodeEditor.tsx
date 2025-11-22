@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -9,6 +8,7 @@ import { Loader2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Textarea } from '../ui/textarea';
 
 
 const languageOptions = [
@@ -23,37 +23,88 @@ const languageOptions = [
 
 const languageTemplates: Record<string, string> = {
   python: `def main():
-    print("Hello from Python!")
-    # Standard libraries like 'math' or 'collections' are available.
-    # Third-party libraries like numpy or matplotlib are not.
+    try:
+        # Example of reading from stdin
+        name = input("Enter your name: ")
+        print(f"Hello, {name}!")
+    except EOFError:
+        print("Hello from Python! Provide input to interact.")
 
 if __name__ == "__main__":
     main()`,
-  java: `public class Main {
+  java: `import java.util.Scanner;
+
+public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello from Java!");
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your name: ");
+        if (scanner.hasNextLine()) {
+            String name = scanner.nextLine();
+            System.out.println("Hello, " + name + "!");
+        } else {
+            System.out.println("Hello from Java! Provide input to interact.");
+        }
+        scanner.close();
     }
 }`,
   cpp: `#include <iostream>
+#include <string>
 
 int main() {
-    std::cout << "Hello from C++!" << std::endl;
+    std::string name;
+    std::cout << "Enter your name: " << std::endl;
+    if (std::getline(std::cin, name)) {
+        std::cout << "Hello, " << name << "!" << std::endl;
+    } else {
+        std::cout << "Hello from C++! Provide input to interact." << std::endl;
+    }
     return 0;
 }`,
   c: `#include <stdio.h>
 
 int main() {
-    printf("Hello from C!\\n");
+    char name[100];
+    printf("Enter your name: \\n");
+    if (fgets(name, sizeof(name), stdin) != NULL) {
+        printf("Hello, %s", name);
+    } else {
+        printf("Hello from C! Provide input to interact.\\n");
+    }
     return 0;
 }`,
-  javascript: `console.log("Hello from JavaScript!");`,
+  javascript: `const readline = require('readline');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+console.log("Enter your name: ");
+
+rl.on('line', (name) => {
+  console.log(\`Hello, \${name}!\`);
+  rl.close();
+});
+
+rl.on('close', () => {
+  // This will run if no input is provided after a short time
+});`,
   csharp: `using System;
 
 class Program
 {
     static void Main()
     {
-        Console.WriteLine("Hello from C#!");
+        Console.WriteLine("Enter your name: ");
+        string name = Console.ReadLine();
+        if (name != null)
+        {
+            Console.WriteLine($"Hello, {name}!");
+        }
+        else
+        {
+            Console.WriteLine("Hello from C#! Provide input to interact.");
+        }
     }
 }`,
 };
@@ -70,6 +121,7 @@ const languageIdToName: Record<number, string> = {
 export function CodeEditor() {
     const [language, setLanguage] = useState(languageOptions[0].value);
     const [code, setCode] = useState(languageTemplates[languageIdToName[languageOptions[0].value as number]]);
+    const [stdin, setStdin] = useState('');
     const [output, setOutput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -98,6 +150,7 @@ export function CodeEditor() {
                 body: JSON.stringify({
                     source_code: code,
                     language_id: language,
+                    stdin: stdin,
                 }),
             });
 
@@ -184,24 +237,35 @@ export function CodeEditor() {
                 />
             </div>
 
-            <div>
-                <h3 className="mb-2 text-lg font-semibold">Output</h3>
-                <ScrollArea className="h-48 w-full font-mono text-sm border rounded-md bg-[#0D1117] text-green-400 p-4 whitespace-pre-wrap">
-                    <div ref={outputRef}>
-                        {isLoading ? (
-                             <div className="flex items-center gap-2 text-gray-400">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Executing code...</span>
-                            </div>
-                        ) : error ? (
-                            <pre className="text-red-400">{error}</pre>
-                        ) : output ? (
-                            <pre>{output}</pre>
-                        ) : (
-                            <span className="text-gray-500">Output will be displayed here.</span>
-                        )}
-                    </div>
-                </ScrollArea>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 className="mb-2 text-lg font-semibold">Input (stdin)</h3>
+                    <Textarea
+                        value={stdin}
+                        onChange={(e) => setStdin(e.target.value)}
+                        placeholder="Provide standard input to your program here..."
+                        className="h-48 font-mono text-sm bg-[#0D1117] text-white"
+                    />
+                </div>
+                <div>
+                    <h3 className="mb-2 text-lg font-semibold">Output</h3>
+                    <ScrollArea className="h-48 w-full font-mono text-sm border rounded-md bg-[#0D1117] text-green-400 p-4 whitespace-pre-wrap">
+                        <div ref={outputRef}>
+                            {isLoading ? (
+                                <div className="flex items-center gap-2 text-gray-400">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Executing code...</span>
+                                </div>
+                            ) : error ? (
+                                <pre className="text-red-400">{error}</pre>
+                            ) : output ? (
+                                <pre>{output}</pre>
+                            ) : (
+                                <span className="text-gray-500">Output will be displayed here.</span>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </div>
             </div>
         </div>
     );
