@@ -73,6 +73,19 @@ export function NotificationPanel() {
             }
         }, 5 * 60 * 1000); // 5 minutes
     };
+    
+    const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string) => {
+        e.stopPropagation(); // Prevent the main click handler from firing
+        if (!user || !firestore) return;
+        const notifRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
+        try {
+            await deleteDoc(notifRef);
+            toast({ title: "Notification Removed" });
+        } catch (error) {
+            console.error("Failed to delete notification:", error);
+            toast({ variant: 'destructive', title: "Error", description: "Could not remove notification." });
+        }
+    };
 
 
     const handleAccept = async (notification: Notification) => {
@@ -132,12 +145,16 @@ export function NotificationPanel() {
                             <div
                                 key={notif.id}
                                 className={cn(
-                                    "flex flex-col gap-3 p-2 rounded-md",
+                                    "flex flex-col gap-3 p-2 rounded-md group relative",
                                     notif.type !== 'friend_request' && "cursor-pointer hover:bg-accent",
                                     !notif.isRead && "bg-primary/10"
                                 )}
                                 onClick={() => handleNotificationClick(notif)}
                             >
+                                <Button variant="ghost" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => handleDeleteNotification(e, notif.id)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+
                                <div className='flex items-start gap-3'>
                                     <Avatar className="w-10 h-10 mt-1">
                                         <AvatarImage src={notif.senderImage ?? undefined} />
@@ -176,5 +193,3 @@ export function NotificationPanel() {
         </div>
     );
 }
-
-    
