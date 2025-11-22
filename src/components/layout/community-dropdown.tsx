@@ -56,10 +56,18 @@ export function CommunityDropdown() {
     if (!chatRooms || !user?.uid) return false;
     return chatRooms.some((room) => {
       const lastMessageTimestamp = room.lastMessage?.timestamp;
-      if (!lastMessageTimestamp) return false;
-      if (room.lastMessage.senderId === user.uid) return false;
+      // No dot if there's no last message or the user sent it
+      if (!lastMessageTimestamp || room.lastMessage.senderId === user.uid) {
+        return false;
+      }
+      
       const lastReadTimestamp = room.lastRead?.[user.uid];
-      if (!lastReadTimestamp) return true;
+      // If user has never read this room, there's a new message
+      if (!lastReadTimestamp) {
+          return true;
+      }
+      
+      // If the last message is newer than the last time the user read it
       return lastMessageTimestamp.toMillis() > lastReadTimestamp.toMillis();
     });
   }, [chatRooms, user?.uid]);
