@@ -14,6 +14,7 @@ import { Input } from "../ui/input";
 import Markdown from 'react-markdown';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Card } from "../ui/card";
+import Image from "next/image";
 
 type ChatMessage = {
     sender: 'user' | 'pookie';
@@ -23,14 +24,14 @@ type ChatMessage = {
 
 type PookieGender = 'male' | 'female' | 'neutral';
 
-function ChatBubble({ message }: { message: ChatMessage; }) {
+function ChatBubble({ message, pookieAvatarUrl }: { message: ChatMessage; pookieAvatarUrl: string; }) {
     const isPookie = message.sender === 'pookie';
 
     return (
          <div className={cn("flex items-end gap-2 max-w-lg w-fit", !isPookie && "self-end flex-row-reverse")}>
              {isPookie && (
                 <Avatar className="w-8 h-8">
-                    <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                    <AvatarImage src={pookieAvatarUrl} />
                     <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
              )}
@@ -58,15 +59,15 @@ function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boo
                 </DialogHeader>
                 <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-3">
                     <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('male', 'Alex')}>
-                        <User className="w-12 h-12 mb-2 text-blue-500" />
+                         <Image src="https://api.dicebear.com/7.x/adventurer/svg?seed=alex&backgroundColor=b6e3f4" alt="Alex" width={64} height={64} className="w-16 h-16 mb-2 rounded-full" />
                         <p className="font-semibold">Alex (Male)</p>
                     </Card>
                      <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('female', 'Mia')}>
-                        <User className="w-12 h-12 mb-2 text-pink-500" />
+                         <Image src="https://api.dicebear.com/7.x/adventurer/svg?seed=mia&backgroundColor=f2d3d3" alt="Mia" width={64} height={64} className="w-16 h-16 mb-2 rounded-full" />
                         <p className="font-semibold">Mia (Female)</p>
                     </Card>
                      <Card className="flex flex-col items-center justify-center p-4 text-center transition-all duration-300 transform cursor-pointer hover:bg-accent hover:shadow-lg hover:-translate-y-1" onClick={() => onSelect('neutral', 'Pookie')}>
-                        <Users className="w-12 h-12 mb-2 text-purple-500" />
+                         <Image src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" alt="Pookie" width={64} height={64} className="w-16 h-16 mb-2 rounded-full" />
                         <p className="font-semibold">Pookie (Neutral)</p>
                     </Card>
                 </div>
@@ -112,6 +113,13 @@ export function PookieAiChatRoom() {
         setMessages([]); // Reset chat history
         setIsPersonaModalOpen(false);
     }
+    
+    const pookieAvatarUrl = useMemo(() => {
+        if (pookieGender === 'male') return "https://api.dicebear.com/7.x/adventurer/svg?seed=alex&backgroundColor=b6e3f4";
+        if (pookieGender === 'female') return "https://api.dicebear.com/7.x/adventurer/svg?seed=mia&backgroundColor=f2d3d3";
+        return "https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50";
+    }, [pookieGender]);
+
 
     const handleSendMessage = async () => {
         if (!input.trim() || !user || !pookieGender) return;
@@ -169,7 +177,7 @@ export function PookieAiChatRoom() {
                 </Button>
                 <button className="flex items-center flex-1 gap-3 text-left rounded-md hover:bg-accent p-1 -m-1" onClick={() => setIsPersonaModalOpen(true)}>
                     <Avatar className="w-10 h-10 border-2 border-primary">
-                        <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                        <AvatarImage src={pookieAvatarUrl} />
                         <AvatarFallback><Bot /></AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -186,7 +194,7 @@ export function PookieAiChatRoom() {
             <ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
                  <div className="flex flex-col gap-4 p-6">
                     {messages.length > 0 ? (
-                        messages.map(msg => <ChatBubble key={msg.id} message={msg} />)
+                        messages.map(msg => <ChatBubble key={msg.id} message={msg} pookieAvatarUrl={pookieAvatarUrl} />)
                     ) : (
                          <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
                             <Sparkles className="w-16 h-16 text-primary/50" />
@@ -197,7 +205,7 @@ export function PookieAiChatRoom() {
                      {isLoading && (
                         <div className="flex items-end self-start gap-2">
                             <Avatar className="w-8 h-8">
-                                <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                                <AvatarImage src={pookieAvatarUrl} />
                                 <AvatarFallback><Bot /></AvatarFallback>
                             </Avatar>
                             <div className="p-3 rounded-lg bg-muted">
