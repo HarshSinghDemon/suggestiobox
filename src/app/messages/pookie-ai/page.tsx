@@ -4,6 +4,9 @@ import { ChatList } from "@/components/p2p-chat/chat-list";
 import { PookieAiChatRoom } from "@/components/p2p-chat/pookie-ai-chat-room";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { UserInfoPanel } from "@/components/p2p-chat/user-info-panel";
+
 
 function ChatListSkeleton() {
     return (
@@ -24,17 +27,18 @@ function ChatListSkeleton() {
 export default function PookieAiChatPage() {
     return (
         <AuthWrapper>
-            <div className="h-[calc(100vh-4rem)]">
-                 <div className="h-full border rounded-lg md:grid md:grid-cols-[350px_1fr]">
-                    <div className="h-full hidden md:col-span-1 md:border-r md:block">
-                        <Suspense fallback={<ChatListSkeleton />}>
+            <div className="flex flex-col h-full">
+                <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
+                         <Suspense fallback={<ChatListSkeleton />}>
                             <ChatList selectedRoomId={"pookie-ai"} />
                         </Suspense>
-                    </div>
-                    <div className="h-full md:col-span-1">
+                    </ResizablePanel>
+                    <ResizableHandle withHandle className="hidden lg:flex"/>
+                    <ResizablePanel defaultSize={75} minSize={30}>
                         <PookieAiChatRoom />
-                    </div>
-                </div>
+                    </ResizablePanel>
+                </ResizablePanelGroup>
             </div>
         </AuthWrapper>
     )

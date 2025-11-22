@@ -161,10 +161,10 @@ export function PookieAiChatRoom() {
 
 
     return (
-         <div className="flex flex-col h-full bg-card">
+         <div className="flex flex-col h-full bg-transparent">
             <PersonaSelectionModal isOpen={isPersonaModalOpen} onOpenChange={setIsPersonaModalOpen} onSelect={handlePersonaSelect} />
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
+                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <button className="flex items-center flex-1 gap-3 text-left rounded-md hover:bg-accent p-1 -m-1" onClick={() => setIsPersonaModalOpen(true)}>
@@ -217,9 +217,9 @@ export function PookieAiChatRoom() {
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         disabled={!user || isLoading || !pookieGender}
-                        className="text-base"
+                        className="text-base h-11 rounded-full bg-input"
                     />
-                    <Button type="submit" size="icon" disabled={!input.trim() || !user || isLoading || !pookieGender}>
+                    <Button type="submit" size="icon" disabled={!input.trim() || !user || isLoading || !pookieGender} className="rounded-full w-11 h-11">
                        {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>

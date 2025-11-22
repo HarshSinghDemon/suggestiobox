@@ -8,7 +8,7 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, Plus } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, Plus, Bot } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -97,9 +97,14 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     }, [chatRooms, currentUser, usersMap]);
 
     const filteredChatRooms = useMemo(() => {
-        return enrichedChatRooms.filter(room => 
+        const pookieName = "Pookie (AI)";
+        const pookieVisible = pookieName.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const userChats = enrichedChatRooms.filter(room => 
             room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
         );
+
+        return { userChats, pookieVisible };
 
     }, [enrichedChatRooms, searchQuery]);
 
@@ -128,54 +133,76 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
              <div className="flex-1 min-h-0 overflow-y-auto p-2">
                  {isLoading ? (
                     <ChatListSkeleton />
-                ) : filteredChatRooms.length > 0 ? (
+                ) : (
                     <div className="space-y-1">
-                        {filteredChatRooms.map(room => {
-                            const otherUser = room.participantDetails?.[0];
-                            if (!otherUser) return null;
-                            return (
-                                <Link href={`/messages/${room.id}`} key={room.id} className="block">
-                                    <div className={cn(
-                                        "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-muted",
-                                        selectedRoomId === room.id && "bg-muted"
-                                    )}>
-                                        <Avatar className="w-12 h-12">
-                                            <AvatarImage src={otherUser.photoURL ?? undefined} />
-                                            <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1 overflow-hidden">
-                                            <div className="flex items-baseline justify-between">
-                                                <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                                {room.lastMessage?.timestamp && (
-                                                    <p className="text-xs text-muted-foreground self-start shrink-0">
-                                                        {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <p className={cn("text-sm truncate", room.isUnread ? "text-foreground font-medium" : "text-muted-foreground")}>
-                                                    {room.lastMessage ? (
-                                                        (room.lastMessage.senderId === currentUser?.uid ? "You: " : "") + 
-                                                        (room.lastMessage.text || "Encrypted message")
-                                                    ) : "No messages yet."}
-                                                </p>
-                                                {room.isUnread && (
-                                                     <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary">
-                                                        1
-                                                    </div>
-                                                )}
-                                            </div>
+                        {filteredChatRooms.pookieVisible && (
+                             <Link href="/messages/pookie-ai" className="block">
+                                <div className={cn(
+                                    "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-muted",
+                                    selectedRoomId === 'pookie-ai' && "bg-muted"
+                                )}>
+                                    <Avatar className="w-12 h-12">
+                                        <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                                        <AvatarFallback><Bot /></AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 overflow-hidden">
+                                        <div className="flex items-baseline justify-between">
+                                            <p className="font-semibold truncate">Pookie (AI)</p>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm truncate text-muted-foreground">Your personal AI friend</p>
                                         </div>
                                     </div>
-                                </Link>
-                            )
-                        })}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
-                        <MessagesSquare className="w-12 h-12 mx-auto" />
-                        <p className="font-semibold">No conversations.</p>
-                        <p className="text-sm">Start a new chat with a friend.</p>
+                                </div>
+                            </Link>
+                        )}
+                        {filteredChatRooms.userChats.length > 0 ? (
+                            filteredChatRooms.userChats.map(room => {
+                                const otherUser = room.participantDetails?.[0];
+                                if (!otherUser) return null;
+                                return (
+                                    <Link href={`/messages/${room.id}`} key={room.id} className="block">
+                                        <div className={cn(
+                                            "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-muted",
+                                            selectedRoomId === room.id && "bg-muted"
+                                        )}>
+                                            <Avatar className="w-12 h-12">
+                                                <AvatarImage src={otherUser.photoURL ?? undefined} />
+                                                <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 overflow-hidden">
+                                                <div className="flex items-baseline justify-between">
+                                                    <p className="font-semibold truncate">{otherUser.displayName}</p>
+                                                    {room.lastMessage?.timestamp && (
+                                                        <p className="text-xs text-muted-foreground self-start shrink-0">
+                                                            {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <p className={cn("text-sm truncate", room.isUnread ? "text-foreground font-medium" : "text-muted-foreground")}>
+                                                        {room.lastMessage ? (
+                                                            (room.lastMessage.senderId === currentUser?.uid ? "You: " : "") + 
+                                                            (room.lastMessage.text || "Encrypted message")
+                                                        ) : "No messages yet."}
+                                                    </p>
+                                                    {room.isUnread && (
+                                                        <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary">
+                                                            1
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                )
+                            })
+                        ) : !filteredChatRooms.pookieVisible ? (
+                             <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
+                                <MessagesSquare className="w-12 h-12 mx-auto" />
+                                <p className="font-semibold">No conversations found.</p>
+                            </div>
+                        ) : null}
                     </div>
                 )}
             </div>
