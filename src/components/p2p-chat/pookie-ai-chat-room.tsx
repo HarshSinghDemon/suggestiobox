@@ -5,7 +5,7 @@ import { useUser } from "@/firebase";
 import { Button } from "../ui/button";
 import { ArrowLeft, Loader2, Send, Bot, Sparkles, User, Users, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
