@@ -20,14 +20,14 @@ import { useRouter } from 'next/navigation';
 import { Logo } from '../logo';
 import { useAuth as useFirebaseAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { ProfileAvatarModal } from '../profile-avatar-modal';
 import { MiniMusicPlayer } from './mini-music-player';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { useAudio } from './audio-provider';
 import { Skeleton } from '../ui/skeleton';
 import { NotificationPanel } from './notification-panel';
-import type { Notification } from '@/lib/types';
+import type { Notification, ChatRoom } from '@/lib/types';
 import { collection, query, where } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +47,16 @@ const NavLink = ({ href, children, onNavigate }: { href: string, children: React
         </button>
     )
 }
+
+function GoldenDot() {
+    return (
+        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-amber-400"></span>
+            <span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+        </span>
+    );
+}
+
 
 function NotificationBell() {
     const { user } = useAuth();
@@ -91,12 +101,7 @@ function NotificationBell() {
             <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && !isLoading && (
-                        <span className="absolute top-2 right-2 flex h-2 w-2">
-                            <span className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping bg-amber-400"></span>
-                            <span className="relative inline-flex w-2 h-2 rounded-full bg-amber-500"></span>
-                        </span>
-                    )}
+                    {unreadCount > 0 && !isLoading && <GoldenDot />}
                     {isLoading && <Skeleton className="absolute top-1 right-1 w-5 h-5 rounded-full" />}
                 </Button>
             </PopoverTrigger>
@@ -111,10 +116,31 @@ function NotificationBell() {
 export function Header() {
   const { user, loading: isAuthLoading } = useAuth();
   const firebaseAuth = useFirebaseAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { isPlaying } = useAudio();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+
+  // Unread messages logic
+  const chatRoomsQuery = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    return query(collection(firestore, 'chatRooms'), where('participants', 'array-contains', user.uid));
+  }, [user?.uid, firestore]);
+
+  const { data: chatRooms, isLoading: isLoadingChatRooms } = useCollection<ChatRoom>(chatRoomsQuery);
+  
+  const hasUnreadMessages = useMemo(() => {
+    if (!chatRooms || !user?.uid) return false;
+    return chatRooms.some(room => {
+        const lastRead = room.lastRead?.[user.uid];
+        const lastMessageTimestamp = room.lastMessage?.timestamp;
+        if (!lastMessageTimestamp) return false;
+        if (!lastRead) return true; // If never read, it's unread
+        return lastMessageTimestamp > lastRead;
+    });
+  }, [chatRooms, user?.uid]);
+
 
   const handleSignOut = async () => {
     await signOut(firebaseAuth);
@@ -169,9 +195,10 @@ export function Header() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
+                    <button className="relative flex items-center gap-1 font-medium transition-colors text-foreground/60 hover:text-foreground/80 focus:outline-none">
                       Community
                       <ChevronDown className="w-4 h-4" />
+                       {hasUnreadMessages && !isLoadingChatRooms && <GoldenDot />}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -179,9 +206,10 @@ export function Header() {
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Community Chat
                     </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => router.push('/messages')}>
+                     <DropdownMenuItem onClick={() => router.push('/messages')} className="relative">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Private Messages
+                      {hasUnreadMessages && <GoldenDot />}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => router.push('/community-members')}>
                       <Users className="w-4 h-4 mr-2" />
@@ -357,7 +385,11 @@ export function Header() {
                                 <MessageSquare className="w-5 h-5 mr-3" /> Community Chat
                             </NavLink>
                             <NavLink href="/messages" onNavigate={() => setIsSheetOpen(false)}>
-                                <MessageSquare className="w-5 h-5 mr-3" /> Private Messages
+                                <div className="relative flex items-center w-full">
+                                    <MessageSquare className="w-5 h-5 mr-3" />
+                                    Private Messages
+                                    {hasUnreadMessages && <GoldenDot />}
+                                </div>
                             </NavLink>
                             <NavLink href="/community-members" onNavigate={() => setIsSheetOpen(false)}>
                                 <Users className="w-5 h-5 mr-3" /> Members
