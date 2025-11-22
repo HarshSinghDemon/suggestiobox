@@ -3,18 +3,16 @@
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction, Reply } from "@/lib/types";
+import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, X, Paperclip } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { importKey, encryptMessage, decryptMessage, generateAndExportKey } from "@/lib/e2ee";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { importKey, encryptMessage, decryptMessage } from "@/lib/e2ee";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
@@ -26,7 +24,6 @@ type DecryptedMessage = {
     createdAt: EncryptedMessage['createdAt'] | Date;
     status?: 'sent' | 'pending';
     reactions?: Reaction[];
-    replyTo?: Reply | null;
     isRead?: boolean;
 }
 
@@ -52,8 +49,7 @@ const ReactionPicker = ({ onSelect, onClose }: { onSelect: (emoji: string) => vo
     );
 };
 
-
-function ChatMessage({ message, isCurrentUserSender, author, onReply, onReact }: { message: DecryptedMessage; isCurrentUserSender: boolean; author?: FirebaseUser; onReply: (message: DecryptedMessage) => void; onReact: (messageId: string, emoji: string) => void; }) {
+function ChatMessage({ message, isCurrentUserSender, author, onReact }: { message: DecryptedMessage; isCurrentUserSender: boolean; author?: FirebaseUser; onReact: (messageId: string, emoji: string) => void; }) {
     const [showActions, setShowActions] = useState(false);
     
     let sentAtDate;
@@ -64,14 +60,6 @@ function ChatMessage({ message, isCurrentUserSender, author, onReply, onReact }:
     }
 
     const timeAgo = sentAtDate ? sentAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
-
-    const groupedReactions = message.reactions?.reduce((acc, reaction) => {
-        if (!acc[reaction.emoji]) {
-            acc[reaction.emoji] = [];
-        }
-        acc[reaction.emoji].push(reaction.userName);
-        return acc;
-    }, {} as Record<string, string[]>);
 
     return (
         <div 
@@ -88,10 +76,10 @@ function ChatMessage({ message, isCurrentUserSender, author, onReply, onReact }:
             
             <div className="relative">
                 <div className={cn(
-                    "p-3 rounded-xl",
+                    "p-3 rounded-2xl",
                     isCurrentUserSender 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted"
+                        ? "bg-primary text-primary-foreground rounded-br-none" 
+                        : "bg-muted rounded-bl-none"
                 )}>
                     <p className="text-sm">{message.text}</p>
                     <div className={cn(
@@ -119,6 +107,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReply, onReact }:
         </div>
     );
 }
+
 
 function ChatRoomSkeleton() {
     return (
@@ -152,7 +141,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
     const [pendingMessages, setPendingMessages] = useState<DecryptedMessage[]>([]);
     const viewportRef = useRef<HTMLDivElement>(null);
-    const [replyingTo, setReplyingTo] = useState<DecryptedMessage | null>(null);
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -198,24 +186,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         }
     }, [encryptedMessages, currentUser, roomRef, room]);
 
-    const initializeAndSetKey = useCallback(async () => {
-        if (!roomRef) return;
-        const newKeyB64 = await generateAndExportKey();
-        await updateDoc(roomRef, { sessionKey_b64: newKeyB64 });
-        const key = await importKey(newKeyB64);
-        setSessionKey(key);
-    }, [roomRef]);
-    
     useEffect(() => {
-        if (isLoadingRoom || !room || !currentUser) return;
-        if (room.sessionKey_b64 && !sessionKey) {
-            importKey(room.sessionKey_b64)
-                .then(key => setSessionKey(key))
-                .catch(() => initializeAndSetKey());
-        } else if (!room.sessionKey_b64) {
-            initializeAndSetKey();
+        if (isLoadingRoom || !room) return;
+        if (room.sessionKey_b64) {
+            importKey(room.sessionKey_b64).then(setSessionKey);
         }
-    }, [room, isLoadingRoom, sessionKey, currentUser, initializeAndSetKey]);
+    }, [room, isLoadingRoom]);
     
     const processPendingMessages = useCallback(async (key: CryptoKey) => {
         if (pendingMessages.length === 0 || !currentUser || !roomRef) return;
@@ -228,10 +204,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 const { cipherText, iv } = await encryptMessage(key, msg.text);
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
-                const replyData = msg.replyTo ? { replyTo: { messageId: msg.replyTo.messageId, text: msg.replyTo.text, senderName: msg.replyTo.senderName } } : {};
-                
                 await addDoc(messagesColRef, {
-                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [], ...replyData,
+                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [],
                 });
                 
                 await updateDoc(roomRef, { lastMessage: { text: 'Encrypted message', timestamp: serverTimestamp(), senderId: currentUser.uid } });
@@ -281,10 +255,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         updateDoc(roomRef, { [`typing.${currentUser.uid}`]: false });
 
         const pendingMsg: DecryptedMessage = {
-            id: `pending-${Date.now()}`, senderId: currentUser.uid, text: textToSend, createdAt: new Date(), status: 'pending',
-            replyTo: replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderId === currentUser.uid ? 'You' : otherUser?.displayName || 'Them' } : null
+            id: `pending-${Date.now()}`, senderId: currentUser.uid, text: textToSend, createdAt: new Date(), status: 'pending'
         };
-        setReplyingTo(null);
         setPendingMessages(prev => [...prev, pendingMsg]);
     };
     
@@ -299,8 +271,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             await updateDoc(messageRef, { reactions: arrayUnion(newReaction) });
         }
     }, [currentUser, firestore, roomId, decryptedMessages]);
-
-    const handleReply = useCallback((message: DecryptedMessage) => setReplyingTo(message), []);
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
     if (isLoading) return <ChatRoomSkeleton />;
@@ -317,12 +287,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     <p className="font-semibold">{otherUser.displayName}</p>
                     <p className="text-xs text-muted-foreground"> {isTyping ? <span className="italic text-primary">typing...</span> : "Online"} </p>
                 </div>
-                <Button variant="ghost" size="icon"> <Info className="w-5 h-5"/> </Button>
+                <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
             </header>
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-6 p-6">
-                        {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReply={handleReply} onReact={handleReaction} />)
+                        {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} />)
                         : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
                     </div>
                 </ScrollArea>

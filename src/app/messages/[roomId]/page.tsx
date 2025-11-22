@@ -40,11 +40,11 @@ export default function PrivateChatPage({ params }: PrivateChatPageProps) {
                         </Suspense>
                     </ResizablePanel>
                     <ResizableHandle withHandle className="hidden lg:flex"/>
-                    <ResizablePanel defaultSize={50} minSize={30}>
+                    <ResizablePanel defaultSize={55} minSize={30}>
                         <PrivateChatRoom roomId={params.roomId} />
                     </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden md:block">
+                    <ResizableHandle withHandle className="hidden lg:flex"/>
+                    <ResizablePanel defaultSize={20} minSize={20} maxSize={30} className="hidden md:block">
                          <Suspense fallback={<p>Loading info...</p>}>
                             <UserInfoPanel roomId={params.roomId} />
                         </Suspense>

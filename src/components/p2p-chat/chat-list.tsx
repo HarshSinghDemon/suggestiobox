@@ -12,9 +12,6 @@ import { MessagesSquare, Search, UserPlus, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { FindFriendsList } from "./find-friends-list";
-import { FriendsList } from "./friends-list";
 import { Button } from "../ui/button";
 
 function ChatListSkeleton() {
@@ -25,7 +22,7 @@ function ChatListSkeleton() {
                     <Skeleton className="w-12 h-12 rounded-full" />
                     <div className="flex-1 space-y-2">
                         <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-48" />
+                        <Skeleton className="h-3 w-32" />
                     </div>
                 </div>
             ))}
@@ -42,7 +39,6 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('chats');
 
     const userDocRef = useMemoFirebase(() => {
         if (!currentUser || !firestore) return null;
@@ -112,7 +108,12 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     return (
         <div className="flex flex-col h-full bg-transparent border-r border-border">
              <div className="p-4 border-b shrink-0">
-                <h2 className="text-xl font-bold">Chat</h2>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold">Chat</h2>
+                    <Button variant="ghost" size="icon">
+                        <Plus className="w-5 h-5"/>
+                    </Button>
+                </div>
                  <div className="relative mt-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -177,12 +178,6 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                         <p className="text-sm">Start a new chat with a friend.</p>
                     </div>
                 )}
-            </div>
-            <div className="p-4 border-t">
-                <Button className="w-full">
-                    <Plus className="w-4 h-4 mr-2"/>
-                    New Chat
-                </Button>
             </div>
         </div>
     )

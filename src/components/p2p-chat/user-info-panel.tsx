@@ -7,7 +7,6 @@ import type { ChatRoom, FirebaseUser } from "@/lib/types";
 import { useMemo } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
 const getInitials = (name: string | null | undefined) => {
@@ -59,16 +58,15 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                 </Avatar>
                 <div>
                     <h3 className="text-xl font-bold">{otherUser.displayName}</h3>
-                    <p className="text-sm text-muted-foreground">{otherUser.email}</p>
+                    <p className="text-sm text-muted-foreground">{otherUser.year} Year</p>
                 </div>
-                <Button variant="outline">View Profile</Button>
             </div>
 
             <Separator className="my-6" />
 
             <div>
                 <h4 className="mb-4 font-semibold">Shared Files</h4>
-                <div className="p-8 text-center border-2 border-dashed rounded-lg text-muted-foreground">
+                <div className="p-8 text-center border-2 border-dashed rounded-lg text-muted-foreground border-border">
                     <p>No files shared yet.</p>
                 </div>
             </div>
