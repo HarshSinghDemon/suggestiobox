@@ -1,5 +1,3 @@
-
-
 {
   "entities": {
     "User": {
@@ -59,6 +57,16 @@
             "type": "array",
             "description": "An array of user IDs from whom this user has received a friend request.",
             "items": { "type": "string" }
+        },
+        "pinnedSuggestions": {
+            "type": "array",
+            "description": "An array of Suggestion IDs the user has pinned.",
+            "items": { "type": "string" }
+        },
+        "pinnedAssignments": {
+            "type": "array",
+            "description": "An array of Assignment IDs the user has pinned.",
+            "items": { "type": "string" }
         }
       },
       "required": [
@@ -68,6 +76,18 @@
         "createdAt",
         "year"
       ]
+    },
+    "SharedCode": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "SharedCode",
+        "type": "object",
+        "description": "Represents the shared code content within a chat room.",
+        "properties": {
+            "content": { "type": "string", "description": "The code content." },
+            "lastEditorId": { "type": "string", "description": "The ID of the user who last edited the code." },
+            "updatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["content", "lastEditorId", "updatedAt"]
     },
     "ChatRoom": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -155,7 +175,6 @@
         "description",
         "subject",
         "semester",
-        "fileUrl",
         "uploadDate"
       ]
     },
@@ -404,6 +423,15 @@
           "params": [{ "name": "roomId" }, { "name": "messageId" }]
         }
       },
+       {
+        "path": "/chatRooms/{roomId}/sharedCode/live",
+        "definition": {
+          "entityName": "SharedCode",
+          "schema": { "$ref": "#/backend/entities/SharedCode" },
+          "description": "Stores the live shared code for a specific chat room.",
+          "params": [{ "name": "roomId" }]
+        }
+      },
       {
         "path": "/suggestions/{suggestionId}",
         "definition": {
@@ -500,6 +528,3 @@
     "reasoning": "The Firestore structure is designed to address the 'auth/operation-not-allowed' error, ensure Authorization Independence, and facilitate secure and scalable data management for the StudyShare Central application. The error suggests an issue with Firebase Authentication configuration, which will be handled on the Firebase console configurations, as the JSON generation is for the Firestore structure only. The structure focuses on organizing user data, suggestions, and assignments in a way that simplifies security rules and optimizes query performance.\n\n**Authorization Independence (Denormalization):**\n\n*   The `userId` field is included in both `suggestions` and `assignments` collections. This denormalization allows security rules to validate ownership (`request.auth.uid == resource.data.userId`) without needing to perform expensive `get()` operations to retrieve user data.  This ensures that authorization checks are atomic and independent of other data.\n\n**Structural Segregation (Homogeneous Security Posture):**\n\n*   User-specific data (suggestions, assignments) are stored under the `/users/{userId}` path.  This segregation ensures that all documents within a given user's subcollections share the same security requirements (i.e., only the user can create/modify/delete them).\n\n**Access Modeling:**\n\n*   **Private Data (User-Owned):**  Suggestions and assignments are placed under `/users/{userId}/suggestions` and `/users/{userId}/assignments` respectively, enforcing path-based ownership.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of data into user-specific subcollections enables secure `list` operations. Rules can easily restrict listing to only the data owned by the authenticated user.\n\n**Invariants:**\n\n*   The structure supports the integrity of ownership through the consistent use of `userId` in both `suggestions` and `assignments`.\n\nIn summary, this design prioritizes security, scalability, and debuggability by denormalizing authorization data, structurally segregating data based on access requirements, and enforcing consistent access patterns."
   }
 }
-
-
-    

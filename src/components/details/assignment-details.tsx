@@ -2,8 +2,8 @@
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import type { Assignment } from '@/lib/types';
+import { doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
+import type { Assignment, Vote } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye, Trash2, AlertCircle } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2, AlertCircle, ArrowUp, ArrowDown, Pin, PinOff } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -35,6 +35,8 @@ import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 import { CommentSection } from './comment-section';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { cn } from '@/lib/utils';
+import { StudyBuddy } from '../ai/study-buddy';
 
 function AssignmentDetailsSkeleton() {
   return (
@@ -78,9 +80,53 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
   );
   
   const { data: assignment, isLoading } = useDoc<Assignment>(assignmentRef);
+  
+  const userProfileRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+  const { data: userProfile } = useDoc(userProfileRef);
+
   const isOwner = user && assignment && user.uid === assignment.userId;
   const canDeleteFile = !!(supabaseUrl && supabaseAnonKey);
   
+  const userVote = assignment?.votes?.find((v: Vote) => v.userId === user?.uid)?.type;
+  const upvotes = assignment?.votes?.filter((v: Vote) => v.type === 'up').length ?? 0;
+  const downvotes = assignment?.votes?.filter((v: Vote) => v.type === 'down').length ?? 0;
+  const isPinned = userProfile?.pinnedAssignments?.includes(assignmentId);
+  
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!user || !assignmentRef) return;
+
+    const existingVote = assignment?.votes?.find((v: Vote) => v.userId === user.uid);
+    let newVotes = assignment?.votes ? [...assignment.votes] : [];
+
+    if (existingVote) {
+      if (existingVote.type === type) {
+        // User is clicking the same button again, remove vote
+        newVotes = newVotes.filter(v => v.userId !== user.uid);
+      } else {
+        // User is changing vote
+        newVotes = newVotes.map(v => v.userId === user.uid ? { ...v, type: type } : v);
+      }
+    } else {
+      // New vote
+      newVotes.push({ userId: user.uid, type });
+    }
+    
+    await updateDoc(assignmentRef, { votes: newVotes });
+  }
+
+  const handlePin = async () => {
+    if (!user || !userProfileRef) return;
+    const updateData = isPinned
+        ? { pinnedAssignments: arrayRemove(assignmentId) }
+        : { pinnedAssignments: arrayUnion(assignmentId) };
+
+    await updateDoc(userProfileRef, updateData);
+    toast({
+        title: isPinned ? 'Unpinned!' : 'Pinned!',
+        description: `This assignment has been ${isPinned ? 'removed from' : 'added to'} your pinned items.`,
+    });
+  }
+
   const handleDelete = async () => {
     if (!firestore || !assignment) return;
     
@@ -121,11 +167,12 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
   }
   
   const date = assignment.createdAt ? assignment.createdAt.toDate().toLocaleDateString() : 'N/A';
+  const description = assignment.description || `An assignment file for ${assignment.subject}.`;
 
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <Button asChild variant="outline" size="sm">
             <Link href="/browse?tab=assignments" prefetch={true}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -133,6 +180,7 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
             </Link>
           </Button>
           <div className="flex items-center gap-2">
+            <StudyBuddy contentToAnalyze={description} />
             {isOwner && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -180,7 +228,7 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
                 </AlertDescription>
             </Alert>
         )}
-        <p className="text-muted-foreground">This is an assignment file submission. Please download the file to view its contents.</p>
+        <p className="text-muted-foreground">{description}</p>
         
         {assignment.fileUrl && assignment.fileName && (
             <div className="flex items-center justify-between w-full p-4 mt-6 rounded-lg bg-muted">
@@ -204,6 +252,22 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
                 </div>
             </div>
         )}
+        
+        <div className="flex items-center gap-4 pt-6 mt-6 border-t">
+            <div className="flex items-center gap-1">
+                <Button variant={userVote === 'up' ? 'default' : 'outline'} size="sm" onClick={() => handleVote('up')} disabled={!user}>
+                    <ArrowUp className="w-4 h-4 mr-2" /> Upvote ({upvotes})
+                </Button>
+                 <Button variant={userVote === 'down' ? 'destructive' : 'outline'} size="sm" onClick={() => handleVote('down')} disabled={!user}>
+                    <ArrowDown className="w-4 h-4 mr-2" /> Downvote ({downvotes})
+                </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={handlePin} disabled={!user}>
+                {isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+                {isPinned ? 'Unpin' : 'Pin'}
+            </Button>
+        </div>
+
 
         <CommentSection collectionPath={['assignments', assignmentId, 'comments']} />
 

@@ -1,4 +1,3 @@
-
 import type { Timestamp } from "firebase/firestore";
 import type { Subject, Semester } from "./constants";
 
@@ -14,6 +13,14 @@ export type FirebaseUser = {
   friends?: string[];
   friendRequestsSent?: string[];
   friendRequestsReceived?: string[];
+  pinnedSuggestions?: string[];
+  pinnedAssignments?: string[];
+};
+
+export type SharedCode = {
+    content: string;
+    lastEditorId: string;
+    updatedAt: Timestamp;
 };
 
 export type ChatRoom = {
@@ -39,6 +46,10 @@ export type ChatRoom = {
     }[];
 };
 
+export type Vote = {
+    userId: string;
+    type: 'up' | 'down';
+}
 
 export type Suggestion = {
   id: string;
@@ -54,11 +65,13 @@ export type Suggestion = {
   fileName?: string;
   path?: string;
   fileType?: string;
+  votes?: Vote[];
 };
 
 export type Assignment = {
   id: string;
   title: string;
+  description?: string;
   subject: Subject;
   semester: Semester;
   createdAt: Timestamp;
@@ -69,6 +82,7 @@ export type Assignment = {
   fileName: string;
   path: string;
   fileType: string;
+  votes?: Vote[];
 };
 
 export type Reaction = {

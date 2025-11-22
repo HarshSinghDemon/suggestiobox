@@ -22,6 +22,7 @@ import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Progress } from '../ui/progress';
 import { uploadFileToSupabase } from '@/lib/supabase/storage';
 import type { FirebaseUser } from '@/lib/types';
+import { Textarea } from '../ui/textarea';
 
 type FileUploadState = {
   progress: number;
@@ -169,6 +170,7 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
     try {
       const docData = {
         title: formData.get('title') as string,
+        description: formData.get('description') as string,
         subject: formData.get('subject') as string,
         semester: formData.get('semester') as string,
         userId: user.uid,
@@ -179,6 +181,7 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
         fileName: fileUpload.name,
         path: fileUpload.path,
         fileType: fileUpload.type,
+        votes: [],
       };
 
       await addDoc(collection(firestore, 'assignments'), docData);
@@ -209,6 +212,16 @@ export function AssignmentForm({ supabaseUrl, supabaseAnonKey }: AssignmentFormP
           name="title"
           placeholder="e.g., Lab Assignment 1 - TCP/IP"
           required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description (Optional)</Label>
+        <Textarea
+          id="description"
+          name="description"
+          placeholder="Briefly describe the assignment or lab file..."
+          className="min-h-[100px]"
         />
       </div>
 

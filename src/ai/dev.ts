@@ -5,3 +5,4 @@ config();
 import '@/ai/flows/check-suggestion-for-offensive-language.ts';
 import '@/ai/flows/moderate-text.ts';
 import '@/ai/flows/validate-email.ts';
+import '@/ai/flows/study-buddy-flow.ts';

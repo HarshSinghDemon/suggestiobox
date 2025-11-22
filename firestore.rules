@@ -32,13 +32,19 @@ service cloud.firestore {
         // Deletion is denied to preserve chat history integrity in this model.
         allow delete: if false; 
       }
+      // Shared code can be read and written only by participants
+      match /sharedCode/live {
+        allow read, write: if isParticipant(roomId);
+      }
     }
 
     // Suggestions can be read by anyone, but only created/modified/deleted by the owner
+    // Votes can be updated by any authenticated user
     match /suggestions/{suggestionId} {
       allow read: if request.auth != null;
       allow create: if request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth.uid == resource.data.userId;
+      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']));
+      allow delete: if request.auth.uid == resource.data.userId;
       
       match /comments/{commentId} {
         allow read, create: if request.auth != null;
@@ -46,10 +52,12 @@ service cloud.firestore {
     }
     
     // Assignments can be read by anyone, but only created/modified/deleted by the owner
+    // Votes can be updated by any authenticated user
     match /assignments/{assignmentId} {
       allow read: if request.auth != null;
       allow create: if request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth.uid == resource.data.userId;
+      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']));
+      allow delete: if request.auth.uid == resource.data.userId;
 
       match /comments/{commentId} {
         allow read, create: if request.auth != null;

@@ -2,8 +2,8 @@
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc, deleteDoc } from 'firebase/firestore';
-import type { Suggestion } from '@/lib/types';
+import { doc, deleteDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import type { Suggestion, Vote } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye, Trash2, AlertCircle } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2, AlertCircle, ArrowUp, ArrowDown, Pin, PinOff, BrainCircuit } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -35,6 +35,8 @@ import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 import { CommentSection } from './comment-section';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { StudyBuddy } from '../ai/study-buddy';
+import { cn } from '@/lib/utils';
 
 function SuggestionDetailsSkeleton() {
   return (
@@ -78,8 +80,53 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
   );
   
   const { data: suggestion, isLoading } = useDoc<Suggestion>(suggestionRef);
+  
+  const userProfileRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+  const { data: userProfile } = useDoc(userProfileRef);
+
   const isOwner = user && suggestion && user.uid === suggestion.userId;
   const canDeleteFile = !!(supabaseUrl && supabaseAnonKey);
+
+  const userVote = suggestion?.votes?.find((v: Vote) => v.userId === user?.uid)?.type;
+  const upvotes = suggestion?.votes?.filter((v: Vote) => v.type === 'up').length ?? 0;
+  const downvotes = suggestion?.votes?.filter((v: Vote) => v.type === 'down').length ?? 0;
+  const isPinned = userProfile?.pinnedSuggestions?.includes(suggestionId);
+  
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!user || !suggestionRef) return;
+
+    const existingVote = suggestion?.votes?.find((v: Vote) => v.userId === user.uid);
+    let newVotes = suggestion?.votes ? [...suggestion.votes] : [];
+
+    if (existingVote) {
+      if (existingVote.type === type) {
+        // User is clicking the same button again, remove vote
+        newVotes = newVotes.filter(v => v.userId !== user.uid);
+      } else {
+        // User is changing vote
+        newVotes = newVotes.map(v => v.userId === user.uid ? { ...v, type: type } : v);
+      }
+    } else {
+      // New vote
+      newVotes.push({ userId: user.uid, type });
+    }
+    
+    await updateDoc(suggestionRef, { votes: newVotes });
+  }
+
+  const handlePin = async () => {
+    if (!user || !userProfileRef) return;
+    const updateData = isPinned
+        ? { pinnedSuggestions: arrayRemove(suggestionId) }
+        : { pinnedSuggestions: arrayUnion(suggestionId) };
+
+    await updateDoc(userProfileRef, updateData);
+    toast({
+        title: isPinned ? 'Unpinned!' : 'Pinned!',
+        description: `This suggestion has been ${isPinned ? 'removed from' : 'added to'} your pinned items.`,
+    });
+  }
+
 
   const handleDelete = async () => {
     if (!firestore || !suggestion) return;
@@ -124,7 +171,7 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
   return (
     <Card className="max-w-4xl mx-auto">
       <CardHeader>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <Button asChild variant="outline" size="sm">
             <Link href="/browse?tab=suggestions" prefetch={true}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -132,6 +179,7 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
             </Link>
           </Button>
            <div className="flex items-center gap-2">
+            <StudyBuddy contentToAnalyze={suggestion.description} />
             {isOwner && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -202,6 +250,22 @@ export function SuggestionDetails({ suggestionId, supabaseUrl, supabaseAnonKey }
                 </div>
             </div>
         )}
+        
+        <div className="flex items-center gap-4 pt-6 mt-6 border-t">
+            <div className="flex items-center gap-1">
+                <Button variant={userVote === 'up' ? 'default' : 'outline'} size="sm" onClick={() => handleVote('up')} disabled={!user}>
+                    <ArrowUp className="w-4 h-4 mr-2" /> Upvote ({upvotes})
+                </Button>
+                 <Button variant={userVote === 'down' ? 'destructive' : 'outline'} size="sm" onClick={() => handleVote('down')} disabled={!user}>
+                    <ArrowDown className="w-4 h-4 mr-2" /> Downvote ({downvotes})
+                </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={handlePin} disabled={!user}>
+                {isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+                {isPinned ? 'Unpin' : 'Pin'}
+            </Button>
+        </div>
+
         <CommentSection collectionPath={['suggestions', suggestionId, 'comments']} />
       </CardContent>
     </Card>

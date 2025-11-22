@@ -4,6 +4,8 @@ import { ChatList } from "@/components/p2p-chat/chat-list";
 import { PrivateChatRoom } from "@/components/p2p-chat/private-chat-room";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LiveCodeEditor } from "@/components/p2p-chat/live-code-editor";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 type PrivateChatPageProps = {
     params: {
@@ -38,7 +40,15 @@ export default function PrivateChatPage({ params }: PrivateChatPageProps) {
                         </Suspense>
                     </div>
                     <div className="h-full md:col-span-1">
-                        <PrivateChatRoom roomId={params.roomId} />
+                        <ResizablePanelGroup direction="horizontal" className="h-full">
+                            <ResizablePanel defaultSize={50}>
+                                <PrivateChatRoom roomId={params.roomId} />
+                            </ResizablePanel>
+                            <ResizableHandle withHandle />
+                            <ResizablePanel defaultSize={50}>
+                                <LiveCodeEditor roomId={params.roomId} />
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
                     </div>
                 </div>
             </div>
