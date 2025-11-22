@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction, Reply } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, MessageCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, Info, Smile, MessageSquareQuote, Check, CheckCheck, MessageCircle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import { Skeleton } from "../ui/skeleton";

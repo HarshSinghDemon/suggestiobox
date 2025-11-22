@@ -33,7 +33,6 @@ function ChatSkeleton() {
 function CommunityChatPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const messagesQuery = useMemoFirebase(
@@ -106,8 +105,8 @@ function CommunityChatPage() {
                   </div>
               </CardHeader>
               <CardContent className="flex-1 p-0 overflow-hidden">
-                  <ScrollArea className="h-full" ref={scrollAreaRef}>
-                       <div className="p-6 space-y-4" ref={viewportRef}>
+                  <ScrollArea className="h-full" viewportRef={viewportRef}>
+                       <div className="p-6 space-y-4">
                           {isLoading ? (
                               <ChatSkeleton />
                           ) : messages && messages.length > 0 ? (
