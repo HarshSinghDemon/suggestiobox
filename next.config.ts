@@ -53,21 +53,4 @@ const nextConfig: NextConfig = {
         hostname: 'i.ytimg.com',
       },
       {
-        protocol: 'https',
-        hostname: 'ik.imagekit.io',
-      },
-    ],
-  },
-  experimental: {
-    serverActions: {
-      maxDuration: 120, // 2 minutes
-    },
-  },
-  env: {
-    NEXT_PUBLIC_YOUTUBE_API_KEY: process.env.NEXT_PUBLIC_YOUTUBE_API_KEY,
-    NEXT_PUBLIC_SPOTIFY_CLIENT_ID: process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID,
-    NEXT_PUBLIC_JAMENDO_CLIENT_ID: '3d159494',
-  },
-};
-
-export default nextConfig;
+        protocol: 'https
