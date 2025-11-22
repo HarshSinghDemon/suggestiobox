@@ -8,7 +8,7 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock, Users } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, MessageSquarePlus, Lock, Users, Bot } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -36,6 +36,26 @@ const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
+
+function PookieAIChatListItem({ isSelected }: { isSelected: boolean }) {
+    return (
+        <Link href="/messages/pookie-ai" className="block">
+            <div className={cn(
+                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
+                isSelected && "bg-accent"
+            )}>
+                <Avatar className="w-12 h-12 border-2 border-primary/50">
+                    <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
+                    <AvatarFallback><Bot /></AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                    <p className="font-semibold">Pookie (AI)</p>
+                    <p className="text-sm italic truncate text-muted-foreground">Your friendly neighborhood chatbot.</p>
+                </div>
+            </div>
+        </Link>
+    )
+}
 
 export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
@@ -95,12 +115,16 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     }, [chatRooms, currentUser, usersMap]);
 
     const filteredChatRooms = useMemo(() => {
-        if (!enrichedChatRooms) return [];
-        if (!searchQuery.trim()) return enrichedChatRooms;
-        
-        return enrichedChatRooms.filter(room => 
+        const pookieMatches = 'pookie (ai)'.includes(searchQuery.toLowerCase());
+        const filteredP2PChats = enrichedChatRooms.filter(room => 
             room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
         );
+
+        return {
+            pookieVisible: pookieMatches || !searchQuery.trim(),
+            p2pChats: filteredP2PChats
+        };
+
     }, [enrichedChatRooms, searchQuery]);
 
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
@@ -132,43 +156,48 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     </div>
                      {isLoading ? (
                         <ChatListSkeleton />
-                    ) : filteredChatRooms && filteredChatRooms.length > 0 ? (
-                        <div className="p-2 space-y-1">
-                            {filteredChatRooms.map(room => {
-                                const otherUser = room.participantDetails?.[0];
-                                if (!otherUser) return null;
-                                return (
-                                    <Link href={`/messages/${room.id}`} key={room.id} className="block">
-                                        <div className={cn(
-                                            "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
-                                            selectedRoomId === room.id && "bg-accent"
-                                        )}>
-                                            <Avatar className="w-12 h-12">
-                                                <AvatarImage src={otherUser.photoURL ?? undefined} />
-                                                <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 overflow-hidden">
-                                                <p className="font-semibold truncate">{otherUser.displayName}</p>
-                                                <div className="flex items-center gap-1 text-sm italic truncate text-muted-foreground">
-                                                    <Lock className="w-3 h-3 shrink-0" />
-                                                    <span>{room.lastMessage ? 'Encrypted message' : 'No messages yet.'}</span>
-                                                </div>
-                                            </div>
-                                            {room.lastMessage?.timestamp && (
-                                                <p className="text-xs text-muted-foreground self-start">
-                                                    {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </Link>
-                                )
-                            })}
-                        </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
-                            <MessageSquarePlus className="w-12 h-12 mx-auto" />
-                            <p className="font-semibold">No conversations yet.</p>
-                            <p className="text-sm">Start a new chat by finding a friend.</p>
+                        <div className="p-2 space-y-1">
+                            {filteredChatRooms.pookieVisible && (
+                                <PookieAIChatListItem isSelected={selectedRoomId === 'pookie-ai'} />
+                            )}
+                            {filteredChatRooms.p2pChats.length > 0 ? (
+                                filteredChatRooms.p2pChats.map(room => {
+                                    const otherUser = room.participantDetails?.[0];
+                                    if (!otherUser) return null;
+                                    return (
+                                        <Link href={`/messages/${room.id}`} key={room.id} className="block">
+                                            <div className={cn(
+                                                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
+                                                selectedRoomId === room.id && "bg-accent"
+                                            )}>
+                                                <Avatar className="w-12 h-12">
+                                                    <AvatarImage src={otherUser.photoURL ?? undefined} />
+                                                    <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="font-semibold truncate">{otherUser.displayName}</p>
+                                                    <div className="flex items-center gap-1 text-sm italic truncate text-muted-foreground">
+                                                        <Lock className="w-3 h-3 shrink-0" />
+                                                        <span>{room.lastMessage ? 'Encrypted message' : 'No messages yet.'}</span>
+                                                    </div>
+                                                </div>
+                                                {room.lastMessage?.timestamp && (
+                                                    <p className="text-xs text-muted-foreground self-start">
+                                                        {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true })}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    )
+                                })
+                            ) : !filteredChatRooms.pookieVisible ? (
+                                <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-muted-foreground">
+                                    <MessageSquarePlus className="w-12 h-12 mx-auto" />
+                                    <p className="font-semibold">No conversations found.</p>
+                                    <p className="text-sm">Your search for "{searchQuery}" returned no results.</p>
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </TabsContent>
