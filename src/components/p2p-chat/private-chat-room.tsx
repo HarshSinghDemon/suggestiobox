@@ -403,7 +403,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }
     
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full bg-transparent">
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
@@ -461,9 +461,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     )}
                 </div>
             </ScrollArea>
-            <footer className="p-2 border-t shrink-0 sm:p-4">
+            <footer className="p-2 border-t shrink-0 sm:p-4 bg-muted/50 rounded-b-xl">
                 {replyingTo && (
-                    <div className="flex items-center justify-between p-2 mb-2 rounded-md bg-muted">
+                    <div className="flex items-center justify-between p-2 mb-2 rounded-md bg-background/50">
                         <div className="overflow-hidden">
                             <p className="text-sm font-semibold text-primary">Replying to {replyingTo.senderId === currentUser?.uid ? "yourself" : otherUser.displayName}</p>
                             <p className="text-sm truncate text-muted-foreground">{replyingTo.text}</p>
@@ -480,9 +480,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         value={messageText}
                         onChange={e => handleTyping(e.target.value)}
                         disabled={!currentUser || !sessionKey}
-                        className="text-base"
+                        className="text-base bg-background/50"
                     />
-                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey}>
+                    <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey} className="rounded-full w-10 h-10">
                        {isSending ? <Loader2 className="animate-spin" /> : <Send />}
                     </Button>
                 </form>

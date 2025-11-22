@@ -41,8 +41,8 @@ function PookieAIChatListItem({ isSelected, aiName }: { isSelected: boolean; aiN
     return (
         <Link href="/messages/pookie-ai" className="block">
             <div className={cn(
-                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
-                isSelected && "bg-accent"
+                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50",
+                isSelected && "bg-muted"
             )}>
                 <Avatar className="w-12 h-12 border-2 border-primary/50">
                     <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
@@ -138,13 +138,13 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full bg-transparent">
             <div className="p-4 border-b">
                 <h2 className="text-xl font-bold">Messages</h2>
             </div>
             <Tabs defaultValue="chats" className="flex flex-col flex-1 min-h-0">
                 <div className="p-4 border-b">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-3 bg-muted/50">
                         <TabsTrigger value="chats"><MessagesSquare className="w-4 h-4 mr-2" />Chats</TabsTrigger>
                         <TabsTrigger value="friends"><Users className="w-4 h-4 mr-2" />Friends</TabsTrigger>
                         <TabsTrigger value="find"><UserPlus className="w-4 h-4 mr-2" />Find</TabsTrigger>
@@ -156,7 +156,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search conversations..."
-                                className="pl-9"
+                                className="pl-9 bg-muted/50"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -176,8 +176,8 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                     return (
                                         <Link href={`/messages/${room.id}`} key={room.id} className="block">
                                             <div className={cn(
-                                                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-accent",
-                                                selectedRoomId === room.id && "bg-accent"
+                                                "flex items-center gap-4 p-3 rounded-lg transition-colors hover:bg-muted/50",
+                                                selectedRoomId === room.id && "bg-muted"
                                             )}>
                                                 <Avatar className="w-12 h-12">
                                                     <AvatarImage src={otherUser.photoURL ?? undefined} />

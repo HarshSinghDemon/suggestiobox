@@ -26,7 +26,7 @@ function ListSkeleton() {
 
 function WelcomePanel() {
     return (
-        <div className="flex-col items-center justify-center h-full gap-4 text-center bg-muted/50 rounded-lg hidden md:flex">
+        <div className="flex-col items-center justify-center h-full gap-4 text-center bg-transparent hidden md:flex">
             <div className="relative w-48 h-48">
                 <Image 
                     src="https://ik.imagekit.io/bt0k47tzc/undraw_chatting_re_j55r_1.svg?updatedAt=1764121287955"
@@ -46,8 +46,8 @@ function WelcomePanel() {
 export default function MessagesPage() {
     return (
         <AuthWrapper>
-            <div className="h-[calc(100vh-4rem)]">
-                 <div className="h-full border rounded-lg md:grid md:grid-cols-[350px_1fr]">
+            <div className="h-[calc(100vh-4rem)] p-4">
+                 <div className="h-full border rounded-xl md:grid md:grid-cols-[350px_1fr] bg-background/80 backdrop-blur-sm">
                     <div className="h-full md:col-span-1 md:border-r">
                         <Suspense fallback={<ListSkeleton />}>
                             <ChatList />
