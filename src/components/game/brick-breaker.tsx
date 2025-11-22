@@ -20,11 +20,11 @@ type Particle = {
 
 type Difficulty = 'rookie' | 'amateur' | 'pro' | 'legend';
 
-const difficultySettings: Record<Difficulty, { speed: number, points: number }> = {
-    rookie: { speed: 2, points: 10 },
-    amateur: { speed: 3, points: 20 },
-    pro: { speed: 4, points: 30 },
-    legend: { speed: 5, points: 40 },
+const difficultySettings: Record<Difficulty, { speed: number; points: number; paddleWidthDivisor: number }> = {
+    rookie: { speed: 2, points: 10, paddleWidthDivisor: 4 },
+    amateur: { speed: 3, points: 20, paddleWidthDivisor: 5 },
+    pro: { speed: 4, points: 30, paddleWidthDivisor: 6 },
+    legend: { speed: 5, points: 40, paddleWidthDivisor: 7 },
 };
 
 export function BrickBreakerGame() {
@@ -98,8 +98,7 @@ export function BrickBreakerGame() {
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    const baseSpeed = difficultySettings[difficulty].speed;
-    const pointsPerBrick = difficultySettings[difficulty].points;
+    const { speed: baseSpeed, points: pointsPerBrick, paddleWidthDivisor } = difficultySettings[difficulty];
     
     let speedMultiplier = 1;
     let dx = (Math.random() - 0.5) * baseSpeed * 1.5;
@@ -108,7 +107,7 @@ export function BrickBreakerGame() {
 
 
     let paddleHeight = 10;
-    let paddleWidth = canvas.width / 5;
+    let paddleWidth = canvas.width / paddleWidthDivisor;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
     let brickRowCount = 7;
@@ -375,5 +374,3 @@ export function BrickBreakerGame() {
     </div>
   );
 }
-
-    
