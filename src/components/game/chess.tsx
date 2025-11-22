@@ -97,21 +97,35 @@ export function ChessGame() {
 
     const makeAIMove = useCallback(() => {
         const moves = game.moves();
-        if (moves.length > 0) {
-            let move;
-            if (difficulty === 'legend' || difficulty === 'pro') {
-                move = getBestMove(game, false); // false for black (minimizing player)
-            } else if (difficulty === 'amateur') {
-                move = Math.random() < 0.5 ? getBestMove(game, false) : moves[Math.floor(Math.random() * moves.length)];
-            } else { // rookie
-                move = moves[Math.floor(Math.random() * moves.length)];
-            }
-            
-            if(move) game.move(move);
-            
-            setBoard(game.board());
-            updateStatus();
+        if (moves.length === 0) return;
+
+        let move;
+        const randomMove = () => moves[Math.floor(Math.random() * moves.length)];
+        const bestMove = () => getBestMove(game, false); // false for black (minimizing player)
+
+        switch (difficulty) {
+            case 'rookie':
+                move = randomMove();
+                break;
+            case 'amateur':
+                move = Math.random() < 0.25 ? bestMove() : randomMove();
+                break;
+            case 'pro':
+                move = Math.random() < 0.75 ? bestMove() : randomMove();
+                break;
+            case 'legend':
+                move = bestMove();
+                break;
+            default:
+                move = randomMove();
         }
+        
+        if (move) {
+            game.move(move);
+        }
+        
+        setBoard(game.board());
+        updateStatus();
     }, [game, updateStatus, difficulty]);
 
     const handleSquareClick = (square: string, piece: Piece | null) => {
