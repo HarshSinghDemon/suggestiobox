@@ -110,8 +110,16 @@
 
 @layer utilities {
     .glass-pane {
-        @apply bg-card/50 backdrop-blur-xl border border-white/10;
-        box-shadow: inset 0 1px 1px 0 hsl(var(--border) / 0.1);
+        @apply bg-background/60 backdrop-blur-2xl;
+        border: 1px solid hsl(var(--border) / 0.2);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .bg-chat-background {
+        background-image: url('https://ik.imagekit.io/bt0k47tzc/chat_bg.jpg?updatedAt=1764124555898');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
     }
     @keyframes music-glow {
       0%, 100% {
