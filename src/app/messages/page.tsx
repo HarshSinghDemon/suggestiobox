@@ -27,6 +27,17 @@ function ListSkeleton() {
 function WelcomePanel() {
     return (
         <div className="relative flex flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale overflow-hidden">
+            
+            {/* Animated GIFs */}
+            <Image 
+                src="https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/3d%20paper%20plane.gif"
+                alt="Floating paper plane"
+                width={120}
+                height={120}
+                unoptimized
+                className="absolute top-10 right-10 w-20 h-20 sm:w-28 sm:h-28 animate-float [filter:drop-shadow(0_10px_15px_rgba(0,0,0,0.3))]"
+            />
+            
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center">
                 <div className="relative w-56 h-56">

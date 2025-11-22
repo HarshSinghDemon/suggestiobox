@@ -242,6 +242,14 @@
     .animate-sound-wave {
         animation: sound-wave 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
     }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(-5deg); }
+        50% { transform: translateY(-15px) rotate(5deg); }
+    }
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
 
 
     .animation-delay-200 {
