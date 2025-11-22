@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, X, Image as ImageIcon, Music, Film, FileText, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, FileIcon, X, Image as ImageIcon, Music, Film, FileText, Download, Phone, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -23,7 +23,7 @@ type DecryptedMessage = {
     id: string;
     senderId: string;
     text: string;
-    iv?: string; // IV is needed for file decryption
+    iv?: string;
     createdAt: EncryptedMessage['createdAt'] | Date;
     status?: 'sent' | 'pending';
     reactions?: Reaction[];
@@ -88,8 +88,6 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
     }
 
     const timeAgo = sentAtDate ? sentAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
-
-    const isImage = message.fileType?.startsWith('image/');
     
     const handleDownload = () => {
         if (message.fileUrl && message.fileName && message.iv && sessionKey) {
@@ -99,12 +97,15 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
 
     return (
         <div 
-            className={cn("flex items-end gap-3 max-w-xl w-fit group", isCurrentUserSender ? "self-end flex-row-reverse" : "self-start")}
+            className={cn(
+                "flex items-end gap-2 max-w-[80%] group", 
+                isCurrentUserSender ? "self-end flex-row-reverse" : "self-start"
+            )}
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
         >
              {!isCurrentUserSender && (
-                 <Avatar className="w-8 h-8 self-start">
+                 <Avatar className="w-8 h-8 self-start shrink-0">
                     <AvatarImage src={author?.photoURL ?? undefined} />
                     <AvatarFallback>{getInitials(author?.displayName)}</AvatarFallback>
                 </Avatar>
@@ -112,23 +113,23 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
             
             <div className="relative">
                 <div className={cn(
-                    "p-3 rounded-2xl",
+                    "p-3 rounded-2xl w-full",
                     isCurrentUserSender 
-                        ? "bg-primary/80 text-primary-foreground rounded-br-none" 
-                        : "bg-muted/80 backdrop-blur-sm rounded-bl-none"
+                        ? "bg-primary text-primary-foreground rounded-br-none" 
+                        : "bg-muted rounded-bl-none"
                 )}>
                     {message.fileUrl && (
                         <div className="mb-2">
                              <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
                                     <Download className="w-8 h-8"/>
                                     <div>
-                                        <p className="font-semibold truncate">{message.fileName}</p>
+                                        <p className="font-semibold break-all">{message.fileName}</p>
                                         <p className="text-xs">Click to download encrypted file</p>
                                     </div>
                                 </div>
                         </div>
                     )}
-                    {message.text && <p className="text-sm">{message.text}</p>}
+                    {message.text && <p className="text-sm break-words">{message.text}</p>}
                     <div className={cn(
                         "text-xs mt-1.5 flex items-center gap-1.5",
                         isCurrentUserSender ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"
@@ -141,7 +142,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </div>
             </div>
 
-             <div className={cn("flex items-center gap-1 transition-opacity", showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+             <div className={cn("flex items-center gap-1 transition-opacity shrink-0", showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="w-7 h-7"><Smile className="w-4 h-4"/></Button>
@@ -257,7 +258,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 const messagesColRef = collection(firestore, 'chatRooms', roomId, 'messages');
                 
                 await addDoc(messagesColRef, {
-                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [], fileUrl: msg.fileUrl, fileName: msg.fileName, fileType: msg.fileType,
+                    roomId, senderId: currentUser.uid, cipherText, iv, createdAt: serverTimestamp(), reactions: [], fileUrl: msg.fileUrl || null, fileName: msg.fileName || null, fileType: msg.fileType || null,
                 });
                 
                 const lastMessageText = msg.fileName ? `Sent a file: ${msg.fileName}` : 'Encrypted message';
@@ -296,7 +297,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     
     useEffect(() => {
         if (viewportRef.current) {
-            viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
+            setTimeout(() => {
+                viewportRef.current?.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
+            }, 100);
         }
     }, [allMessages]);
 
@@ -315,9 +318,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             iv: file?.iv,
             createdAt: new Date(),
             status: 'pending',
-            fileUrl: file?.url,
-            fileName: file?.name,
-            fileType: file?.type,
+            fileUrl: file?.url || undefined,
+            fileName: file?.name || undefined,
+            fileType: file?.type || undefined,
         };
         setPendingMessages(prev => [...prev, pendingMsg]);
     };
@@ -376,18 +379,20 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     
     return (
         <div className="flex flex-col h-full bg-transparent">
-            <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0 border-border">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}> <ArrowLeft className="w-5 h-5" /> </Button>
+            <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0 border-border/50">
+                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => router.push('/messages')}> <ArrowLeft className="w-5 h-5" /> </Button>
                 <Avatar className="w-10 h-10"> <AvatarImage src={otherUser.photoURL ?? undefined} /> <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback> </Avatar>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>
                     <p className="text-xs text-muted-foreground"> {isTyping ? <span className="italic text-primary">typing...</span> : "Online"} </p>
                 </div>
+                <Button variant="ghost" size="icon"><Phone className="w-5 h-5"/></Button>
+                <Button variant="ghost" size="icon"><Video className="w-5 h-5"/></Button>
                 <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
             </header>
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
-                    <div className="flex flex-col gap-6 p-6">
+                    <div className="flex flex-col gap-4 p-6">
                         {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} sessionKey={sessionKey} />)
                         : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
                     </div>
@@ -401,12 +406,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </div>
                 </div>
             )}
-            <footer className="p-2 border-t shrink-0 sm:p-4 border-border">
+            <footer className="p-2 border-t shrink-0 sm:p-4 border-border/50">
                 <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                     <Popover open={isAttachmentMenuOpen} onOpenChange={setIsAttachmentMenuOpen}>
                         <PopoverTrigger asChild>
-                             <Button variant="ghost" size="icon" type="button" className="hidden"> <Paperclip/> </Button>
+                             <Button variant="ghost" size="icon" type="button"> <Paperclip className="w-5 h-5"/> </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-2 mb-2" side="top" align="start">
                             <div className="grid grid-cols-2 gap-2">
@@ -426,7 +431,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         </PopoverContent>
                     </Popover>
                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="text-base h-11 rounded-full bg-input" />
-                    <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
+                    <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11 shrink-0"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
                 </form>
             </footer>
         </div>

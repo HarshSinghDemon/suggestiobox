@@ -1,12 +1,10 @@
 
-
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { MessageSquare, Users, Lock } from "lucide-react";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 function ListSkeleton() {
     return (
@@ -28,9 +26,6 @@ function WelcomePanel() {
     return (
         <div className="relative flex-col items-center justify-center h-full gap-6 text-center animate-fade-in-scale overflow-hidden hidden md:flex">
             
-            {/* Animated GIFs */}
-            
-            {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center">
                 <div className="relative w-56 h-56">
                     <Image 
@@ -69,22 +64,16 @@ function WelcomePanel() {
 export default function MessagesPage() {
     return (
         <AuthWrapper>
-            <div className="md:hidden h-full">
-                <Suspense fallback={<ListSkeleton />}>
-                    <ChatList />
-                </Suspense>
-            </div>
-            <ResizablePanelGroup direction="horizontal" className="h-full hidden md:flex">
-                <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+            <div className="flex flex-col h-full bg-transparent md:grid md:grid-cols-3">
+                <div className="flex flex-col h-full col-span-1 border-r border-border">
                     <Suspense fallback={<ListSkeleton />}>
                         <ChatList />
                     </Suspense>
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={70}>
+                </div>
+                <div className="hidden col-span-2 md:block">
                     <WelcomePanel />
-                </ResizablePanel>
-            </ResizablePanelGroup>
+                </div>
+            </div>
         </AuthWrapper>
     );
 }

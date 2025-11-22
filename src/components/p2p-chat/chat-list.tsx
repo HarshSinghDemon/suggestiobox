@@ -8,7 +8,7 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, Bot } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, Bot, Edit } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -23,16 +23,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FriendsList } from "./friends-list";
 import { FindFriendsList } from "./find-friends-list";
+import { ChatHeader } from "./chat-header";
 
 function ChatListSkeleton() {
     return (
-        <div className="p-4 space-y-2">
+        <div className="p-4 space-y-4">
             {[...Array(8)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-3">
-                    <Skeleton className="w-12 h-12 rounded-full" />
+                    <Skeleton className="w-16 h-16 rounded-full" />
                     <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-4 w-40" />
                     </div>
                 </div>
             ))}
@@ -121,47 +122,46 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
     return (
-        <div className="flex flex-col h-full bg-transparent border-r border-border">
-             <div className="p-4 border-b shrink-0">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold">Chat</h2>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <UserPlus className="w-5 h-5"/>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="p-0 border-0 max-w-md">
-                            <Tabs defaultValue="friends" className="w-full">
-                                <DialogHeader className="p-4 border-b">
-                                    <DialogTitle>Manage Friends</DialogTitle>
-                                    <TabsList className="grid w-full grid-cols-2 mt-2">
-                                        <TabsTrigger value="friends">Friends</TabsTrigger>
-                                        <TabsTrigger value="find">Find</TabsTrigger>
-                                    </TabsList>
-                                </DialogHeader>
-                                <TabsContent value="friends" className="m-0">
-                                    <FriendsList />
-                                </TabsContent>
-                                <TabsContent value="find" className="m-0">
-                                    <FindFriendsList />
-                                </TabsContent>
-                            </Tabs>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                 <div className="relative mt-4">
+        <div className="flex flex-col h-full bg-transparent">
+             <ChatHeader>
+                 <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Edit className="w-5 h-5"/>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="p-0 border-0 max-w-md">
+                        <Tabs defaultValue="friends" className="w-full">
+                            <DialogHeader className="p-4 border-b">
+                                <DialogTitle>Manage Friends</DialogTitle>
+                                <TabsList className="grid w-full grid-cols-2 mt-2">
+                                    <TabsTrigger value="friends">Friends</TabsTrigger>
+                                    <TabsTrigger value="find">Find</TabsTrigger>
+                                </TabsList>
+                            </DialogHeader>
+                            <TabsContent value="friends" className="m-0">
+                                <FriendsList />
+                            </TabsContent>
+                            <TabsContent value="find" className="m-0">
+                                <FindFriendsList />
+                            </TabsContent>
+                        </Tabs>
+                    </DialogContent>
+                </Dialog>
+             </ChatHeader>
+             <div className="px-4 pb-2 shrink-0">
+                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder="Search..."
-                        className="pl-9 bg-input"
+                        className="pl-9 bg-input h-10 rounded-full"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
             </div>
             
-             <div className="flex-1 min-h-0 overflow-y-auto p-2">
+             <div className="flex-1 min-h-0 overflow-y-auto px-2">
                  {isLoading ? (
                     <ChatListSkeleton />
                 ) : (
@@ -172,7 +172,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                     "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-muted",
                                     selectedRoomId === 'pookie-ai' && "bg-muted"
                                 )}>
-                                    <Avatar className="w-12 h-12">
+                                    <Avatar className="w-14 h-14">
                                         <AvatarImage src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=pookie&backgroundColor=7950f2,f1efff&backgroundType=gradientLinear&radius=50" />
                                         <AvatarFallback><Bot /></AvatarFallback>
                                     </Avatar>
@@ -180,9 +180,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                         <div className="flex items-baseline justify-between">
                                             <p className="font-semibold truncate">Pookie (AI)</p>
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-sm truncate text-muted-foreground">Your personal AI friend</p>
-                                        </div>
+                                        <p className="text-sm truncate text-muted-foreground">Your personal AI friend</p>
                                     </div>
                                 </div>
                             </Link>
@@ -194,10 +192,10 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                 return (
                                     <Link href={`/messages/${room.id}`} key={room.id} className="block">
                                         <div className={cn(
-                                            "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-muted",
+                                            "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-muted",
                                             selectedRoomId === room.id && "bg-muted"
                                         )}>
-                                            <Avatar className="w-12 h-12">
+                                            <Avatar className="w-14 h-14">
                                                 <AvatarImage src={otherUser.photoURL ?? undefined} />
                                                 <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
                                             </Avatar>
@@ -218,7 +216,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                                         ) : "No messages yet."}
                                                     </p>
                                                     {room.isUnread && (
-                                                        <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary">
+                                                        <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary shrink-0">
                                                             1
                                                         </div>
                                                     )}

@@ -256,4 +256,7 @@
         animation-delay: 200ms;
     }
 
+    .break-all {
+        word-break: break-all;
+    }
 }

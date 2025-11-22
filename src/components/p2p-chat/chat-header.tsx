@@ -4,7 +4,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, MessageSquare, LogOut } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, Search, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { NotificationPanel } from '../layout/notification-panel';
@@ -21,19 +21,6 @@ const getInitials = (name: string | null | undefined) => {
     const names = name.split(' ');
     return names.map((n) => n[0]).join('').substring(0, 2);
 };
-
-function SoundwaveIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-foreground">
-            <path d="M4 12V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M7 10V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M10 7V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M13 10V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16 12V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-             <path d="M19 14V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    )
-}
 
 function GoldenDot() {
     return (
@@ -92,48 +79,24 @@ function NotificationBell() {
 }
 
 
-export function ChatHeader() {
+export function ChatHeader({ children }: { children?: React.ReactNode }) {
     const { user, loading } = useAuth();
     const pathname = usePathname();
 
     return (
-        <header className="flex items-center justify-between h-20 p-6 glass-pane border-b rounded-t-2xl">
-            <Link href="/" className="flex items-center gap-2 group">
-                <SoundwaveIcon />
-                <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-pink-500">
-                    Private Space
-                </span>
-            </Link>
-
-            <nav className="flex items-center gap-2 p-1 rounded-full bg-background/50">
-                <Link href="/messages" prefetch={false}>
-                    <Button variant="ghost" size="sm" className={cn("gap-2 rounded-full", pathname.startsWith('/messages') && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')}>
-                        <MessageSquare className="w-4 h-4" />
-                        Chat
-                    </Button>
+        <header className="flex flex-col h-auto p-4 shrink-0">
+            <div className="flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2 group">
+                    <span className="text-2xl font-bold">
+                        Chats
+                    </span>
                 </Link>
-                <Link href="/" prefetch={false}>
-                     <Button variant="ghost" size="sm" className="gap-2 rounded-full">
-                        <LogOut className="w-4 h-4" />
-                        Exit
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon">
+                        <Search className="w-5 h-5" />
                     </Button>
-                </Link>
-            </nav>
-
-            <div className="flex items-center gap-2">
-                {loading ? (
-                    <Skeleton className="w-10 h-10 rounded-full" />
-                ) : user ? (
-                    <>
-                        <NotificationBell />
-                        <Avatar className="w-9 h-9 border-2 border-primary">
-                            <AvatarImage src={user.photoURL ?? undefined} />
-                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                        </Avatar>
-                    </>
-                ) : (
-                    <Skeleton className="w-24 h-9" />
-                )}
+                    {children}
+                </div>
             </div>
         </header>
     );

@@ -11,13 +11,10 @@ export default function MessagesLayout({
   return (
     <AuthWrapper>
       <ImageKitProvider>
-        <div className="chat-theme relative h-[calc(100vh)] bg-background text-foreground overflow-hidden">
+        <div className="chat-theme relative h-screen bg-background text-foreground flex flex-col">
             <div className="fixed inset-0 bg-chat-background -z-10" />
-            <div className="relative z-10 h-full flex flex-col p-4">
-                <ChatHeader />
-                <div className="flex-1 min-h-0 rounded-b-2xl overflow-hidden glass-pane border-t-0 rounded-t-none bg-transparent">
-                    {children}
-                </div>
+            <div className="relative z-10 flex flex-col flex-1 h-full min-h-0">
+                {children}
             </div>
         </div>
       </ImageKitProvider>
