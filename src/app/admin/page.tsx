@@ -32,14 +32,14 @@ export default function AdminPage() {
     return (
         <div className="space-y-8 mt-8">
             <AdminProfileSettings supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
-            <Card className="border-border/50">
+            <Card>
                 <CardHeader>
                     <CardTitle>User & Content Management</CardTitle>
                     <CardDescription>
                     Oversee and manage the application's content and users.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 md:p-6">
+                <CardContent>
                     <Suspense fallback={<Skeleton className="w-full h-[400px]" />}>
                         <AdminDashboard supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
                     </Suspense>
@@ -53,13 +53,13 @@ export default function AdminPage() {
     <AdminAuthWrapper>
       <div className="container py-8 mx-auto md:px-4">
         <div className="w-full mx-auto md:max-w-6xl">
-            <Card className="overflow-hidden border-red-500/20 bg-gradient-to-br from-card to-destructive/5">
+             <Card className="overflow-hidden bg-gradient-to-br from-card to-destructive/10">
                 <CardHeader className="flex flex-row items-center gap-4 p-6">
-                    <div className="p-4 rounded-lg bg-gradient-to-br from-red-500/20 to-destructive/20 border border-destructive/30">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-red-500/20 to-destructive/20 border border-destructive/30">
                          <ShieldAlert className="w-8 h-8 text-red-400" />
                     </div>
                     <div>
-                        <CardTitle className="text-3xl font-bold tracking-tight">Admin Dashboard</CardTitle>
+                        <CardTitle className="text-2xl font-bold tracking-tight">Admin Dashboard</CardTitle>
                         <CardDescription className="text-destructive-foreground/70">
                             Power to oversee and manage the application's content and users.
                         </CardDescription>
