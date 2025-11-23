@@ -7,7 +7,6 @@ import { PrivateChatRoom } from "@/components/p2p-chat/private-chat-room";
 import { Suspense, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { UserInfoPanel } from "@/components/p2p-chat/user-info-panel";
 import { useParams } from "next/navigation";
 
 
@@ -30,12 +29,7 @@ function ChatListSkeleton() {
 export default function PrivateChatPage() {
     const params = useParams();
     const roomId = params.roomId as string;
-    const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
 
-    const toggleInfoPanel = () => {
-        setIsInfoPanelVisible(prev => !prev);
-    }
-    
     return (
         <AuthWrapper>
             <div className="flex flex-col h-full">
@@ -46,17 +40,9 @@ export default function PrivateChatPage() {
                         </Suspense>
                     </ResizablePanel>
                     <ResizableHandle withHandle className="hidden lg:flex"/>
-                    <ResizablePanel defaultSize={isInfoPanelVisible ? 50 : 75} minSize={30}>
-                        <PrivateChatRoom roomId={roomId} onToggleInfoPanel={toggleInfoPanel} />
+                    <ResizablePanel defaultSize={75} minSize={30}>
+                        <PrivateChatRoom roomId={roomId} />
                     </ResizablePanel>
-                    {isInfoPanelVisible && (
-                        <>
-                            <ResizableHandle withHandle className="hidden lg:flex" />
-                            <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
-                                <UserInfoPanel roomId={roomId} />
-                            </ResizablePanel>
-                        </>
-                    )}
                 </ResizablePanelGroup>
             </div>
         </AuthWrapper>

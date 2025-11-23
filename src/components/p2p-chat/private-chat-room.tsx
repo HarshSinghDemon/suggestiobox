@@ -22,6 +22,9 @@ import Markdown from "react-markdown";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { UserInfoPanel } from "./user-info-panel";
+
 
 type DecryptedMessage = {
     id: string;
@@ -177,7 +180,7 @@ function ChatRoomSkeleton() {
     );
 }
 
-export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string, onToggleInfoPanel: () => void; }) {
+export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
@@ -193,6 +196,7 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
     const [dialogOpen, setDialogOpen] = useState<'clear' | 'block' | null>(null);
+    const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(false);
 
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -404,12 +408,15 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
                         {isTyping ? <span className="italic text-primary">typing...</span> : "Active now"}
                     </p>
                 </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(true)}>
+                    <UserCircle className="w-5 h-5" />
+                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                          <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                         <DropdownMenuItem onSelect={onToggleInfoPanel}>
+                         <DropdownMenuItem onSelect={() => setIsInfoPanelOpen(true)}>
                             <UserCircle className="w-4 h-4 mr-2" />
                             View Profile
                         </DropdownMenuItem>
@@ -473,6 +480,11 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <Dialog open={isInfoPanelOpen} onOpenChange={setIsInfoPanelOpen}>
+                <DialogContent className="p-0 border-0 max-w-md glass-pane">
+                    <UserInfoPanel roomId={roomId} />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
