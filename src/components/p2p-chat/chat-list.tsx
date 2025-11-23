@@ -155,7 +155,6 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
         <div className="flex items-center gap-2 py-2">
             <Button variant={selectedRoomId ? "ghost" : "secondary"} className="rounded-full">Chats</Button>
             <Button variant="ghost" className="rounded-full">Groups</Button>
-            <Button variant="ghost" className="rounded-full">Contacts</Button>
         </div>
 
         <div className="flex-1 min-h-0 -mr-4">
