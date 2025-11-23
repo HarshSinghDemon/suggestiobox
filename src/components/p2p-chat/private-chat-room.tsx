@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -420,7 +421,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     return (
         <div className="flex flex-col h-full md:p-4">
           <div className="flex flex-col h-full glass-pane md:rounded-2xl">
-            <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20 glass-pane">
+            <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/10 glass-pane">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
@@ -442,7 +443,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                                 <span className="animate-pulse-fast [animation-delay:0.3s]">.</span>
                             </span>
                         ) : isOtherUserOnline ? (
-                            "Online"
+                            "Active now"
                         ) : otherUser.lastSeen ? (
                              `Last seen ${formatDistanceToNow(otherUser.lastSeen.toDate(), { addSuffix: true })}`
                         ) : (
@@ -487,7 +488,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </div>
                 </div>
             )}
-            <footer className="p-4 border-t shrink-0 border-white/20 glass-pane">
+            <footer className="p-4 border-t shrink-0 border-white/10 glass-pane">
                 <form className="relative" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
                      <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base px-5 pr-12 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">

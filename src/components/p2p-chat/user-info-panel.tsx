@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -79,7 +80,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     }
 
     return (
-        <div className="flex flex-col h-full p-6 glass-pane md:rounded-l-2xl border-l border-white/20">
+        <div className="flex flex-col h-full p-6 glass-pane md:rounded-l-2xl border-l border-white/10">
             <div className="flex flex-col items-center gap-4 text-center">
                 <Avatar className="w-24 h-24">
                     <AvatarImage src={otherUser.photoURL ?? undefined} alt={otherUser.displayName ?? ''} />
@@ -97,14 +98,14 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                 </div>
             )}
 
-            <Separator className="my-6 bg-white/20" />
+            <Separator className="my-6 bg-white/10" />
             
             <div>
                 <h4 className="flex items-center gap-2 mb-2 font-semibold">
                     <KeyRound className="w-4 h-4" />
                     Encryption Key
                 </h4>
-                <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-white/10 border-white/20">
+                <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-white/10 border-white/10">
                     <p className="flex-1 font-mono text-xs text-white/70">{displayKey}</p>
                     <Button variant="ghost" size="icon" className="shrink-0" onClick={copyKeyToClipboard}>
                         <Copy className="w-4 h-4" />
