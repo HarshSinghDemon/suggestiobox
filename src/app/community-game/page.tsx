@@ -176,9 +176,9 @@ const communityGames = [
         variant: 'ocean',
     },
     {
-        name: 'Scribble It! (Coming Soon)',
+        name: 'Scribble It!',
         description: 'A shared drawing and guessing game for real-time fun.',
-        href: '/community-games/collaborative-canvas',
+        href: '/community-games/scribble-it',
         icon: PenTool,
         variant: 'fiery',
     },
