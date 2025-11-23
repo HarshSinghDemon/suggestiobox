@@ -1,4 +1,6 @@
 
+'use client';
+
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { PrivateChatRoom } from "@/components/p2p-chat/private-chat-room";
