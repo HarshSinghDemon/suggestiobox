@@ -180,6 +180,13 @@ const games = [
         icon: Rocket,
         variant: 'fiery',
     },
+    {
+        name: 'Party Games Mini Shooter Battle',
+        description: 'Engage in a fun and chaotic mini shooter battle.',
+        href: '/community-games/party-games-mini-shooter-battle',
+        icon: Rocket,
+        variant: 'ocean',
+    },
 ];
 
 
