@@ -2,10 +2,10 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove, writeBatch } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, X, Download, File, ImageIcon, UserCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, X, Download, File, ImageIcon, UserCircle, Trash2, ShieldOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -19,6 +19,9 @@ import { useDebounce } from 'use-debounce';
 import { useImageKit } from "@/lib/imagekit/imagekit-provider";
 import Image from "next/image";
 import Markdown from "react-markdown";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type DecryptedMessage = {
     id: string;
@@ -178,6 +181,7 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
     const [messageText, setMessageText] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [sessionKey, setSessionKey] = useState<CryptoKey | null>(null);
@@ -188,7 +192,8 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
     const { upload } = useImageKit();
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
-    
+    const [dialogOpen, setDialogOpen] = useState<'clear' | 'block' | null>(null);
+
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
 
@@ -327,32 +332,6 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
         setPendingMessages(prev => [...prev, pendingMsg]);
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !sessionKey) return;
-    
-        setUploadProgress(0);
-        try {
-            const fileBuffer = await file.arrayBuffer();
-            const { cipherText, iv } = await encryptBuffer(sessionKey, fileBuffer);
-            const encryptedBlob = new Blob([atob(cipherText)], { type: 'application/octet-stream' });
-            const encryptedFile = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
-            
-            setUploadProgress(50);
-            
-            const result = await upload(encryptedFile, { fileName: file.name, folder: `chats/${roomId}` });
-            
-            setUploadProgress(100);
-
-            await handleSendMessage({ file: { url: result.url, name: file.name, type: file.type, iv: iv } });
-        } catch (error) {
-            console.error("File upload failed", error);
-        } finally {
-            setUploadProgress(null);
-            if(fileInputRef.current) fileInputRef.current.value = "";
-        }
-    };
-
     const handleReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!currentUser || !firestore) return;
         const messageRef = doc(firestore, 'chatRooms', roomId, 'messages', messageId);
@@ -364,6 +343,43 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
             await updateDoc(messageRef, { reactions: arrayUnion(newReaction) });
         }
     }, [currentUser, firestore, roomId, decryptedMessages]);
+
+    const handleClearChat = async () => {
+        if (!firestore || !encryptedMessages || encryptedMessages.length === 0) {
+            toast({ title: "Chat is already empty." });
+            setDialogOpen(null);
+            return;
+        }
+
+        const batch = writeBatch(firestore);
+        encryptedMessages.forEach(msg => {
+            const msgRef = doc(firestore, 'chatRooms', roomId, 'messages', msg.id);
+            batch.delete(msgRef);
+        });
+        
+        // Also clear the last message on the room itself
+        batch.update(roomRef!, { lastMessage: null });
+
+        try {
+            await batch.commit();
+            toast({ title: "Chat Cleared", description: "All messages have been deleted." });
+        } catch (error) {
+            console.error("Failed to clear chat:", error);
+            toast({ variant: 'destructive', title: "Error", description: "Could not clear chat history." });
+        } finally {
+            setDialogOpen(null);
+        }
+    };
+    
+    const handleBlockUser = async () => {
+        // This is a placeholder for a real block implementation
+        toast({
+            variant: "destructive",
+            title: "Feature Not Implemented",
+            description: "User blocking is not yet available.",
+        });
+        setDialogOpen(null);
+    }
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
     if (isLoading) return <ChatRoomSkeleton />;
@@ -391,7 +407,26 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
                 <Button variant="ghost" size="icon" onClick={onToggleInfoPanel}>
                     <UserCircle className="w-5 h-5"/>
                 </Button>
-                <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                         <DropdownMenuItem onSelect={onToggleInfoPanel}>
+                            <UserCircle className="w-4 h-4 mr-2" />
+                            View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => setDialogOpen('clear')} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                           <Trash2 className="w-4 h-4 mr-2" />
+                            Clear Chat
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={() => setDialogOpen('block')} className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                           <ShieldOff className="w-4 h-4 mr-2" />
+                            Block User
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </header>
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
@@ -419,8 +454,28 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
                     </div>
                 </form>
             </footer>
-             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
           </div>
+           <AlertDialog open={!!dialogOpen} onOpenChange={(open) => !open && setDialogOpen(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {dialogOpen === 'clear'
+                                ? "This action cannot be undone. This will permanently delete all messages in this chat."
+                                : "Blocking this user will prevent them from sending you messages. Are you sure?"}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDialogOpen(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={dialogOpen === 'clear' ? handleClearChat : handleBlockUser}
+                            className="bg-destructive hover:bg-destructive/90"
+                        >
+                            {dialogOpen === 'clear' ? 'Clear Chat' : 'Block User'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
