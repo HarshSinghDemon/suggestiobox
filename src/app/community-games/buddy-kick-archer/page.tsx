@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Rocket } from 'lucide-react';
 
-export default function NewGamePage() {
+export default function BuddyKickArcherPage() {
   const gameUrl = "https://html5.gamemonetize.co/yhrb03lzm5viyx80fucyw85ppapumvwk/";
 
   return (
@@ -18,9 +18,9 @@ export default function NewGamePage() {
                 <Rocket className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-bold tracking-tight">New Game</CardTitle>
+                <CardTitle className="text-2xl font-bold tracking-tight">Buddy Kick Archer</CardTitle>
                 <CardDescription>
-                  Enjoy this new game from GameMonetize.
+                  Test your aim in this fun archery game.
                 </CardDescription>
               </div>
             </div>
