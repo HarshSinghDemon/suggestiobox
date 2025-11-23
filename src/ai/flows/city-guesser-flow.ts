@@ -37,15 +37,19 @@ const cityGuesserPrompt = ai.definePrompt({
 
 Your task is to generate a single "guess the city" question based on the chosen difficulty level: {{{difficulty}}}.
 
-Difficulty Guidelines:
-- **Easy:** Pick a very well-known capital or major world city (e.g., Paris, Tokyo, New York). Hints should be about famous, unmissable landmarks.
-- **Medium:** Pick a large, globally recognized city that might not be a capital (e.g., Barcelona, Vancouver, Kyoto). Hints can be about culture, industry, or secondary landmarks.
-- **Hard:** Pick a notable but less globally famous city, or a city known for specific historical or niche reasons (e.g., Timbuktu, Petra, Samarkand). Hints should be more obscure and challenging.
+Difficulty & Region Guidelines:
+- **Easy & Medium:** The city MUST be from India.
+- **Hard:** The city can be from anywhere in the world.
+
+Difficulty Details:
+- **Easy:** Pick a very well-known Indian Tier-1 city (e.g., Mumbai, Delhi, Bangalore). Hints should be about famous, unmissable landmarks or facts.
+- **Medium:** Pick a well-known but perhaps not Tier-1 Indian city (e.g., Jaipur, Lucknow, Kochi). Hints can be about culture, industry, or secondary landmarks.
+- **Hard:** Pick a notable but less globally famous city from anywhere in the world (e.g., Timbuktu, Petra, Samarkand). Hints should be more obscure and challenging.
 
 Instructions:
-1.  **Pick a city** according to the difficulty.
+1.  **Pick a city** according to the difficulty and region rules.
 2.  **Write two distinct, interesting hints** appropriate for the difficulty. Avoid obvious hints like "This city is in [Country Name]".
-3.  **Create four multiple-choice options**. One option must be the correct city. The other three must be incorrect but plausible distractors, preferably from the same country or region.
+3.  **Create four multiple-choice options**. One option must be the correct city. The other three must be incorrect but plausible distractors from the same country or region.
 4.  **Ensure the correct city is one of the four options.**
 5.  Provide the output in the specified JSON format.
 `,
