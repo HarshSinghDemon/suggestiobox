@@ -404,9 +404,6 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
                         {isTyping ? <span className="italic text-primary">typing...</span> : "Active now"}
                     </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onToggleInfoPanel}>
-                    <UserCircle className="w-5 h-5"/>
-                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                          <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
