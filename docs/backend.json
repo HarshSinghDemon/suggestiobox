@@ -520,6 +520,58 @@
         }
       },
       "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "SpyfallLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SpyfallLobby",
+      "type": "object",
+      "description": "Represents a real-time 'Spyfall' game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" }
+            },
+            "required": ["id", "displayName"]
+          }
+        }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "SpyGridLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SpyGridLobby",
+      "type": "object",
+      "description": "Represents a real-time 'Spy Grid' (Codenames) game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" }
+            },
+            "required": ["id", "displayName"]
+          }
+        }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
     }
   },
   "auth": {
@@ -719,6 +771,24 @@
           "entityName": "ImposterLobby",
           "schema": { "$ref": "#/backend/entities/ImposterLobby" },
           "description": "Stores data for a real-time 'Imposter's Agenda' game session.",
+          "params": [{ "name": "lobbyId" }]
+        }
+      },
+      {
+        "path": "/spyfallLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "SpyfallLobby",
+          "schema": { "$ref": "#/backend/entities/SpyfallLobby" },
+          "description": "Stores data for a real-time 'Spyfall' game session.",
+          "params": [{ "name": "lobbyId" }]
+        }
+      },
+      {
+        "path": "/spyGridLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "SpyGridLobby",
+          "schema": { "$ref": "#/backend/entities/SpyGridLobby" },
+          "description": "Stores data for a real-time 'Spy Grid' game session.",
           "params": [{ "name": "lobbyId" }]
         }
       }

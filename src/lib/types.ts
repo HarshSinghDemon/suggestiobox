@@ -248,3 +248,16 @@ export type SpyfallLobby = {
         photoURL?: string;
     }[];
 };
+
+export type SpyGridLobby = {
+    id: string;
+    joinCode: string;
+    hostId: string;
+    status: 'waiting' | 'playing' | 'finished';
+    createdAt: Timestamp;
+    players: {
+        id: string;
+        displayName: string;
+        photoURL?: string;
+    }[];
+};

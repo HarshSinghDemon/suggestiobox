@@ -153,6 +153,13 @@ const teamFunGames = [
         href: '/community-games/spyfall',
         icon: Eye,
         variant: 'fiery',
+    },
+    {
+        name: "Spy Grid",
+        description: "A team-based word association game of clues and guesses.",
+        href: '/community-games/spy-grid',
+        icon: Brain,
+        variant: 'ocean',
     }
 ]
 

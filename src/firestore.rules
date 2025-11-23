@@ -28,6 +28,10 @@ service cloud.firestore {
       return request.auth.uid in get(/databases/$(database)/documents/spyfallLobbies/$(lobbyId)).data.players.map(p => p.id);
     }
 
+    function isSpyGridParticipant(lobbyId) {
+      return request.auth.uid in get(/databases/$(database)/documents/spyGridLobbies/$(lobbyId)).data.players.map(p => p.id);
+    }
+
     // Users can read/write their own profile, but only read others'
     // A user can update their own coins, but not other fields if it's a 'decrement' operation by another service.
     match /users/{userId} {
@@ -130,6 +134,13 @@ service cloud.firestore {
         allow get: if request.auth != null;
         allow create: if request.auth.uid == request.resource.data.hostId;
         allow update: if isSpyfallParticipant(lobbyId);
+    }
+
+    // Spy Grid Lobbies
+    match /spyGridLobbies/{lobbyId} {
+        allow get: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.hostId;
+        allow update: if isSpyGridParticipant(lobbyId);
     }
   }
 }
