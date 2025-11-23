@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket } from 'lucide-react';
+import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -155,6 +155,20 @@ const communityGames = [
         icon: ChessIcon,
         variant: 'fiery',
     },
+    {
+        name: 'Whac-A-Mole',
+        description: 'Test your reflexes and whack the moles!',
+        href: '/community-games/whac-a-mole',
+        icon: Hammer,
+        variant: 'ocean',
+    },
+    {
+        name: 'Doodle Jumper',
+        description: 'Jump your way to the top!',
+        href: '/community-games/doodle-jumper',
+        icon: ArrowUp,
+        variant: 'fiery',
+    },
 ];
 
 
@@ -172,7 +186,7 @@ export default function CommunityGamePage() {
             <div>
               <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Community & AI Games</h2>
                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {communityGames.map((game) => (
+                  {communityGames.sort((a, b) => a.name.localeCompare(b.name)).map((game) => (
                       <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-2">
                           <Card className={cn(
                             "flex flex-col h-full transition-shadow duration-300 hover:shadow-xl",
