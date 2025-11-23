@@ -33,7 +33,7 @@ const cityGuesserPrompt = ai.definePrompt({
   name: 'cityGuesserPrompt',
   input: {schema: CityGuesserInputSchema},
   output: {schema: CityGuesserOutputSchema},
-  prompt: `You are a world geography trivia expert creating a wide variety of questions for a game. It is crucial that you provide different cities and avoid repetition in your responses.
+  prompt: `You are a world geography trivia expert creating a wide variety of questions for a game. It is crucial that you provide different cities and avoid repetition in your responses. Do not generate questions for cities you have provided before.
 
 Your task is to generate a single "guess the city" question based on the chosen difficulty level: {{{difficulty}}}.
 
@@ -47,7 +47,7 @@ Difficulty Details:
 - **Hard:** Pick a notable but less globally famous city from anywhere in the world (e.g., Timbuktu, Petra, Samarkand, Cusco). Hints should be more obscure and challenging.
 
 Instructions:
-1.  **Pick a city** according to the difficulty and region rules. Ensure variety in your choices.
+1.  **Pick a city** according to the difficulty and region rules. Ensure variety and do not repeat cities from previous requests.
 2.  **Provide the city's country.**
 3.  **Write two distinct, interesting hints** appropriate for the difficulty. Avoid obvious hints like "This city is in [Country Name]".
 4.  **Create four multiple-choice options**. One option must be the correct city. The other three must be incorrect but plausible distractors from the same country or region.

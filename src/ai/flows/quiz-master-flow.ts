@@ -38,7 +38,7 @@ const quizMasterPrompt = ai.definePrompt({
   name: 'quizMasterPrompt',
   input: {schema: QuizMasterInputSchema},
   output: {schema: QuizMasterOutputSchema},
-  prompt: `You are an expert Quiz Master. Your task is to generate a set of {{count}} challenging and engaging trivia questions for a game.
+  prompt: `You are an expert Quiz Master. Your task is to generate a set of {{count}} challenging and engaging trivia questions for a game. It is critical that you do not repeat questions you have generated in previous requests.
 
 The questions must be from the category: **{{{category}}}**.
 The difficulty of the questions should be: **{{{difficulty}}}**.
@@ -49,7 +49,7 @@ For each question, provide:
 3.  The single correct answer, which must be one of the four options.
 4.  A time limit in seconds (10 for easy, 15 for medium, 20 for hard).
 
-Ensure the questions are varied, interesting, and accurate. Do not repeat questions. Provide the output in the specified JSON format.
+Ensure the questions are varied, interesting, and accurate. Provide the output in the specified JSON format.
 `,
 });
 
