@@ -1,7 +1,7 @@
 
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
-import { ChatHeader } from "@/components/p2p-chat/chat-header";
 import { ImageKitProvider } from "@/lib/imagekit/imagekit-provider";
+import Image from "next/image";
 
 export default function MessagesLayout({
   children,
@@ -11,11 +11,16 @@ export default function MessagesLayout({
   return (
     <AuthWrapper>
       <ImageKitProvider>
-        <div className="chat-theme relative h-screen bg-background text-foreground flex flex-col">
-            <div className="fixed inset-0 bg-chat-background -z-10" />
-            <div className="relative z-10 flex flex-col flex-1 h-full min-h-0">
-                {children}
-            </div>
+        <div className="relative h-screen w-full overflow-hidden">
+          <Image
+            src="https://ik.imagekit.io/bt0k47tzc/kermit_the_frog_muppets_minimalism_simple_background_purple_87910_1920x1080.jpg?updatedAt=1721111666632"
+            alt="Abstract purple background"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/30" />
+          <main className="absolute inset-0 flex flex-col">{children}</main>
         </div>
       </ImageKitProvider>
     </AuthWrapper>

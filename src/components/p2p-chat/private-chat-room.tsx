@@ -98,50 +98,45 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
     return (
         <div 
             className={cn(
-                "flex items-end gap-2 w-full group", 
+                "flex items-end gap-2 max-w-[75%] w-fit group", 
                 isCurrentUserSender ? "self-end flex-row-reverse" : "self-start"
             )}
             onMouseEnter={() => setShowActions(true)}
             onMouseLeave={() => setShowActions(false)}
         >
              {!isCurrentUserSender && (
-                 <Avatar className="w-8 h-8 self-start shrink-0">
+                 <Avatar className="w-8 h-8 shrink-0">
                     <AvatarImage src={author?.photoURL ?? undefined} />
                     <AvatarFallback>{getInitials(author?.displayName)}</AvatarFallback>
                 </Avatar>
              )}
             
-            <div className={cn("relative max-w-[75%]", isCurrentUserSender ? "ml-auto" : "mr-auto")}>
-                <div className={cn(
-                    "p-3 rounded-2xl w-fit",
-                    isCurrentUserSender 
-                        ? "bg-primary text-primary-foreground rounded-br-none" 
-                        : "bg-muted rounded-bl-none"
-                )}>
-                    {message.fileUrl && (
-                        <div className="mb-2">
-                             <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
-                                    <Download className="w-8 h-8"/>
-                                    <div>
-                                        <p className="font-semibold break-all">{message.fileName}</p>
-                                        <p className="text-xs">Click to download encrypted file</p>
-                                    </div>
+            <div className={cn("relative p-3 text-sm rounded-3xl", 
+              isCurrentUserSender 
+                ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
+                : "glass-pane rounded-bl-none border-none")}>
+                {message.fileUrl && (
+                    <div className="mb-2">
+                         <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
+                                <Download className="w-8 h-8"/>
+                                <div>
+                                    <p className="font-semibold break-all">{message.fileName}</p>
+                                    <p className="text-xs">Click to download encrypted file</p>
                                 </div>
-                        </div>
-                    )}
-                    {message.text && <p className="text-sm break-all">{message.text}</p>}
-                    <div className={cn(
-                        "text-xs mt-1.5 flex items-center gap-1.5",
-                        isCurrentUserSender ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"
-                    )}>
-                        <span>{timeAgo}</span>
-                        {isCurrentUserSender && message.status !== 'pending' && (
-                             message.isRead ? <CheckCheck className="w-4 h-4 text-blue-400"/> : <Check className="w-4 h-4" />
-                        )}
+                            </div>
                     </div>
+                )}
+                {message.text && <p className="break-words">{message.text}</p>}
+                 <div className={cn(
+                    "text-xs mt-1.5 flex items-center gap-1.5",
+                    isCurrentUserSender ? "text-white/70 justify-end" : "text-white/70"
+                )}>
+                    <span>{timeAgo}</span>
+                    {isCurrentUserSender && message.status !== 'pending' && (
+                         message.isRead ? <CheckCheck className="w-4 h-4 text-blue-400"/> : <Check className="w-4 h-4" />
+                    )}
                 </div>
             </div>
-
              <div className={cn("flex items-center gap-1 transition-opacity shrink-0", showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                 <Popover>
                     <PopoverTrigger asChild>
@@ -155,7 +150,6 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
         </div>
     );
 }
-
 
 function ChatRoomSkeleton() {
     return (
@@ -193,7 +187,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     const { upload } = useImageKit();
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
     const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
-
     
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -358,14 +351,6 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             if(fileInputRef.current) fileInputRef.current.value = "";
         }
     };
-    
-    const triggerFilePicker = (accept: string) => {
-        if (fileInputRef.current) {
-            fileInputRef.current.accept = accept;
-            fileInputRef.current.click();
-            setIsAttachmentMenuOpen(false);
-        }
-    };
 
     const handleReaction = useCallback(async (messageId: string, emoji: string) => {
         if (!currentUser || !firestore) return;
@@ -386,21 +371,30 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }
     
     return (
-        <div className="flex flex-col h-full bg-transparent">
-            <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0 border-border/50">
-                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => router.push('/messages')}> <ArrowLeft className="w-5 h-5" /> </Button>
-                <Avatar className="w-10 h-10"> <AvatarImage src={otherUser.photoURL ?? undefined} /> <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback> </Avatar>
+        <div className="flex flex-col h-full md:p-4">
+          <div className="flex flex-col h-full glass-pane md:rounded-2xl">
+            <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20">
+                <div className="relative">
+                    <Avatar className="w-12 h-12">
+                        <AvatarImage src={otherUser.photoURL ?? undefined} />
+                        <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                    </Avatar>
+                     <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>
+                </div>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>
-                    <p className="text-xs text-muted-foreground"> {isTyping ? <span className="italic text-primary">typing...</span> : "Online"} </p>
+                    <p className="text-xs text-white/70">
+                        {isTyping ? <span className="italic text-primary">typing...</span> : "Active now"}
+                    </p>
                 </div>
+                <Button variant="ghost" size="icon"> <Phone className="w-5 h-5"/> </Button>
                 <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
             </header>
             <div className="flex-1 min-h-0">
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-4 p-6">
                         {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} sessionKey={sessionKey} />)
-                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-muted-foreground bg-muted"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
+                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-white/60 bg-white/10"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
                     </div>
                 </ScrollArea>
             </div>
@@ -412,12 +406,20 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </div>
                 </div>
             )}
-            <footer className="p-2 border-t shrink-0 sm:p-4 border-border/50">
-                <form className="flex w-full items-center gap-2" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
-                    <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="text-base h-11 rounded-full bg-input" />
-                    <Button type="submit" size="icon" disabled={(!messageText.trim() && uploadProgress === null) || !currentUser || isSending || !sessionKey} className="rounded-full w-11 h-11 shrink-0"> {isSending ? <Loader2 className="animate-spin" /> : <Send />} </Button>
+            <footer className="p-4 border-t shrink-0 border-white/20">
+                <form className="relative" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
+                    <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base pl-4 pr-24 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="rounded-full">
+                           <Paperclip className="w-5 h-5" />
+                        </Button>
+                        <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey} className="rounded-full bg-primary w-9 h-9">
+                          {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5"/>}
+                        </Button>
+                    </div>
                 </form>
             </footer>
+          </div>
         </div>
     );
 }
