@@ -3,7 +3,7 @@
 
 import { useUser } from "@/firebase";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Bot, Sparkles, User, Users, Settings } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Bot, Sparkles, User, Users, Settings, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils";
 import { pookieAi } from "@/ai/flows/pookie-ai-flow";
 import { Input } from "../ui/input";
 import Markdown from 'react-markdown';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Card } from "../ui/card";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 type ChatMessage = {
     sender: 'user' | 'pookie';
@@ -47,7 +48,7 @@ function ChatBubble({ message, pookieAvatarUrl }: { message: ChatMessage; pookie
     )
 }
 
-function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boolean, onOpenChange: (isOpen: boolean) => void, onSelect: (gender: PookieGender, name: string) => void }) {
+function PersonaSelectionModal({ isOpen, onOpenChange, onSelect, onClearHistory, hasHistory }: { isOpen: boolean, onOpenChange: (isOpen: boolean) => void, onSelect: (gender: PookieGender, name: string) => void, onClearHistory: () => void, hasHistory: boolean }) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
@@ -71,6 +72,12 @@ function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boo
                         <p className="font-semibold">Pookie (Neutral)</p>
                     </Card>
                 </div>
+                 <DialogFooter className="pt-4 mt-4 border-t">
+                    <Button variant="destructive" onClick={onClearHistory} disabled={!hasHistory}>
+                        <Trash2 className="w-4 h-4 mr-2"/>
+                        Clear Chat History
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )
@@ -80,6 +87,7 @@ function PersonaSelectionModal({ isOpen, onOpenChange, onSelect }: { isOpen: boo
 export function PookieAiChatRoom() {
     const { user } = useUser();
     const router = useRouter();
+    const { toast } = useToast();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -88,16 +96,35 @@ export function PookieAiChatRoom() {
     const [pookieGender, setPookieGender] = useState<PookieGender | null>(null);
     const [pookieName, setPookieName] = useState<string>('Pookie');
     
+    // Load state from localStorage on initial render
     useEffect(() => {
-        const storedGender = localStorage.getItem('pookieGender');
-        const storedName = localStorage.getItem('pookieName');
+        if (!user?.uid) return;
+        const storedGender = localStorage.getItem(`pookieGender_${user.uid}`);
+        const storedName = localStorage.getItem(`pookieName_${user.uid}`);
+        const storedMessages = localStorage.getItem(`pookieMessages_${user.uid}`);
+        
         if (storedGender && storedName) {
             setPookieGender(storedGender as PookieGender);
             setPookieName(storedName);
         } else {
-            setIsPersonaModalOpen(true);
+            setIsPersonaModalOpen(true); // Prompt for persona if not set
         }
-    }, []);
+
+        if (storedMessages) {
+            setMessages(JSON.parse(storedMessages));
+        }
+    }, [user?.uid]);
+
+    // Save messages to localStorage whenever they change
+    useEffect(() => {
+        if (!user?.uid || messages.length === 0) return;
+        try {
+            localStorage.setItem(`pookieMessages_${user.uid}`, JSON.stringify(messages));
+        } catch (error) {
+            console.error("Failed to save messages to localStorage:", error);
+        }
+    }, [messages, user?.uid]);
+
 
     useEffect(() => {
         if (viewportRef.current) {
@@ -106,11 +133,25 @@ export function PookieAiChatRoom() {
     }, [messages]);
     
     const handlePersonaSelect = (gender: PookieGender, name: string) => {
-        localStorage.setItem('pookieGender', gender);
-        localStorage.setItem('pookieName', name);
+        if (!user?.uid) return;
+        localStorage.setItem(`pookieGender_${user.uid}`, gender);
+        localStorage.setItem(`pookieName_${user.uid}`, name);
+        localStorage.removeItem(`pookieMessages_${user.uid}`); // Clear history on persona change
+        
         setPookieGender(gender);
         setPookieName(name);
-        setMessages([]); // Reset chat history
+        setMessages([]);
+        setIsPersonaModalOpen(false);
+    }
+    
+    const handleClearHistory = () => {
+        if (!user?.uid) return;
+        localStorage.removeItem(`pookieMessages_${user.uid}`);
+        setMessages([]);
+        toast({
+            title: "Chat History Cleared",
+            description: "Your conversation with Pookie has been reset.",
+        });
         setIsPersonaModalOpen(false);
     }
     
@@ -170,7 +211,13 @@ export function PookieAiChatRoom() {
 
     return (
          <div className="flex flex-col h-full bg-transparent">
-            <PersonaSelectionModal isOpen={isPersonaModalOpen} onOpenChange={setIsPersonaModalOpen} onSelect={handlePersonaSelect} />
+            <PersonaSelectionModal 
+                isOpen={isPersonaModalOpen} 
+                onOpenChange={setIsPersonaModalOpen} 
+                onSelect={handlePersonaSelect}
+                onClearHistory={handleClearHistory}
+                hasHistory={messages.length > 0}
+            />
             <header className="flex items-center h-16 gap-3 px-4 border-b shrink-0">
                 <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => router.push('/messages')}>
                     <ArrowLeft className="w-5 h-5" />
