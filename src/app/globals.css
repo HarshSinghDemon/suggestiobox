@@ -82,6 +82,12 @@
 
 
 @layer utilities {
+    .portrait\:flex {
+        @media (orientation: portrait) {
+            display: flex;
+        }
+    }
+
     @keyframes float {
         0% { transform: translateY(0px) translateX(0px); }
         50% { transform: translateY(-30px) translateX(15px); }

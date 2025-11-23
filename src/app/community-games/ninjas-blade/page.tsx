@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
-import { Swords } from 'lucide-react';
+import { Swords, Smartphone } from 'lucide-react';
 
 export default function NinjasBladePage() {
   const gameUrl = "https://html5.gamemonetize.co/4zan7z32l5z63lmeo68xg3t3b7jvzmb0/";
@@ -26,7 +26,12 @@ export default function NinjasBladePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="w-full aspect-video rounded-lg overflow-hidden border">
+            <div className="w-full aspect-video rounded-lg overflow-hidden border relative">
+                <div className="absolute inset-0 z-10 flex-col items-center justify-center hidden p-4 text-center bg-background/90 md:hidden portrait:flex">
+                    <Smartphone className="w-16 h-16 mb-4 text-primary animate-pulse" />
+                    <h3 className="text-xl font-bold">Rotate Your Device</h3>
+                    <p className="text-muted-foreground">For the best experience, please play this game in landscape mode.</p>
+                </div>
                 <iframe
                     src={gameUrl}
                     width="100%"
