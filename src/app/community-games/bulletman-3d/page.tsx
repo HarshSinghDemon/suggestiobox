@@ -3,10 +3,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
-import { Rocket } from 'lucide-react';
+import { Rocket, Expand } from 'lucide-react';
+import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function Bulletman3DPage() {
   const gameUrl = "https://html5.gamemonetize.co/tjsii5r6qlrfyf34b076syz13lzeq0x1/";
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleFullscreen = () => {
+    iframeRef.current?.requestFullscreen();
+  };
 
   return (
     <AuthWrapper>
@@ -26,8 +33,9 @@ export default function Bulletman3DPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="w-full aspect-video rounded-lg overflow-hidden border">
+            <div className="w-full aspect-[4/3] sm:aspect-video rounded-lg overflow-hidden border">
                 <iframe
+                    ref={iframeRef}
                     src={gameUrl}
                     width="100%"
                     height="100%"
@@ -35,6 +43,12 @@ export default function Bulletman3DPage() {
                     allowFullScreen
                     className='border-0'
                 ></iframe>
+            </div>
+             <div className="flex justify-end mt-2">
+                <Button variant="outline" onClick={handleFullscreen}>
+                    <Expand className="w-4 h-4 mr-2" />
+                    Fullscreen
+                </Button>
             </div>
           </CardContent>
         </Card>
