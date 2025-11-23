@@ -37,10 +37,7 @@ export default function Home() {
             </h1>
             <div className="max-w-md space-y-4 md:max-w-lg">
               <p className="text-base md:text-lg text-foreground/80">
-                Your all-in-one student hub for academic success, creative coding, and community fun. Share notes, drop suggestions, and collaborate on assignments. Connect with classmates in our public chat or have secure, end-to-end encrypted private conversations.
-              </p>
-              <p className="text-sm md:text-base text-foreground/80">
-                When you're ready for a break, dive into our massive arcade, code up a storm in the online editor, jam out with the Jokebox, or chat with your personal AI bestie, Pookie. Learn, share, play, and connect—all in one place.
+                Your ultimate student hub. Share notes, collaborate on assignments, and chat securely. Take a break in the arcade, code in the online editor, listen with the Jokebox, or chat with your AI bestie, Pookie. Learn, share, play, and connect—all in one place.
               </p>
             </div>
             <div className="flex flex-col items-center justify-center w-full gap-4">
