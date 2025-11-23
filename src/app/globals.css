@@ -5,9 +5,9 @@
 
 @layer base {
   :root {
-    --background: 263 80% 12%;
+    --background: 263 80% 14%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 15%;
+    --card: 263 80% 17%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -36,9 +36,9 @@
   }
 
   .dark {
-    --background: 263 80% 12%;
+    --background: 263 80% 14%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 15%;
+    --card: 263 80% 17%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -83,20 +83,20 @@
 
 @layer utilities {
     @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-        100% { transform: translateY(0px); }
+        0% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(-30px) translateX(15px); }
+        100% { transform: translateY(0px) translateX(0px); }
     }
     @keyframes float-reverse {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(20px); }
-        100% { transform: translateY(0px); }
+        0% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(30px) translateX(-15px); }
+        100% { transform: translateY(0px) translateX(0px); }
     }
     .animate-float {
-        animation: float 30s ease-in-out infinite;
+        animation: float 15s ease-in-out infinite;
     }
     .animate-float-reverse {
-        animation: float-reverse 30s ease-in-out infinite;
+        animation: float-reverse 15s ease-in-out infinite;
     }
 
     @keyframes fade-in-up {
