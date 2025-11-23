@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { Swords } from 'lucide-react';
 
 export default function NinjasBladePage() {
-  const gameUrl = "https://html5.gamemonetize.co/79f9p8v2b59j9vld3ig7lq17p22jwazy/";
+  const gameUrl = "https://html5.gamemonetize.co/4zan7z32l5z63lmeo68xg3t3b7jvzmb0/";
 
   return (
     <AuthWrapper>
