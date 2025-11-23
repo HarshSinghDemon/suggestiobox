@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useUser, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, arrayUnion, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { Swords, Loader2 } from 'lucide-react';
+import { Swords, Loader2, BrainCircuit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { FirebaseUser } from '@/lib/types';
@@ -68,6 +68,7 @@ export default function QuizRoyalePage() {
 
             if (querySnapshot.empty) {
                 toast({ variant: 'destructive', title: 'Lobby not found', description: 'No game lobby was found with that code.' });
+                setIsJoining(false);
                 return;
             }
 
@@ -77,12 +78,18 @@ export default function QuizRoyalePage() {
 
             if (lobbyData.status !== 'waiting') {
                 toast({ variant: 'destructive', title: 'Game in Progress', description: 'This game has already started or is finished.' });
+                setIsJoining(false);
                 return;
             }
 
             const playerExists = lobbyData.players.some((p: FirebaseUser) => p.id === user.uid);
 
             if (!playerExists) {
+                if (lobbyData.players.length >= 8) {
+                    toast({ variant: 'destructive', title: 'Lobby Full', description: 'This game lobby is already full.' });
+                    setIsJoining(false);
+                    return;
+                }
                 await updateDoc(lobbyDoc.ref, {
                     players: arrayUnion({
                         id: user.uid,
@@ -99,6 +106,7 @@ export default function QuizRoyalePage() {
             console.error("Error joining lobby: ", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not join the game lobby.' });
         } finally {
+            // This might not be reached if router.push succeeds, but good practice
             setIsJoining(false);
         }
     }
@@ -110,14 +118,26 @@ export default function QuizRoyalePage() {
                 <div className="max-w-md mx-auto text-center">
                     <Swords className="w-16 h-16 mx-auto mb-4 text-primary" />
                     <h1 className="text-4xl font-bold">Quiz Royale</h1>
-                    <p className="mt-2 text-lg text-muted-foreground">Challenge your friends in a live trivia battle!</p>
+                    <p className="mt-2 text-lg text-muted-foreground">Challenge your friends in a live trivia battle or play solo against the AI!</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-3 max-w-4xl mx-auto">
+                    <Card className="md:col-span-3">
+                        <CardHeader>
+                            <CardTitle>Play Solo</CardTitle>
+                            <CardDescription>Test your knowledge against our AI Quiz Master.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button className="w-full" onClick={() => router.push('/community-games/quiz-royale/solo')}>
+                                <BrainCircuit className="w-4 h-4 mr-2" />
+                                Start Solo Game
+                            </Button>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Create a New Game</CardTitle>
-                            <CardDescription>Start a new lobby and invite your friends to join.</CardDescription>
+                            <CardDescription>Start a new lobby and invite friends.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button className="w-full" onClick={handleCreateLobby} disabled={isCreating}>
@@ -126,8 +146,7 @@ export default function QuizRoyalePage() {
                             </Button>
                         </CardContent>
                     </Card>
-
-                    <Card>
+                    <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle>Join a Game</CardTitle>
                             <CardDescription>Enter the 6-digit code to join an existing game.</CardDescription>

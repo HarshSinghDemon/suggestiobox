@@ -9,3 +9,4 @@ import '@/ai/flows/study-buddy-flow.ts';
 import '@/ai/flows/code-buddy-flow.ts';
 import '@/ai/flows/pookie-ai-flow.ts';
 import '@/ai/flows/city-guesser-flow.ts';
+import '@/ai/flows/quiz-master-flow.ts';

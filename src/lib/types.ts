@@ -177,3 +177,28 @@ export type SpotifyTrack = {
   };
   played_at?: string; // This is for recently played
 };
+
+export type QuizQuestion = {
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    time: number;
+};
+
+
+export type QuizLobby = {
+    id: string;
+    joinCode: string;
+    hostId: string;
+    status: 'waiting' | 'active' | 'finished';
+    createdAt: Timestamp;
+    players: {
+        id: string;
+        displayName: string;
+        photoURL?: string;
+        score: number;
+    }[];
+    questions?: QuizQuestion[];
+    currentQuestionIndex?: number;
+    questionStartTime?: Timestamp;
+};
