@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +70,13 @@ const games = [
         href: '/community-games/2048',
         icon: Brain,
         variant: 'ocean',
+    },
+    {
+        name: 'Murder Mafia',
+        description: 'Find the imposter among the crew.',
+        href: '/community-games/murder-mafia',
+        icon: Bomb,
+        variant: 'fiery',
     },
     {
         name: 'Rock Paper Scissors (2P)',
