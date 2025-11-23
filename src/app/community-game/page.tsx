@@ -173,6 +173,13 @@ const games = [
         icon: ArcheryIcon,
         variant: 'default',
     },
+    {
+        name: 'Bulletman 3D',
+        description: 'Take aim and shoot your way through challenging levels.',
+        href: '/community-games/bulletman-3d',
+        icon: Rocket,
+        variant: 'fiery',
+    },
 ];
 
 
