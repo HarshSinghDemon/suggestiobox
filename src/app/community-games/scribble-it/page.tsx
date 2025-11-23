@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -117,7 +118,19 @@ export default function ScribbleItPage() {
                     <p className="mt-2 text-lg text-muted-foreground">Draw, guess, and have fun with friends!</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-4xl mx-auto">
+                     <Card className="md:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Play Solo</CardTitle>
+                            <CardDescription>Practice your drawing skills against the clock.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button className="w-full" disabled>
+                                <BrainCircuit className="w-4 h-4 mr-2" />
+                                Coming Soon
+                            </Button>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Create a New Game</CardTitle>

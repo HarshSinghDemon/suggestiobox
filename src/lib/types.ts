@@ -261,3 +261,16 @@ export type SpyGridLobby = {
         photoURL?: string;
     }[];
 };
+
+export type SketchLobby = {
+    id: string;
+    joinCode: string;
+    hostId: string;
+    status: 'waiting' | 'playing' | 'finished';
+    createdAt: Timestamp;
+    players: {
+        id: string;
+        displayName: string;
+        photoURL?: string;
+    }[];
+};

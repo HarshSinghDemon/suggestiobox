@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useUser, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, arrayUnion, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { Users, Loader2 } from 'lucide-react';
+import { Users, Loader2, BrainCircuit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { FirebaseUser } from '@/lib/types';
@@ -119,7 +119,19 @@ export default function ImpostersAgendaPage() {
                     <p className="mt-2 text-lg text-muted-foreground">A game of trust, deception, and deduction.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-4xl mx-auto">
+                    <Card className="md:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Play Solo vs. AI</CardTitle>
+                            <CardDescription>Practice your deception skills against AI opponents.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button className="w-full" disabled>
+                                <BrainCircuit className="w-4 h-4 mr-2" />
+                                Coming Soon
+                            </Button>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Host a Game</CardTitle>

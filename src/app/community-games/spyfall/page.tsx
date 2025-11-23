@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useUser, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, arrayUnion, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2, BrainCircuit } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -115,7 +115,19 @@ export default function SpyfallPage() {
                     <p className="mt-2 text-lg text-muted-foreground">A game of asking clever questions and giving clever answers.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-2xl mx-auto">
+                 <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-4xl mx-auto">
+                    <Card className="md:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Play Solo vs. AI</CardTitle>
+                            <CardDescription>Test your bluffing skills against a table of AI players.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Button className="w-full" disabled>
+                                <BrainCircuit className="w-4 h-4 mr-2" />
+                                Coming Soon
+                            </Button>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>Host a Game</CardTitle>

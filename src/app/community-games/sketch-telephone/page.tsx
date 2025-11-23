@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useUser, useFirestore } from '@/firebase';
 import { addDoc, collection, serverTimestamp, arrayUnion, updateDoc, getDocs, query, where } from 'firebase/firestore';
-import { BrainCircuit, Loader2 } from 'lucide-react';
+import { Edit, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function SpyGridPage() {
+export default function SketchTelephonePage() {
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
@@ -44,8 +44,8 @@ export default function SpyGridPage() {
                     }
                 ],
             };
-            const docRef = await addDoc(collection(firestore, 'spyGridLobbies'), lobbyData);
-            router.push(`/community-games/spy-grid/${docRef.id}`);
+            const docRef = await addDoc(collection(firestore, 'sketchLobbies'), lobbyData);
+            router.push(`/community-games/sketch-telephone/${docRef.id}`);
         } catch (error) {
             console.error("Error creating lobby: ", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not create a new game lobby.' });
@@ -59,7 +59,7 @@ export default function SpyGridPage() {
         setIsJoining(true);
 
         try {
-            const q = query(collection(firestore, 'spyGridLobbies'), where('joinCode', '==', joinCode.toUpperCase()));
+            const q = query(collection(firestore, 'sketchLobbies'), where('joinCode', '==', joinCode.toUpperCase()));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -81,7 +81,7 @@ export default function SpyGridPage() {
             const playerExists = lobbyData.players.some((p: any) => p.id === user.uid);
 
             if (!playerExists) {
-                if (lobbyData.players.length >= 10) { // Max 10 players
+                if (lobbyData.players.length >= 12) { // Max 12 players
                     toast({ variant: 'destructive', title: 'Lobby Full', description: 'This game lobby is already full.' });
                     setIsJoining(false);
                     return;
@@ -95,7 +95,7 @@ export default function SpyGridPage() {
                 });
             }
             
-            router.push(`/community-games/spy-grid/${lobbyId}`);
+            router.push(`/community-games/sketch-telephone/${lobbyId}`);
 
         } catch (error) {
             console.error("Error joining lobby: ", error);
@@ -110,24 +110,12 @@ export default function SpyGridPage() {
         <AuthWrapper>
             <div className="container py-12 mx-auto">
                 <div className="max-w-md mx-auto text-center">
-                    <BrainCircuit className="w-16 h-16 mx-auto mb-4 text-primary" />
-                    <h1 className="text-4xl font-bold">Spy Grid</h1>
-                    <p className="mt-2 text-lg text-muted-foreground">A team-based word association game.</p>
+                    <Edit className="w-16 h-16 mx-auto mb-4 text-primary" />
+                    <h1 className="text-4xl font-bold">Sketch Telephone</h1>
+                    <p className="mt-2 text-lg text-muted-foreground">A hilarious game of drawing and guessing.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-4xl mx-auto">
-                    <Card className="md:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Play Solo vs. AI</CardTitle>
-                            <CardDescription>Hone your clue-giving skills against an AI partner.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button className="w-full" disabled>
-                                <BrainCircuit className="w-4 h-4 mr-2" />
-                                Coming Soon
-                            </Button>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 max-w-2xl mx-auto">
                     <Card>
                         <CardHeader>
                             <CardTitle>Host a Game</CardTitle>
