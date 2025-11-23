@@ -169,6 +169,13 @@ const communityGames = [
         icon: ArrowUp,
         variant: 'fiery',
     },
+    {
+        name: 'Quiz Royale (Multiplayer)',
+        description: 'Challenge friends in a live trivia battle!',
+        href: '/community-games/quiz-royale',
+        icon: Swords,
+        variant: 'ocean',
+    },
 ];
 
 

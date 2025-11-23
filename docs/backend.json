@@ -20,10 +20,19 @@
           "type": "string",
           "description": "Display name of the user."
         },
+        "bio": {
+            "type": "string",
+            "description": "A short bio about the user."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
             "description": "The date and time the user account was created."
+        },
+        "lastSeen": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last time the user was seen online."
         },
         "year": {
             "type": "string",
@@ -42,6 +51,11 @@
         "chatRoomIds": {
             "type": "array",
             "description": "An array of ChatRoom IDs the user is a part of.",
+            "items": { "type": "string" }
+        },
+        "groupChatRoomIds": {
+            "type": "array",
+            "description": "An array of GroupChatRoom IDs the user is a part of.",
             "items": { "type": "string" }
         },
         "friends": {
@@ -100,6 +114,31 @@
             }
         },
         "required": ["id", "participants", "createdAt"]
+    },
+    "GroupChatRoom": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GroupChatRoom",
+      "type": "object",
+      "description": "Represents a group chat session.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the GroupChatRoom." },
+        "name": { "type": "string", "description": "The name of the group chat." },
+        "description": { "type": "string", "description": "A short description of the group." },
+        "photoURL": { "type": "string", "format": "uri", "description": "URL for the group's avatar." },
+        "participants": { "type": "array", "items": { "type": "string" }, "description": "An array of user IDs participating in the chat." },
+        "admins": { "type": "array", "items": { "type": "string" }, "description": "An array of user IDs who are admins of the group." },
+        "createdBy": { "type": "string", "description": "The user ID of the group's creator." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastMessage": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" },
+            "senderName": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "required": ["id", "name", "participants", "admins", "createdBy", "createdAt"]
     },
     "Message": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -347,6 +386,50 @@
         "isRead",
         "createdAt"
       ]
+    },
+    "QuizLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuizLobby",
+      "type": "object",
+      "description": "Represents a real-time quiz game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string", "description": "A short, unique code for players to join the lobby." },
+        "hostId": { "type": "string", "description": "The user ID of the player who created the lobby." },
+        "status": { "type": "string", "enum": ["waiting", "active", "finished"], "description": "The current state of the game." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "description": "List of players in the lobby.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" },
+              "score": { "type": "number" }
+            },
+            "required": ["id", "displayName", "photoURL", "score"]
+          }
+        },
+        "questions": {
+          "type": "array",
+          "description": "The list of questions for this quiz.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswer": { "type": "number", "description": "The index of the correct option." },
+              "time": { "type": "number", "description": "Time limit in seconds." }
+            },
+            "required": ["question", "options", "correctAnswer", "time"]
+          }
+        },
+        "currentQuestionIndex": { "type": "number", "default": -1 },
+        "questionStartTime": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
     }
   },
   "auth": {
@@ -404,12 +487,30 @@
         }
       },
       {
+        "path": "/groupChatRooms/{groupId}",
+        "definition": {
+          "entityName": "GroupChatRoom",
+          "schema": { "$ref": "#/backend/entities/GroupChatRoom" },
+          "description": "Stores metadata for each group chat room.",
+          "params": [{ "name": "groupId" }]
+        }
+      },
+      {
         "path": "/chatRooms/{roomId}/messages/{messageId}",
         "definition": {
           "entityName": "Message",
           "schema": { "$ref": "#/backend/entities/Message" },
-          "description": "Stores all messages for a specific chat room.",
+          "description": "Stores all messages for a specific private chat room.",
           "params": [{ "name": "roomId" }, { "name": "messageId" }]
+        }
+      },
+       {
+        "path": "/groupChatRooms/{groupId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores all messages for a specific group chat room.",
+          "params": [{ "name": "groupId" }, { "name": "messageId" }]
         }
       },
       {
@@ -502,6 +603,15 @@
               "description": "The unique identifier for the score entry."
             }
           ]
+        }
+      },
+      {
+        "path": "/quizLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "QuizLobby",
+          "schema": { "$ref": "#/backend/entities/QuizLobby" },
+          "description": "Stores data for a real-time quiz game session.",
+          "params": [{ "name": "lobbyId" }]
         }
       }
     ],
