@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp } from 'lucide-react';
+import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp, PenTool } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -176,10 +176,10 @@ const communityGames = [
         variant: 'ocean',
     },
     {
-        name: 'Collaborative Canvas',
-        description: 'A shared drawing board for real-time creativity.',
+        name: 'Scribble It! (Coming Soon)',
+        description: 'A shared drawing and guessing game for real-time fun.',
         href: '/community-games/collaborative-canvas',
-        icon: Palette,
+        icon: PenTool,
         variant: 'fiery',
     },
 ];
