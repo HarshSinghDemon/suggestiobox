@@ -98,7 +98,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
     return (
         <div 
             className={cn(
-                "flex items-end gap-2 max-w-[75%] w-full group animate-fade-in-up", 
+                "flex items-end gap-2 w-full group animate-fade-in-up", 
                 isCurrentUserSender ? "self-end flex-row-reverse" : "self-start"
             )}
             onMouseEnter={() => setShowActions(true)}
@@ -111,7 +111,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </Avatar>
              )}
             
-            <div className={cn("relative p-3 rounded-3xl", 
+            <div className={cn("relative p-3 rounded-3xl max-w-[75%]", 
               isCurrentUserSender 
                 ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
@@ -126,7 +126,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                             </div>
                     </div>
                 )}
-                {message.text && <p className="font-chat text-base break-words">{message.text}</p>}
+                {message.text && <p className="font-chat text-sm break-words">{message.text}</p>}
                  <div className={cn(
                     "text-xs mt-1.5 flex items-center gap-1.5",
                     isCurrentUserSender ? "text-white/70 justify-end" : "text-white/70"
