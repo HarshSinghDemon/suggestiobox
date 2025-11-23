@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Music,
   Users,
+  Code2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { ChatRoom } from '@/lib/types';
@@ -104,6 +105,10 @@ export function CommunityDropdown() {
         <DropdownMenuItem onClick={() => router.push('/community-game')}>
           <Gamepad2 className="w-4 h-4 mr-2" />
           Community Games
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push('/code')}>
+            <Code2 className="w-4 h-4 mr-2" />
+            Code Editor
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => router.push('/jokebox')}>
           <Music className="w-4 h-4 mr-2" />

@@ -185,14 +185,6 @@ export function Header() {
                 <CommunityDropdown />
                 
                 <Link
-                    href="/code"
-                    className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
-                    prefetch={false}
-                >
-                    Code Editor
-                </Link>
-
-                <Link
                     href="/pookie-contributors"
                     className="font-medium transition-colors text-foreground/60 hover:text-foreground/80"
                     prefetch={false}
