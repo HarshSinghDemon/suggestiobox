@@ -49,7 +49,7 @@ const ChessIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const ArcheryIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" {...props}><path d="M12 22s8-4 8-10V4l-8 4-8-4v8c0 6 8 10 8 10z"></path><path d="M12 14l-4-2"></path><path d="M12 14l4-2"></path><path d="M12 14v-4"></path></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V4l-8 4-8-4v8c0 6 8 10 8 10z"></path><path d="M12 14l-4-2"></path><path d="M12 14l4-2"></path><path d="M12 14v-4"></path></svg>
 );
 
 
