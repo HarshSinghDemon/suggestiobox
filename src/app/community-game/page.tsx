@@ -169,7 +169,7 @@ export default function CommunityGamePage() {
 
           <div className="mt-12 space-y-12">
             <div>
-                <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Team Fun Games</h2>
+                <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Party Games</h2>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {teamFunGames.sort((a, b) => a.name.localeCompare(b.name)).map((game) => (
                         <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-2">
