@@ -263,7 +263,7 @@ export function Header() {
                               </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setIsAvatarModalOpen(true)}><Users className="w-4 h-4 mr-2" /><span>Change Avatar</span></DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setIsAvatarModalOpen(true)}><Users className="w-4 h-4 mr-2" /><span>Edit Profile</span></DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push('/browse')}><Compass className="w-4 h-4 mr-2" /><span>Browse</span></DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push('/suggestions/new')}><PlusCircle className="w-4 h-4 mr-2" /><span>New Suggestion</span></DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push('/assignments/new')}><Upload className="w-4 h-4 mr-2" /><span>New Assignment</span></DropdownMenuItem>

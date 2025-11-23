@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, LogOut } from 'lucide-react';
-import { useUser, useAuth as useFirebaseAuth, useFirestore } from '@/firebase';
+import { useUser, useAuth as useFirebaseAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { updateProfile } from 'firebase/auth';
@@ -23,6 +23,7 @@ import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import type { FirebaseUser } from '@/lib/types';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
@@ -56,22 +57,14 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   const [isSaving, setIsSaving] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<AvatarStyleKey>('notionists');
 
+  const userDocRef = useMemoFirebase(() => (user && firestore) ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: userData } = useDoc<FirebaseUser>(userDocRef);
+
   useEffect(() => {
-    if (user?.uid && firestore) {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      // You might need to fetch the user document to get the current bio
-      // This part is simplified. For a real app, you'd fetch the user doc.
-      // For now, we'll assume the `user` object might have it or it's empty.
-      // A better approach would be to use `useDoc` hook on the user document.
-      // Let's assume you fetch it somehow. For this example, I'll mock it.
-      const fetchBio = async () => {
-        const userDoc = await (await fetch(userDocRef.path)).json();
-        const userData = userDoc as any;
-        setBio((userData?.bio as string) || '');
-      };
-      // fetchBio(); // This is pseudo-code for fetching the bio
+    if (isOpen && userData) {
+        setBio(userData.bio || '');
     }
-  }, [user, firestore, isOpen]);
+  }, [isOpen, userData]);
 
 
   const currentAvatarUrl = useMemo(() => {
@@ -103,22 +96,33 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
     setIsSaving(true);
     try {
         const updatePayload: { photoURL?: string, bio?: string } = {};
+        let somethingChanged = false;
 
-        if (newAvatarUrl) {
+        if (newAvatarUrl && newAvatarUrl !== user.photoURL) {
             updatePayload.photoURL = newAvatarUrl;
             await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
+            somethingChanged = true;
         }
         
-        // This assumes the bio state is correctly managed.
-        updatePayload.bio = bio;
+        if (bio !== (userData?.bio || '')) {
+            updatePayload.bio = bio;
+            somethingChanged = true;
+        }
 
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await updateDoc(userDocRef, updatePayload);
+        if (somethingChanged) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await updateDoc(userDocRef, updatePayload);
 
-        toast({
-            title: 'Profile Updated!',
-            description: 'Your changes have been saved.',
-        });
+            toast({
+                title: 'Profile Updated!',
+                description: 'Your changes have been saved.',
+            });
+        } else {
+            toast({
+                title: 'No changes detected',
+            });
+        }
+
         onOpenChange(false);
         setNewAvatarUrl(null);
     } catch (error) {
@@ -141,6 +145,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   const onModalStateChange = (open: boolean) => {
     if (!open) {
       setNewAvatarUrl(null); // Reset when closing
+      setBio(userData?.bio || ''); // Reset bio to original value
     }
     onOpenChange(open);
   }
