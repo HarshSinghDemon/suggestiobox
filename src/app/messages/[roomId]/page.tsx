@@ -2,14 +2,11 @@
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 import { ChatList } from "@/components/p2p-chat/chat-list";
 import { PrivateChatRoom } from "@/components/p2p-chat/private-chat-room";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { UserInfoPanel } from "@/components/p2p-chat/user-info-panel";
 
-type PrivateChatPageProps = {
-    params: {
-        roomId: string;
-    }
-}
 
 function ChatListSkeleton() {
     return (
@@ -27,18 +24,35 @@ function ChatListSkeleton() {
     );
 }
 
-export default function PrivateChatPage({ params }: PrivateChatPageProps) {
+export default function PrivateChatPage({ params }: { params: { roomId: string } }) {
+    const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
+
+    const toggleInfoPanel = () => {
+        setIsInfoPanelVisible(prev => !prev);
+    }
+    
     return (
         <AuthWrapper>
-            <div className="flex h-full w-full">
-                 <aside className="hidden md:block md:w-1/3 lg:w-1/4 h-full">
-                    <Suspense fallback={<ChatListSkeleton />}>
-                        <ChatList selectedRoomId={params.roomId} />
-                    </Suspense>
-                </aside>
-                <div className="flex-1 h-full">
-                    <PrivateChatRoom roomId={params.roomId} />
-                </div>
+            <div className="flex flex-col h-full">
+                <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
+                         <Suspense fallback={<ChatListSkeleton />}>
+                            <ChatList selectedRoomId={params.roomId} />
+                        </Suspense>
+                    </ResizablePanel>
+                    <ResizableHandle withHandle className="hidden lg:flex"/>
+                    <ResizablePanel defaultSize={isInfoPanelVisible ? 50 : 75} minSize={30}>
+                        <PrivateChatRoom roomId={params.roomId} onToggleInfoPanel={toggleInfoPanel} />
+                    </ResizablePanel>
+                    {isInfoPanelVisible && (
+                        <>
+                            <ResizableHandle withHandle className="hidden lg:flex" />
+                            <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
+                                <UserInfoPanel roomId={params.roomId} />
+                            </ResizablePanel>
+                        </>
+                    )}
+                </ResizablePanelGroup>
             </div>
         </AuthWrapper>
     )

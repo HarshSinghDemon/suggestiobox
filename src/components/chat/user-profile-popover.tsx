@@ -4,7 +4,7 @@
 import { FirebaseUser } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Mail, MessageSquare, ShieldCheck, Star, Loader2, UserPlus, UserCheck, UserX, Check, X } from 'lucide-react';
+import { Mail, MessageSquare, ShieldCheck, Star, Loader2, UserPlus, UserCheck, UserX, Check, X, KeyRound, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { useState } from 'react';
@@ -183,7 +183,20 @@ function ActionButtons({ otherUser }: { otherUser: FirebaseUser }) {
 }
 
 export function UserProfilePopover({ user: otherUser }: UserProfilePopoverProps) {
+  const { toast } = useToast();
   if (!otherUser) return null;
+
+  const displayKey = otherUser.publicKey || 'BwEaRml...key_not_found';
+  
+  const copyKeyToClipboard = () => {
+    if (displayKey) {
+        navigator.clipboard.writeText(displayKey);
+        toast({
+            title: "Public Key Copied!",
+            description: "The user's public key for E2EE has been copied.",
+        });
+    }
+  };
   
   return (
     <div className="flex flex-col items-center gap-4 text-center">
@@ -205,6 +218,19 @@ export function UserProfilePopover({ user: otherUser }: UserProfilePopoverProps)
         </a>
       </div>
       
+       <div className='w-full p-3 mt-2 space-y-2 text-left border rounded-md bg-muted/50'>
+          <h4 className="flex items-center gap-2 text-sm font-semibold">
+              <KeyRound className="w-4 h-4" />
+              Encryption Key
+          </h4>
+          <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-background">
+              <p className="flex-1 font-mono text-xs text-muted-foreground">{displayKey}</p>
+              <Button variant="ghost" size="icon" className="shrink-0 w-7 h-7" onClick={copyKeyToClipboard}>
+                  <Copy className="w-3.5 h-3.5" />
+              </Button>
+          </div>
+      </div>
+
       <ActionButtons otherUser={otherUser} />
     </div>
   );

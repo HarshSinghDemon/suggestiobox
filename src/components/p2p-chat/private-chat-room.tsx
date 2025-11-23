@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@
 import { collection, doc, orderBy, query, serverTimestamp, updateDoc, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import type { ChatRoom, FirebaseUser, Message as EncryptedMessage, Reaction } from "@/lib/types";
 import { Button } from "../ui/button";
-import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, X, Download, File, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Send, Lock, MoreVertical, Smile, Paperclip, Check, CheckCheck, X, Download, File, ImageIcon, UserCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -111,7 +111,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </Avatar>
              )}
             
-            <div className={cn("relative p-3 rounded-3xl max-w-[75%]", 
+            <div className={cn("relative p-3 rounded-3xl max-w-[80%]", 
               isCurrentUserSender 
                 ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
@@ -173,7 +173,7 @@ function ChatRoomSkeleton() {
     );
 }
 
-export function PrivateChatRoom({ roomId }: { roomId: string }) {
+export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string, onToggleInfoPanel: () => void; }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
@@ -387,6 +387,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                         {isTyping ? <span className="italic text-primary">typing...</span> : "Active now"}
                     </p>
                 </div>
+                <Button variant="ghost" size="icon" onClick={onToggleInfoPanel}>
+                    <UserCircle className="w-5 h-5"/>
+                </Button>
                 <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
             </header>
             <div className="flex-1 min-h-0">

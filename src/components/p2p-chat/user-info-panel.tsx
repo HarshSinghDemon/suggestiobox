@@ -66,7 +66,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     }
 
     return (
-        <div className="flex flex-col h-full p-6 bg-transparent border-l border-border">
+        <div className="flex flex-col h-full p-6 glass-pane md:rounded-l-2xl border-l border-white/20">
             <div className="flex flex-col items-center gap-4 text-center">
                 <Avatar className="w-24 h-24">
                     <AvatarImage src={otherUser.photoURL ?? undefined} alt={otherUser.displayName ?? ''} />
@@ -78,26 +78,27 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                 </div>
             </div>
 
-            <Separator className="my-6" />
+            <Separator className="my-6 bg-white/20" />
             
             <div>
                 <h4 className="flex items-center gap-2 mb-2 font-semibold">
                     <KeyRound className="w-4 h-4" />
                     Encryption Key
                 </h4>
-                <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-muted">
-                    <p className="flex-1 font-mono text-xs text-muted-foreground">{displayKey}</p>
+                <div className="flex items-center gap-2 p-2 break-all border rounded-md bg-white/10 border-white/20">
+                    <p className="flex-1 font-mono text-xs text-white/70">{displayKey}</p>
                     <Button variant="ghost" size="icon" className="shrink-0" onClick={copyKeyToClipboard}>
                         <Copy className="w-4 h-4" />
                     </Button>
                 </div>
+                 <p className="mt-2 text-xs text-white/50">This key is used for End-to-End Encryption. Only you and {otherUser.displayName} can read your messages.</p>
             </div>
             
-            <Separator className="my-6" />
+            <Separator className="my-6 bg-white/20" />
 
             <div>
                 <h4 className="mb-4 font-semibold">Shared Files</h4>
-                <div className="p-8 text-center border-2 border-dashed rounded-lg text-muted-foreground border-border">
+                <div className="p-8 text-center border-2 border-dashed rounded-lg text-white/60 border-white/20">
                     <p>No files shared yet.</p>
                 </div>
             </div>
