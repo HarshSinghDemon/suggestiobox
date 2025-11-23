@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -194,11 +195,11 @@ export function FindFriendsList() {
 
     return (
         <div className="space-y-4">
-            <div className="relative p-4 border-b">
-                <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative p-4 border-b border-white/20">
+                <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <Input
                     placeholder="Search for people..."
-                    className="pl-9"
+                    className="pl-9 bg-white/10 border-none focus-visible:ring-primary"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -209,7 +210,7 @@ export function FindFriendsList() {
                 ) : filteredUsers && filteredUsers.length > 0 ? (
                     <div className="space-y-2 p-2">
                         {filteredUsers.map(user => (
-                            <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent">
+                            <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="w-12 h-12">
                                         <AvatarImage src={user.photoURL ?? undefined} />
@@ -217,7 +218,7 @@ export function FindFriendsList() {
                                     </Avatar>
                                     <div>
                                         <p className="font-semibold">{user.displayName}</p>
-                                        <p className="text-sm text-muted-foreground">{user.year} Year</p>
+                                        <p className="text-sm text-white/70">{user.year} Year</p>
                                     </div>
                                 </div>
                             <ActionButton otherUser={user} />
@@ -225,7 +226,7 @@ export function FindFriendsList() {
                         ))}
                     </div>
                 ) : (
-                    <div className="py-16 text-center text-muted-foreground">
+                    <div className="py-16 text-center text-white/50">
                         <Users className="w-12 h-12 mx-auto mb-4" />
                         <p className="font-semibold">No users found.</p>
                         <p className="text-sm">Either everyone is your friend, or your search came up empty.</p>

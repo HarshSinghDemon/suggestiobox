@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -57,7 +58,7 @@ function FriendItem({ friend }: { friend: FirebaseUser }) {
     };
     
     return (
-        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-accent">
+        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors">
             <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12">
                     <AvatarImage src={friend.photoURL ?? undefined} />
@@ -65,7 +66,7 @@ function FriendItem({ friend }: { friend: FirebaseUser }) {
                 </Avatar>
                 <div>
                     <p className="font-semibold">{friend.displayName}</p>
-                    <p className="text-sm text-muted-foreground">{friend.year} Year</p>
+                    <p className="text-sm text-white/70">{friend.year} Year</p>
                 </div>
             </div>
             <Button size="sm" onClick={handleStartChat} disabled={isLoading}>
@@ -110,11 +111,11 @@ export function FriendsList() {
 
     return (
         <div className="space-y-4">
-            <div className="relative p-4 border-b">
-                <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <div className="relative p-4 border-b border-white/20">
+                <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <Input
                     placeholder="Search friends..."
-                    className="pl-9"
+                    className="pl-9 bg-white/10 border-none focus-visible:ring-primary"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -129,7 +130,7 @@ export function FriendsList() {
                         ))}
                     </div>
                 ) : (
-                    <div className="py-16 text-center text-muted-foreground">
+                    <div className="py-16 text-center text-white/50">
                         <Users className="w-12 h-12 mx-auto mb-4" />
                         <p className="font-semibold">No friends yet.</p>
                         <p className="text-sm">Use the 'Find' tab to add friends.</p>
