@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 import type { Subject, Semester } from "./constants";
 
@@ -8,6 +9,7 @@ export type FirebaseUser = {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  lastSeen?: Timestamp;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';
   publicKey?: string;

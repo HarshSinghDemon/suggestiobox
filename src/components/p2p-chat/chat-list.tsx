@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { MessagesSquare, Search, UserPlus, Bot, Edit, MoreHorizontal, LogOut, Plus, Shield, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -49,12 +49,25 @@ const getInitials = (name: string | null | undefined) => {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2);
 };
 
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning!";
+    if (hour < 18) return "Good Afternoon!";
+    return "Good Evening!";
+};
+
+
 export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'chats' | 'groups'>('chats');
     const router = useRouter();
+    const [greeting, setGreeting] = useState("Good Morning!");
+
+    useEffect(() => {
+        setGreeting(getGreeting());
+    }, []);
 
     const userDocRef = useMemoFirebase(() => {
         if (!currentUser || !firestore) return null;
@@ -116,7 +129,8 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                 participantDetails: participantDetails ? [{
                     id: participantDetails.id,
                     displayName: participantDetails.displayName,
-                    photoURL: participantDetails.photoURL
+                    photoURL: participantDetails.photoURL,
+                    lastSeen: participantDetails.lastSeen,
                 }] : [],
                 isUnread,
             };
@@ -164,7 +178,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     <AvatarFallback>{getInitials(currentUser?.displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="font-semibold text-lg">
-                    <p>Good Morning!</p>
+                    <p>{greeting}</p>
                 </div>
             </div>
              <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
@@ -291,6 +305,10 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                           const link = isGroup ? `/messages/group/${room.id}` : `/messages/${room.id}`;
                           const name = isGroup ? room.name : room.participantDetails?.[0]?.displayName;
                           const photoURL = isGroup ? room.photoURL : room.participantDetails?.[0]?.photoURL;
+                          
+                          const lastSeen = (room as any).participantDetails?.[0]?.lastSeen?.toDate();
+                          const isOnline = lastSeen && (new Date().getTime() - lastSeen.getTime()) < 5 * 60 * 1000;
+
 
                           return (
                               <Link href={link} key={room.id} className="block">
@@ -305,7 +323,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                                   {isGroup ? <Users /> : getInitials(name)}
                                               </AvatarFallback>
                                           </Avatar>
-                                          {!isGroup && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
+                                          {!isGroup && isOnline && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
                                       </div>
                                       <div className="flex-1 overflow-hidden">
                                           <div className="flex items-baseline justify-between">

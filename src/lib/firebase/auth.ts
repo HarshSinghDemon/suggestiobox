@@ -47,6 +47,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string; pu
       displayName: user.displayName,
       photoURL: user.photoURL,
       createdAt: serverTimestamp(),
+      lastSeen: serverTimestamp(),
       role: user.email === 'harshroop100@gmail.com' || user.email === '15mondalatrik@gmail.com' ? 'admin' : 'user',
       friends: [],
       friendRequestsSent: [],
@@ -64,6 +65,7 @@ export const handleUserSignIn = async (user: User, details?: { year?: string; pu
      await updateDoc(userDocRef, {
         displayName: user.displayName,
         photoURL: user.photoURL,
+        lastSeen: serverTimestamp(),
     });
   }
   return false; // Indicates user already exists
@@ -119,6 +121,11 @@ export const signInWithEmail = async (
 
 export const signOut = async (auth: Auth) => {
   try {
+    const db = getFirestore(auth.app);
+    if(auth.currentUser) {
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, { lastSeen: serverTimestamp() });
+    }
     await firebaseSignOut(auth);
   } catch (error) {
     console.error('Error signing out: ', error);
