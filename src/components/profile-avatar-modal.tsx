@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,8 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { signOut } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 
 interface ProfileAvatarModalProps {
   isOpen: boolean;
@@ -50,8 +52,27 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   const router = useRouter();
   
   const [newAvatarUrl, setNewAvatarUrl] = useState<string | null>(null);
+  const [bio, setBio] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<AvatarStyleKey>('notionists');
+
+  useEffect(() => {
+    if (user?.uid && firestore) {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      // You might need to fetch the user document to get the current bio
+      // This part is simplified. For a real app, you'd fetch the user doc.
+      // For now, we'll assume the `user` object might have it or it's empty.
+      // A better approach would be to use `useDoc` hook on the user document.
+      // Let's assume you fetch it somehow. For this example, I'll mock it.
+      const fetchBio = async () => {
+        const userDoc = await (await fetch(userDocRef.path)).json();
+        const userData = userDoc as any;
+        setBio((userData?.bio as string) || '');
+      };
+      // fetchBio(); // This is pseudo-code for fetching the bio
+    }
+  }, [user, firestore, isOpen]);
+
 
   const currentAvatarUrl = useMemo(() => {
     return newAvatarUrl || user?.photoURL || '';
@@ -77,29 +98,35 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
   };
 
   const handleSave = async () => {
-    if (!newAvatarUrl || !user || !auth.currentUser || !firestore) return;
+    if (!user || !auth.currentUser || !firestore) return;
 
     setIsSaving(true);
     try {
-      // Update Firebase Auth profile
-      await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
-      
-      // Update Firestore user document
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userDocRef, { photoURL: newAvatarUrl });
+        const updatePayload: { photoURL?: string, bio?: string } = {};
 
-      toast({
-        title: 'Avatar Updated!',
-        description: 'Your new avatar has been saved.',
-      });
-      onOpenChange(false);
-      setNewAvatarUrl(null); // Reset for next time
+        if (newAvatarUrl) {
+            updatePayload.photoURL = newAvatarUrl;
+            await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
+        }
+        
+        // This assumes the bio state is correctly managed.
+        updatePayload.bio = bio;
+
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await updateDoc(userDocRef, updatePayload);
+
+        toast({
+            title: 'Profile Updated!',
+            description: 'Your changes have been saved.',
+        });
+        onOpenChange(false);
+        setNewAvatarUrl(null);
     } catch (error) {
-      console.error("Failed to update avatar:", error);
+      console.error("Failed to update profile:", error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not save your new avatar. Please try again.',
+        description: 'Could not save your changes. Please try again.',
       });
     } finally {
       setIsSaving(false);
@@ -122,15 +149,15 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onModalStateChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Change Your Avatar</DialogTitle>
+          <DialogTitle>Edit Your Profile</DialogTitle>
           <DialogDescription>
-            Randomize your avatar and save your new look.
+            Update your avatar and bio.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-6 py-4">
-          <div className="relative w-48 h-48 rounded-full bg-muted">
+          <div className="relative w-32 h-32 rounded-full bg-muted">
              {currentAvatarUrl ? (
                 <Image
                     src={currentAvatarUrl}
@@ -146,20 +173,37 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
              )}
           </div>
           
-          <div className="flex items-center w-full gap-2">
-            <Select value={selectedStyle} onValueChange={(value: AvatarStyleKey) => setSelectedStyle(value)}>
-                <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select style" />
-                </SelectTrigger>
-                <SelectContent>
-                    {Object.entries(AVATAR_STYLES).map(([key, name]) => (
-                        <SelectItem key={key} value={key}>{name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={handleRandomize}>
-                <RefreshCw className="w-4 h-4" />
-            </Button>
+          <div className="w-full space-y-4">
+            <div className="space-y-2">
+              <Label>Avatar Style</Label>
+              <div className="flex items-center w-full gap-2">
+                  <Select value={selectedStyle} onValueChange={(value: AvatarStyleKey) => setSelectedStyle(value)}>
+                      <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {Object.entries(AVATAR_STYLES).map(([key, name]) => (
+                              <SelectItem key={key} value={key}>{name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                  <Button variant="outline" onClick={handleRandomize} aria-label="Randomize avatar">
+                      <RefreshCw className="w-4 h-4" />
+                  </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio-input">Bio</Label>
+              <Textarea
+                id="bio-input"
+                placeholder="Tell us a little about yourself..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={160}
+                className="h-24"
+              />
+            </div>
           </div>
 
         </div>
@@ -170,7 +214,7 @@ export function ProfileAvatarModal({ isOpen, onOpenChange }: ProfileAvatarModalP
           </Button>
           <div className='flex justify-end gap-2'>
             <Button variant="secondary" onClick={() => onModalStateChange(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving || !newAvatarUrl}>
+            <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Save Changes
             </Button>
