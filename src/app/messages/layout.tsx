@@ -13,12 +13,12 @@ export default function MessagesLayout({
       <ImageKitProvider>
         <div className="relative h-screen w-full overflow-hidden">
           <Image
-            src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto=format&fit=crop"
-            alt="Purple nebula"
+            src="https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2070&auto=format&fit=crop"
+            alt="Abstract purple and blue background"
             fill
             className="object-cover"
             priority
-            data-ai-hint="space nebula"
+            data-ai-hint="abstract gradient"
           />
           <div className="absolute inset-0 bg-black/50" />
           <main className="absolute inset-0 flex flex-col">{children}</main>
