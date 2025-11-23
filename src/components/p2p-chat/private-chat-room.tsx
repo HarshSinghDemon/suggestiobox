@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -138,7 +137,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
             
             <div className={cn("relative p-3 rounded-2xl max-w-[75%]", 
               isCurrentUserSender 
-                ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
+                ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
                  {reactionsSummary && (
                     <div className={cn("absolute -bottom-3 flex gap-1", isCurrentUserSender ? "right-2" : "left-2")}>
@@ -421,7 +420,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     return (
         <div className="flex flex-col h-full md:p-4">
           <div className="flex flex-col h-full glass-pane md:rounded-2xl">
-            <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20">
+            <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20 glass-pane">
                 <button className="relative" onClick={() => setIsInfoPanelOpen(true)}>
                     <Avatar className="w-12 h-12">
                         <AvatarImage src={otherUser.photoURL ?? undefined} />
@@ -440,9 +439,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                                 <span className="animate-pulse-fast [animation-delay:0.3s]">.</span>
                             </span>
                         ) : isOtherUserOnline ? (
-                            "Active now"
+                            "Online"
                         ) : otherUser.lastSeen ? (
-                             `Active ${formatDistanceToNow(otherUser.lastSeen.toDate(), { addSuffix: true })}`
+                             `Last seen ${formatDistanceToNow(otherUser.lastSeen.toDate(), { addSuffix: true })}`
                         ) : (
                             "Offline"
                         )}
@@ -473,7 +472,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-4 p-6">
                         {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} sessionKey={sessionKey} />)
-                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-white/60 bg-white/10"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted.</p> </div> )}
+                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-white/60 bg-white/10"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted. No one outside of this chat, not even us, can read them.</p> </div> )}
                     </div>
                 </ScrollArea>
             </div>
@@ -485,7 +484,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                     </div>
                 </div>
             )}
-            <footer className="p-4 border-t shrink-0 border-white/20">
+            <footer className="p-4 border-t shrink-0 border-white/20 glass-pane">
                 <form className="relative" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
                      <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base px-5 pr-12 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
@@ -525,4 +524,3 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
-
