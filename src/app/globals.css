@@ -5,9 +5,9 @@
 
 @layer base {
   :root {
-    --background: 263 80% 14%;
+    --background: 263 80% 12%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 17%;
+    --card: 263 80% 15%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -36,9 +36,9 @@
   }
 
   .dark {
-    --background: 263 80% 14%;
+    --background: 263 80% 12%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 17%;
+    --card: 263 80% 15%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -188,5 +188,13 @@
     }
     .backface-hidden {
       backface-visibility: hidden;
+    }
+
+    @keyframes heartbeat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+    }
+    .animate-heartbeat {
+        animation: heartbeat 1.5s ease-in-out infinite;
     }
 }

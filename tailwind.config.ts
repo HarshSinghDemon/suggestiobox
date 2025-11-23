@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -109,6 +110,11 @@ export default {
         'shine': {
           'to': { 'background-position': '200% center' },
         },
+        'heartbeat': {
+            '0%': { transform: 'scale(1)' },
+            '50%': { transform: 'scale(1.3)' },
+            '100%': { transform: 'scale(1)' },
+        },
         'text-shine': {
           '0%': { 'background-position': '0% 50%' },
           '100%': { 'background-position': '200% 50%' },
@@ -139,6 +145,7 @@ export default {
         'pulse-scale': 'pulse-scale 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
         'shine': 'shine 1.5s linear infinite',
+        'heartbeat': 'heartbeat 1.5s ease-in-out infinite',
         'text-shine': 'text-shine 2.5s linear infinite',
         'wave': 'wave 20s ease-in-out infinite',
         'spin-slow': 'spin-slow 4s linear infinite',
