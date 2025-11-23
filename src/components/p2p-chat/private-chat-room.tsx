@@ -476,7 +476,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 <ScrollArea className="h-full" viewportRef={viewportRef}>
                     <div className="flex flex-col gap-4 p-6">
                         {allMessages.length > 0 ? allMessages.map(msg => <ChatMessage key={msg.id} message={msg} isCurrentUserSender={msg.senderId === currentUser?.uid} author={otherUser} onReact={handleReaction} sessionKey={sessionKey} />)
-                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-white/60 bg-white/10"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted. No one outside of this chat, not even us, can read them.</p> </div> )}
+                        : ( <div className="flex items-center justify-center gap-2 p-4 my-8 text-sm text-center rounded-md text-white/60 bg-black/20"> <Lock className="w-4 h-4 shrink-0" /> <p>Messages are end-to-end encrypted. No one outside of this chat, not even us, can read them.</p> </div> )}
                     </div>
                 </ScrollArea>
             </div>
@@ -490,7 +490,7 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             )}
             <footer className="p-4 border-t shrink-0 border-white/10 glass-pane">
                 <form className="relative" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
-                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base px-5 pr-12 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
+                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base px-5 pr-12 rounded-full bg-black/20 focus-visible:ring-primary border-none" />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                         <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey} className="rounded-full bg-primary w-9 h-9">
                           {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5"/>}

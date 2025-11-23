@@ -171,7 +171,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
 
     return (
       <div className="h-full w-full flex flex-col p-4 md:p-6 glass-pane md:rounded-r-2xl">
-        <header className="flex items-center justify-between pb-4 border-b border-white/20">
+        <header className="flex items-center justify-between pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
                 <Avatar>
                     <AvatarImage src={currentUser?.photoURL ?? undefined} />
@@ -191,7 +191,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
                 <Input
                     placeholder="Search..."
-                    className="pl-9 h-10 rounded-full bg-white/10 border-none focus-visible:ring-primary"
+                    className="pl-9 h-10 rounded-full bg-black/20 border-none focus-visible:ring-primary"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -200,7 +200,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
 
         <Dialog>
             <DialogTrigger asChild>
-                 <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow cursor-pointer hover:bg-white/20 transition-colors">
+                 <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-black/20 text-emerald-300 animate-pulse-slow cursor-pointer hover:bg-black/30 transition-colors">
                     <Shield className="w-3.5 h-3.5" />
                     <span>End-to-End Encrypted</span>
                 </div>
@@ -222,7 +222,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     <p>
                         This means only you and the person you're talking to can read what's sent. No one in between, not even us, can decipher your messages.
                     </p>
-                    <p className="p-3 text-center border rounded-lg bg-white/5 border-white/10">
+                    <p className="p-3 text-center border rounded-lg bg-black/20 border-white/10">
                         <span className="font-semibold text-white">"Don't worry, even the developer can't see your messages. Not even the database knows what you're up to! It's your little secret."</span> 😉
                     </p>
                 </div>
@@ -230,7 +230,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
         </Dialog>
 
 
-        <div className="relative flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
+        <div className="relative flex items-center gap-1 p-1 my-2 rounded-full bg-black/20 backdrop-blur-sm">
             <div className={cn(
                 "absolute left-1 top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white/20 rounded-full transition-transform duration-300 ease-in-out",
                 "transform",
@@ -367,9 +367,9 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     </DialogTrigger>
                     <DialogContent className="p-0 border-0 max-w-md glass-pane">
                         <Tabs defaultValue="friends" className="w-full">
-                            <DialogHeader className="p-4 border-b border-white/20">
+                            <DialogHeader className="p-4 border-b border-white/10">
                                 <DialogTitle>Manage Friends</DialogTitle>
-                                <TabsList className="grid w-full grid-cols-2 mt-2 bg-white/10">
+                                <TabsList className="grid w-full grid-cols-2 mt-2 bg-black/20">
                                     <TabsTrigger value="friends">My Friends</TabsTrigger>
                                     <TabsTrigger value="find">Find People</TabsTrigger>
                                 </TabsList>
