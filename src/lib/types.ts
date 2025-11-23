@@ -12,6 +12,7 @@ export type FirebaseUser = {
   role?: 'user' | 'admin';
   publicKey?: string;
   chatRoomIds?: string[];
+  groupChatRoomIds?: string[];
   friends?: string[];
   friendRequestsSent?: string[];
   friendRequestsReceived?: string[];
@@ -22,6 +23,7 @@ export type FirebaseUser = {
 export type ChatRoom = {
     id: string;
     participants: string[];
+    createdAt: Timestamp;
     sessionKey_b64: string;
     lastMessage?: {
         text: string;
@@ -40,7 +42,26 @@ export type ChatRoom = {
         displayName: string | null;
         photoURL: string | null;
     }[];
+    isUnread?: boolean;
 };
+
+export type GroupChatRoom = {
+    id: string;
+    name: string;
+    description?: string;
+    photoURL?: string;
+    participants: string[];
+    admins: string[];
+    createdBy: string;
+    createdAt: Timestamp;
+    lastMessage?: {
+        text: string;
+        timestamp: Timestamp;
+        senderId: string;
+        senderName: string;
+    };
+    isUnread?: boolean;
+}
 
 export type Vote = {
     userId: string;

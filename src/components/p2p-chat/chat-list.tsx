@@ -4,12 +4,12 @@
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where, orderBy, doc } from "firebase/firestore";
-import type { ChatRoom, FirebaseUser } from "@/lib/types";
+import type { ChatRoom, FirebaseUser, GroupChatRoom } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, Bot, Edit, MoreHorizontal, LogOut, Plus, Shield } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, Bot, Edit, MoreHorizontal, LogOut, Plus, Shield, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -62,16 +62,27 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { data: userData, isLoading: isLoadingUser } = useDoc<FirebaseUser>(userDocRef);
 
     const chatRoomIds = userData?.chatRoomIds || [];
+    const groupChatRoomIds = userData?.groupChatRoomIds || [];
 
     const chatRoomsQuery = useMemoFirebase(() => {
         if (!firestore || chatRoomIds.length === 0) return null;
         return query(
             collection(firestore, 'chatRooms'),
             where('__name__', 'in', chatRoomIds),
-            orderBy('lastMessage.timestamp', 'desc')
         );
     }, [firestore, chatRoomIds]);
+
+    const groupChatRoomsQuery = useMemoFirebase(() => {
+        if (!firestore || groupChatRoomIds.length === 0) return null;
+        return query(
+            collection(firestore, 'groupChatRooms'),
+            where('__name__', 'in', groupChatRoomIds),
+        );
+    }, [firestore, groupChatRoomIds]);
+
+
     const { data: chatRooms, isLoading: isLoadingRooms } = useCollection<ChatRoom>(chatRoomsQuery);
+    const { data: groupChatRooms, isLoading: isLoadingGroupRooms } = useCollection<GroupChatRoom>(groupChatRoomsQuery);
 
     const allParticipantIds = useMemo(() => {
         if (!chatRooms) return [];
@@ -110,20 +121,38 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
             };
         }).filter(room => room.participantDetails.length > 0);
     }, [chatRooms, currentUser, usersMap]);
+    
+    const sortedChats = useMemo(() => {
+        const allChats = [
+            ...(enrichedChatRooms || []),
+            ...(groupChatRooms || [])
+        ];
+
+        return allChats.sort((a, b) => {
+            const timeA = a.lastMessage?.timestamp?.toMillis() || a.createdAt?.toMillis() || 0;
+            const timeB = b.lastMessage?.timestamp?.toMillis() || b.createdAt?.toMillis() || 0;
+            return timeB - timeA;
+        });
+
+    }, [enrichedChatRooms, groupChatRooms]);
 
     const filteredChatRooms = useMemo(() => {
         const pookieName = "Pookie (AI)";
         const pookieVisible = pookieName.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const userChats = enrichedChatRooms.filter(room => 
-            room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const userChats = sortedChats.filter(room => {
+            if ('name' in room) { // It's a group chat
+                return room.name.toLowerCase().includes(searchQuery.toLowerCase());
+            }
+            // It's a private chat
+            return room.participantDetails[0]?.displayName?.toLowerCase().includes(searchQuery.toLowerCase());
+        });
 
         return { userChats, pookieVisible };
 
-    }, [enrichedChatRooms, searchQuery]);
-
-    const isLoading = isLoadingUser || isLoadingRooms || (allParticipantIds.length > 0 && isLoadingUsers);
+    }, [sortedChats, searchQuery]);
+    
+    const isLoading = isLoadingUser || isLoadingRooms || isLoadingGroupRooms || (allParticipantIds.length > 0 && isLoadingUsers);
 
     return (
       <div className="h-full w-full flex flex-col p-4 md:p-6 glass-pane md:rounded-r-2xl">
@@ -156,7 +185,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
 
         <Dialog>
             <DialogTrigger asChild>
-                <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow cursor-pointer hover:bg-white/20 transition-colors">
+                 <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow cursor-pointer hover:bg-white/20 transition-colors">
                     <Shield className="w-3.5 h-3.5" />
                     <span>End-to-End Encrypted</span>
                 </div>
@@ -186,17 +215,18 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
         </Dialog>
 
 
-        <div className="flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
+         <div className="relative flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
+            <div className={cn(
+                "absolute left-1 top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white/20 rounded-full transition-transform duration-300 ease-in-out",
+                "transform " // Add your logic here to move it, e.g., 'translateX(0)' or 'translateX(100%)'
+            )}></div>
             <Button 
               variant={'ghost'} 
-              className={cn(
-                "rounded-full flex-1 transition-all duration-300", 
-                !selectedRoomId && "bg-white/20 shadow-md"
-              )}
+              className="z-10 rounded-full flex-1 transition-all duration-300"
             >
               Chats
             </Button>
-            <Button variant="ghost" className="rounded-full flex-1 text-white/60">Groups</Button>
+            <Button variant="ghost" className="z-10 rounded-full flex-1 text-white/60">Groups</Button>
         </div>
 
         <div className="flex-1 min-h-0 -mr-4">
@@ -226,24 +256,29 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                       )}
                       {filteredChatRooms.userChats.length > 0 ? (
                           filteredChatRooms.userChats.map(room => {
-                              const otherUser = room.participantDetails?.[0];
-                              if (!otherUser) return null;
+                              const isGroup = 'name' in room;
+                              const link = isGroup ? `/messages/group/${room.id}` : `/messages/${room.id}`;
+                              const name = isGroup ? room.name : room.participantDetails?.[0]?.displayName;
+                              const photoURL = isGroup ? room.photoURL : room.participantDetails?.[0]?.photoURL;
+
                               return (
-                                  <Link href={`/messages/${room.id}`} key={room.id} className="block">
+                                  <Link href={link} key={room.id} className="block">
                                       <div className={cn(
                                           "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-white/20",
                                           selectedRoomId === room.id && "bg-white/20"
                                       )}>
                                           <div className="relative">
                                               <Avatar className="w-12 h-12">
-                                                  <AvatarImage src={otherUser.photoURL ?? undefined} />
-                                                  <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
+                                                  <AvatarImage src={photoURL ?? undefined} />
+                                                  <AvatarFallback>
+                                                      {isGroup ? <Users /> : getInitials(name)}
+                                                  </AvatarFallback>
                                               </Avatar>
-                                              <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>
+                                              {!isGroup && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
                                           </div>
                                           <div className="flex-1 overflow-hidden">
                                               <div className="flex items-baseline justify-between">
-                                                  <p className="font-semibold truncate">{otherUser.displayName}</p>
+                                                  <p className="font-semibold truncate">{name}</p>
                                                   {room.lastMessage?.timestamp && (
                                                       <p className="text-xs text-white/50 self-start shrink-0">
                                                           {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true, includeSeconds: true }).replace('about ','').replace('less than a minute ago', 'now')}
@@ -255,7 +290,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                                                       {room.lastMessage ? (
                                                           (room.lastMessage.senderId === currentUser?.uid ? "You: " : "") + 
                                                           (room.lastMessage.text || "Encrypted message")
-                                                      ) : "No messages yet."}
+                                                      ) : isGroup ? "No messages yet." : "Chat not started."}
                                                   </p>
                                                   {room.isUnread && (
                                                       <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary shrink-0">
@@ -278,20 +313,20 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
               )}
           </ScrollArea>
         </div>
-         <div className="pt-4 mt-auto">
+         <div className="pt-4 mt-auto flex gap-2">
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full h-12 rounded-full">
-                        <Plus className="w-5 h-5 mr-2"/>
-                        New Chat
+                    <Button variant="secondary" className="flex-1 h-12 rounded-full">
+                        <UserPlus className="w-5 h-5 mr-2"/>
+                        Add Friend
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="p-0 border-0 max-w-md glass-pane">
                     <Tabs defaultValue="friends" className="w-full">
                         <DialogHeader className="p-4 border-b border-white/20">
-                            <DialogTitle>Start a new chat</DialogTitle>
+                            <DialogTitle>Manage Friends</DialogTitle>
                             <TabsList className="grid w-full grid-cols-2 mt-2 bg-white/10">
-                                <TabsTrigger value="friends">Friends</TabsTrigger>
+                                <TabsTrigger value="friends">My Friends</TabsTrigger>
                                 <TabsTrigger value="find">Find People</TabsTrigger>
                             </TabsList>
                         </DialogHeader>
@@ -304,6 +339,10 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                     </Tabs>
                 </DialogContent>
             </Dialog>
+            <Button variant="secondary" className="h-12 rounded-full flex-1" onClick={() => router.push('/messages/new-group')}>
+                <Users className="w-5 h-5 mr-2"/>
+                New Group
+            </Button>
         </div>
       </div>
     )
