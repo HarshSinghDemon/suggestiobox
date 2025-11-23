@@ -53,6 +53,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<'chats' | 'groups'>('chats');
     const router = useRouter();
 
     const userDocRef = useMemoFirebase(() => {
@@ -215,19 +216,28 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
         </Dialog>
 
 
-         <div className="relative flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
+        <div className="relative flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
             <div className={cn(
                 "absolute left-1 top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white/20 rounded-full transition-transform duration-300 ease-in-out",
-                "transform " // Add your logic here to move it, e.g., 'translateX(0)' or 'translateX(100%)'
+                "transform",
+                 activeTab === 'groups' ? "translateX(100%)" : "translateX(0)"
             )}></div>
             <Button 
               variant={'ghost'} 
-              className="z-10 rounded-full flex-1 transition-all duration-300"
+              className={cn("z-10 rounded-full flex-1 transition-all duration-300", activeTab === 'chats' ? 'text-white' : 'text-white/60')}
+              onClick={() => setActiveTab('chats')}
             >
               Chats
             </Button>
-            <Button variant="ghost" className="z-10 rounded-full flex-1 text-white/60">Groups</Button>
+            <Button 
+                variant="ghost" 
+                className={cn("z-10 rounded-full flex-1 transition-all duration-300", activeTab === 'groups' ? 'text-white' : 'text-white/60')}
+                onClick={() => setActiveTab('groups')}
+            >
+                Groups
+            </Button>
         </div>
+
 
         <div className="flex-1 min-h-0 -mr-4">
           <ScrollArea className="h-full pr-4">
@@ -235,7 +245,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                   <ChatListSkeleton />
               ) : (
                   <div className="space-y-1">
-                      {filteredChatRooms.pookieVisible && (
+                      {activeTab === 'chats' && filteredChatRooms.pookieVisible && (
                            <Link href="/messages/pookie-ai" className="block">
                               <div className={cn(
                                   "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-white/20",
@@ -254,95 +264,113 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                               </div>
                           </Link>
                       )}
-                      {filteredChatRooms.userChats.length > 0 ? (
-                          filteredChatRooms.userChats.map(room => {
-                              const isGroup = 'name' in room;
-                              const link = isGroup ? `/messages/group/${room.id}` : `/messages/${room.id}`;
-                              const name = isGroup ? room.name : room.participantDetails?.[0]?.displayName;
-                              const photoURL = isGroup ? room.photoURL : room.participantDetails?.[0]?.photoURL;
+                      
+                      {activeTab === 'chats' && filteredChatRooms.userChats.filter(chat => !('name' in chat)).length === 0 && !filteredChatRooms.pookieVisible && (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-white/50">
+                            <MessagesSquare className="w-12 h-12 mx-auto" />
+                            <p className="font-semibold">No private chats yet.</p>
+                            <p className="text-xs">Use the 'Add Friend' button below to start a conversation.</p>
+                        </div>
+                      )}
+                      
+                      {activeTab === 'groups' && filteredChatRooms.userChats.filter(chat => 'name' in chat).length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-white/50">
+                            <Users className="w-12 h-12 mx-auto" />
+                            <p className="font-semibold">No groups found.</p>
+                            <p className="text-xs">Use the 'New Group' button below to create one.</p>
+                        </div>
+                      )}
 
-                              return (
-                                  <Link href={link} key={room.id} className="block">
-                                      <div className={cn(
-                                          "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-white/20",
-                                          selectedRoomId === room.id && "bg-white/20"
-                                      )}>
-                                          <div className="relative">
-                                              <Avatar className="w-12 h-12">
-                                                  <AvatarImage src={photoURL ?? undefined} />
-                                                  <AvatarFallback>
-                                                      {isGroup ? <Users /> : getInitials(name)}
-                                                  </AvatarFallback>
-                                              </Avatar>
-                                              {!isGroup && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
-                                          </div>
-                                          <div className="flex-1 overflow-hidden">
-                                              <div className="flex items-baseline justify-between">
-                                                  <p className="font-semibold truncate">{name}</p>
-                                                  {room.lastMessage?.timestamp && (
-                                                      <p className="text-xs text-white/50 self-start shrink-0">
-                                                          {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true, includeSeconds: true }).replace('about ','').replace('less than a minute ago', 'now')}
-                                                      </p>
-                                                  )}
-                                              </div>
-                                              <div className="flex items-center justify-between">
-                                                  <p className={cn("text-sm truncate", room.isUnread ? "text-white font-medium" : "text-white/60")}>
-                                                      {room.lastMessage ? (
-                                                          (room.lastMessage.senderId === currentUser?.uid ? "You: " : "") + 
-                                                          (room.lastMessage.text || "Encrypted message")
-                                                      ) : isGroup ? "No messages yet." : "Chat not started."}
+                      {filteredChatRooms.userChats.map(room => {
+                          const isGroup = 'name' in room;
+                          
+                          if ((activeTab === 'chats' && isGroup) || (activeTab === 'groups' && !isGroup)) {
+                              return null;
+                          }
+
+                          const link = isGroup ? `/messages/group/${room.id}` : `/messages/${room.id}`;
+                          const name = isGroup ? room.name : room.participantDetails?.[0]?.displayName;
+                          const photoURL = isGroup ? room.photoURL : room.participantDetails?.[0]?.photoURL;
+
+                          return (
+                              <Link href={link} key={room.id} className="block">
+                                  <div className={cn(
+                                      "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-white/20",
+                                      selectedRoomId === room.id && "bg-white/20"
+                                  )}>
+                                      <div className="relative">
+                                          <Avatar className="w-12 h-12">
+                                              <AvatarImage src={photoURL ?? undefined} />
+                                              <AvatarFallback>
+                                                  {isGroup ? <Users /> : getInitials(name)}
+                                              </AvatarFallback>
+                                          </Avatar>
+                                          {!isGroup && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
+                                      </div>
+                                      <div className="flex-1 overflow-hidden">
+                                          <div className="flex items-baseline justify-between">
+                                              <p className="font-semibold truncate">{name}</p>
+                                              {room.lastMessage?.timestamp && (
+                                                  <p className="text-xs text-white/50 self-start shrink-0">
+                                                      {formatDistanceToNow(room.lastMessage.timestamp.toDate(), { addSuffix: true, includeSeconds: true }).replace('about ','').replace('less than a minute ago', 'now')}
                                                   </p>
-                                                  {room.isUnread && (
-                                                      <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary shrink-0">
-                                                          1
-                                                      </div>
-                                                  )}
-                                              </div>
+                                              )}
+                                          </div>
+                                          <div className="flex items-center justify-between">
+                                              <p className={cn("text-sm truncate", room.isUnread ? "text-white font-medium" : "text-white/60")}>
+                                                  {room.lastMessage ? (
+                                                      (room.lastMessage.senderId === currentUser?.uid ? "You: " : "") + 
+                                                      (room.lastMessage.text || "Encrypted message")
+                                                  ) : isGroup ? "No messages yet." : "Chat not started."}
+                                              </p>
+                                              {room.isUnread && (
+                                                  <div className="flex items-center justify-center w-5 h-5 text-xs text-white rounded-full bg-primary shrink-0">
+                                                      1
+                                                  </div>
+                                              )}
                                           </div>
                                       </div>
-                                  </Link>
-                              )
-                          })
-                      ) : !filteredChatRooms.pookieVisible ? (
-                           <div className="flex flex-col items-center justify-center h-full gap-2 p-8 text-center text-white/50">
-                              <MessagesSquare className="w-12 h-12 mx-auto" />
-                              <p className="font-semibold">No conversations found.</p>
-                          </div>
-                      ) : null}
+                                  </div>
+                              </Link>
+                          )
+                      })}
                   </div>
               )}
           </ScrollArea>
         </div>
          <div className="pt-4 mt-auto flex gap-2">
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="secondary" className="flex-1 h-12 rounded-full">
-                        <UserPlus className="w-5 h-5 mr-2"/>
-                        Add Friend
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="p-0 border-0 max-w-md glass-pane">
-                    <Tabs defaultValue="friends" className="w-full">
-                        <DialogHeader className="p-4 border-b border-white/20">
-                            <DialogTitle>Manage Friends</DialogTitle>
-                            <TabsList className="grid w-full grid-cols-2 mt-2 bg-white/10">
-                                <TabsTrigger value="friends">My Friends</TabsTrigger>
-                                <TabsTrigger value="find">Find People</TabsTrigger>
-                            </TabsList>
-                        </DialogHeader>
-                        <TabsContent value="friends" className="m-0">
-                            <FriendsList />
-                        </TabsContent>
-                        <TabsContent value="find" className="m-0">
-                            <FindFriendsList />
-                        </TabsContent>
-                    </Tabs>
-                </DialogContent>
-            </Dialog>
-            <Button variant="secondary" className="h-12 rounded-full flex-1" onClick={() => router.push('/messages/new-group')}>
-                <Users className="w-5 h-5 mr-2"/>
-                New Group
-            </Button>
+            {activeTab === 'chats' ? (
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="secondary" className="flex-1 h-12 rounded-full">
+                            <UserPlus className="w-5 h-5 mr-2"/>
+                            Add Friend
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="p-0 border-0 max-w-md glass-pane">
+                        <Tabs defaultValue="friends" className="w-full">
+                            <DialogHeader className="p-4 border-b border-white/20">
+                                <DialogTitle>Manage Friends</DialogTitle>
+                                <TabsList className="grid w-full grid-cols-2 mt-2 bg-white/10">
+                                    <TabsTrigger value="friends">My Friends</TabsTrigger>
+                                    <TabsTrigger value="find">Find People</TabsTrigger>
+                                </TabsList>
+                            </DialogHeader>
+                            <TabsContent value="friends" className="m-0">
+                                <FriendsList />
+                            </TabsContent>
+                            <TabsContent value="find" className="m-0">
+                                <FindFriendsList />
+                            </TabsContent>
+                        </Tabs>
+                    </DialogContent>
+                </Dialog>
+            ) : (
+                <Button variant="secondary" className="h-12 rounded-full flex-1" onClick={() => router.push('/messages/new-group')}>
+                    <Users className="w-5 h-5 mr-2"/>
+                    New Group
+                </Button>
+            )}
         </div>
       </div>
     )
