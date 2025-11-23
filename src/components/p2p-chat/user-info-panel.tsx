@@ -89,10 +89,13 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                     <h3 className="text-xl font-bold">{otherUser.displayName}</h3>
                     <p className="text-sm text-muted-foreground">{otherUser.year} Year</p>
                 </div>
-                {otherUser.bio && (
-                    <p className="text-sm text-center text-white/80 italic">"{otherUser.bio}"</p>
-                )}
             </div>
+
+            {otherUser.bio && (
+                 <div className="p-3 my-6 text-center border rounded-lg bg-white/5 border-white/10">
+                    <p className="text-sm italic text-white/80">"{otherUser.bio}"</p>
+                </div>
+            )}
 
             <Separator className="my-6 bg-white/20" />
             
@@ -108,15 +111,6 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                     </Button>
                 </div>
                  <p className="mt-2 text-xs text-white/50">This key is used for End-to-End Encryption. Only you and {otherUser.displayName} can read your messages.</p>
-            </div>
-            
-            <Separator className="my-6 bg-white/20" />
-
-            <div>
-                <h4 className="mb-4 font-semibold">Shared Files</h4>
-                <div className="p-8 text-center border-2 border-dashed rounded-lg text-white/60 border-white/20">
-                    <p>No files shared yet.</p>
-                </div>
             </div>
             
              {otherUser.id !== currentUser?.uid && (
