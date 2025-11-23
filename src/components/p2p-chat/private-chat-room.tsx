@@ -18,6 +18,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
 import { useImageKit } from "@/lib/imagekit/imagekit-provider";
 import Image from "next/image";
+import Markdown from "react-markdown";
 
 type DecryptedMessage = {
     id: string;
@@ -111,7 +112,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </Avatar>
              )}
             
-            <div className={cn("relative p-3 rounded-3xl max-w-[75%]", 
+            <div className={cn("relative p-3 rounded-2xl max-w-[75%]", 
               isCurrentUserSender 
                 ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
