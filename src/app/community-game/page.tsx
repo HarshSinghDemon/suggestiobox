@@ -1,8 +1,7 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -77,6 +76,13 @@ const games = [
         href: '/community-games/murder-mafia',
         icon: Bomb,
         variant: 'fiery',
+    },
+    {
+        name: 'Ninja\'s Blade',
+        description: 'Slice through your enemies in this action-packed game.',
+        href: '/community-games/ninjas-blade',
+        icon: Swords,
+        variant: 'ocean',
     },
     {
         name: 'Rock Paper Scissors (2P)',
