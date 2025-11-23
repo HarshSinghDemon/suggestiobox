@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { Assignment, Vote } from '@/lib/types';
+import { doc, deleteDoc, updateDoc, increment, arrayUnion, arrayRemove, runTransaction } from 'firebase/firestore';
+import type { Assignment, FirebaseUser } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -14,7 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Eye, Trash2, AlertCircle, ArrowUp, ArrowDown, Pin, PinOff } from 'lucide-react';
+import { Download, ArrowLeft, Eye, Trash2, AlertCircle, Pin, PinOff, Coins } from 'lucide-react';
 import { FileIcon } from '@/components/browse/file-icon';
 import { SubjectIcon } from '@/components/browse/subject-icon';
 import Link from 'next/link';
@@ -34,8 +35,9 @@ import { useRouter } from 'next/navigation';
 import { deleteFileFromSupabase } from '@/lib/supabase/storage';
 import { CommentSection } from './comment-section';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
-import { cn } from '@/lib/utils';
 import { StudyBuddy } from '../ai/study-buddy';
+import { useState } from 'react';
+import { Input } from '../ui/input';
 
 function AssignmentDetailsSkeleton() {
   return (
@@ -72,6 +74,7 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
   const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [investmentAmount, setInvestmentAmount] = useState<number | string>("");
 
   const assignmentRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'assignments', assignmentId) : null),
@@ -81,36 +84,50 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
   const { data: assignment, isLoading } = useDoc<Assignment>(assignmentRef);
   
   const userProfileRef = useMemoFirebase(() => (firestore && user) ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
-  const { data: userProfile } = useDoc(userProfileRef);
+  const { data: userProfile } = useDoc<FirebaseUser>(userProfileRef);
 
   const isOwner = user && assignment && user.uid === assignment.userId;
   const canDeleteFile = !!(supabaseUrl && supabaseAnonKey);
   
-  const userVote = assignment?.votes?.find((v: Vote) => v.userId === user?.uid)?.type;
-  const upvotes = assignment?.votes?.filter((v: Vote) => v.type === 'up').length ?? 0;
-  const downvotes = assignment?.votes?.filter((v: Vote) => v.type === 'down').length ?? 0;
+  const totalInvestment = assignment?.investments?.reduce((acc, inv) => acc + inv.amount, 0) ?? 0;
+  const userInvestment = assignment?.investments?.find(inv => inv.userId === user?.uid)?.amount ?? 0;
   const isPinned = userProfile?.pinnedAssignments?.includes(assignmentId);
   
-  const handleVote = async (type: 'up' | 'down') => {
-    if (!user || !assignmentRef) return;
+  const handleInvestment = async () => {
+    if (!user || !firestore || !assignmentRef || !userProfileRef) return;
+    const amount = Number(investmentAmount);
 
-    const existingVote = assignment?.votes?.find((v: Vote) => v.userId === user.uid);
-    let newVotes = assignment?.votes ? [...assignment.votes] : [];
-
-    if (existingVote) {
-      if (existingVote.type === type) {
-        // User is clicking the same button again, remove vote
-        newVotes = newVotes.filter(v => v.userId !== user.uid);
-      } else {
-        // User is changing vote
-        newVotes = newVotes.map(v => v.userId === user.uid ? { ...v, type: type } : v);
-      }
-    } else {
-      // New vote
-      newVotes.push({ userId: user.uid, type });
+    if (isNaN(amount) || amount <= 0) {
+        toast({ variant: 'destructive', title: 'Invalid amount', description: 'Please enter a positive number.' });
+        return;
     }
     
-    await updateDoc(assignmentRef, { votes: newVotes });
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const userDoc = await transaction.get(userProfileRef);
+            const assignmentDoc = await transaction.get(assignmentRef);
+
+            if (!userDoc.exists() || !assignmentDoc.exists()) {
+                throw new Error("User or Assignment not found.");
+            }
+
+            const currentUserCoins = userDoc.data()?.coins ?? 0;
+            if (currentUserCoins < amount) {
+                throw new Error("You don't have enough coins to make this investment.");
+            }
+
+            const newInvestments = (assignmentDoc.data().investments || []).filter((inv: any) => inv.userId !== user.uid);
+            newInvestments.push({ userId: user.uid, amount: (userInvestment + amount) });
+
+            transaction.update(userProfileRef, { coins: increment(-amount) });
+            transaction.update(assignmentRef, { investments: newInvestments });
+        });
+        toast({ title: 'Investment Successful!', description: `You invested ${amount} coins.` });
+        setInvestmentAmount("");
+    } catch (error: any) {
+        console.error("Investment failed:", error);
+        toast({ variant: 'destructive', title: 'Investment Failed', description: error.message });
+    }
   }
 
   const handlePin = async () => {
@@ -252,21 +269,42 @@ export function AssignmentDetails({ assignmentId, supabaseUrl, supabaseAnonKey }
             </div>
         )}
         
-        <div className="flex items-center gap-4 pt-6 mt-6 border-t">
-            <div className="flex items-center gap-1">
-                <Button variant={userVote === 'up' ? 'default' : 'outline'} size="sm" onClick={() => handleVote('up')} disabled={!user}>
-                    <ArrowUp className="w-4 h-4 mr-2" /> Upvote ({upvotes})
-                </Button>
-                 <Button variant={userVote === 'down' ? 'destructive' : 'outline'} size="sm" onClick={() => handleVote('down')} disabled={!user}>
-                    <ArrowDown className="w-4 h-4 mr-2" /> Downvote ({downvotes})
-                </Button>
+         <div className="pt-6 mt-6 border-t">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h4 className="text-lg font-semibold">Idea Stock</h4>
+              <p className="text-sm text-muted-foreground">Total coins invested in this idea.</p>
+               <div className="flex items-center gap-2 mt-2 text-2xl font-bold text-primary">
+                <Coins className="w-6 h-6" />
+                <span>{totalInvestment.toLocaleString()}</span>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handlePin} disabled={!user}>
-                {isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
-                {isPinned ? 'Unpin' : 'Pin'}
-            </Button>
+            
+            <div className="flex flex-col gap-2 p-4 rounded-lg bg-muted md:w-1/2">
+                <div className="flex items-center justify-between text-sm">
+                    <span>Your Coins: <span className="font-bold text-amber-400">{userProfile?.coins?.toLocaleString() ?? 0}</span></span>
+                    <span>Your Investment: <span className="font-bold text-green-400">{userInvestment.toLocaleString()}</span></span>
+                </div>
+                 <div className="flex gap-2">
+                    <Input 
+                        type="number" 
+                        placeholder="Amount" 
+                        min="1"
+                        value={investmentAmount}
+                        onChange={e => setInvestmentAmount(e.target.value)}
+                        disabled={!user}
+                    />
+                    <Button onClick={handleInvestment} disabled={!user || !investmentAmount}>
+                        Pledge Coins
+                    </Button>
+                 </div>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={handlePin} disabled={!user} className="mt-4">
+              {isPinned ? <PinOff className="w-4 h-4 mr-2" /> : <Pin className="w-4 h-4 mr-2" />}
+              {isPinned ? 'Unpin' : 'Pin'}
+          </Button>
         </div>
-
 
         <CommentSection collectionPath={['assignments', assignmentId, 'comments']} />
 

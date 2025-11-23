@@ -24,6 +24,10 @@
             "type": "string",
             "description": "A short bio about the user."
         },
+        "coins": {
+            "type": "number",
+            "description": "The amount of virtual currency the user has."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -194,6 +198,18 @@
           "type": "string",
           "description": "Date and time when the suggestion was uploaded.",
           "format": "date-time"
+        },
+        "investments": {
+            "type": "array",
+            "description": "An array of investment objects from users.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "userId": { "type": "string" },
+                    "amount": { "type": "number" }
+                },
+                "required": ["userId", "amount"]
+            }
         }
       },
       "required": [
@@ -242,6 +258,18 @@
           "type": "string",
           "description": "Date and time when the assignment was uploaded.",
           "format": "date-time"
+        },
+        "investments": {
+            "type": "array",
+            "description": "An array of investment objects from users.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "userId": { "type": "string" },
+                    "amount": { "type": "number" }
+                },
+                "required": ["userId", "amount"]
+            }
         }
       },
       "required": [
