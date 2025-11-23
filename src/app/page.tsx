@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronRight, Gamepad2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FloatingAvatars } from '@/components/home/floating-avatars';
 
 const WavyBackground = dynamic(() => import('@/components/wavy-background').then(mod => mod.WavyBackground), {
   loading: () => <Skeleton className="absolute inset-0" />,
@@ -15,7 +16,8 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] text-center px-4 overflow-hidden relative">
+        <FloatingAvatars />
         <WavyBackground 
           className="w-full max-w-4xl mx-auto"
           waveWidth={60}
