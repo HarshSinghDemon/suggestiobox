@@ -5,9 +5,9 @@
 
 @layer base {
   :root {
-    --background: 263 80% 11%;
+    --background: 263 80% 12%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 14%;
+    --card: 263 80% 15%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -36,9 +36,9 @@
   }
 
   .dark {
-    --background: 263 80% 11%;
+    --background: 263 80% 12%;
     --foreground: 210 40% 98%;
-    --card: 263 80% 14%;
+    --card: 263 80% 15%;
     --card-foreground: 210 40% 98%;
     --popover: 263 80% 11%;
     --popover-foreground: 210 40% 98%;
@@ -75,7 +75,7 @@
   }
   .glass-pane {
     @apply bg-black/20 backdrop-blur-lg;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid hsl(var(--border) / 0.5);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   }
 }
@@ -83,23 +83,110 @@
 
 @layer utilities {
     @keyframes float {
-        0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-        25% { transform: translateY(20px) translateX(-30px) rotate(5deg); }
-        50% { transform: translateY(-20px) translateX(10px) rotate(-5deg); }
-        75% { transform: translateY(10px) translateX(30px) rotate(10deg); }
-        100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
     }
     @keyframes float-reverse {
-        0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
-        25% { transform: translateY(-20px) translateX(30px) rotate(-5deg); }
-        50% { transform: translateY(20px) translateX(-10px) rotate(5deg); }
-        75% { transform: translateY(-10px) translateX(-30px) rotate(-10deg); }
-        100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(20px); }
+        100% { transform: translateY(0px); }
     }
     .animate-float {
         animation: float 30s ease-in-out infinite;
     }
     .animate-float-reverse {
         animation: float-reverse 30s ease-in-out infinite;
+    }
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-fade-in-up {
+        animation: fade-in-up 0.5s ease-out forwards;
+    }
+
+    @keyframes fade-in-scale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    .animate-fade-in-scale {
+      animation: fade-in-scale 0.5s ease-out forwards;
+    }
+    
+    .animation-delay-200 { animation-delay: 200ms; }
+    .animation-delay-400 { animation-delay: 400ms; }
+    .animation-delay-600 { animation-delay: 600ms; }
+
+    @keyframes sound-wave {
+      0%, 100% { transform: scaleY(0.5); }
+      50% { transform: scaleY(1); }
+    }
+    .animate-sound-wave {
+      animation: sound-wave 1.2s ease-in-out infinite;
+    }
+    
+    @keyframes music-glow {
+      0%, 100% { filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.8)); }
+      50% { filter: drop-shadow(0 0 5px hsl(var(--primary))); }
+    }
+    .animate-music-glow {
+      animation: music-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes super-senior-shine {
+        0%, 100% {
+            box-shadow: 0 0 4px #a855f7, 0 0 6px #a855f7, inset 0 0 2px #d8b4fe;
+            border-color: #c084fc;
+        }
+        50% {
+            box-shadow: 0 0 8px #c084fc, 0 0 12px #c084fc, inset 0 0 4px #e9d5ff;
+            border-color: #d8b4fe;
+        }
+    }
+    .animate-super-senior-shine {
+        animation: super-senior-shine 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-fast {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+    .animate-pulse-fast {
+        animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .perspective-\[1000px\] {
+      perspective: 1000px;
+    }
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
     }
 }
