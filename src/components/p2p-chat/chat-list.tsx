@@ -9,7 +9,7 @@ import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessagesSquare, Search, UserPlus, Bot, Edit, MoreHorizontal, LogOut, Plus } from "lucide-react";
+import { MessagesSquare, Search, UserPlus, Bot, Edit, MoreHorizontal, LogOut, Plus, Shield } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
@@ -152,6 +152,12 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                 />
             </div>
         </div>
+
+        <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow">
+            <Shield className="w-3.5 h-3.5" />
+            <span>End-to-End Encrypted</span>
+        </div>
+
 
         <div className="flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
             <Button 
