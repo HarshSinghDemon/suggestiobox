@@ -19,7 +19,7 @@ export default function MessagesLayout({
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/60" />
           <main className="absolute inset-0 flex flex-col">{children}</main>
         </div>
       </ImageKitProvider>

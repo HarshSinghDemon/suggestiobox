@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { LogOut, Search, Edit } from 'lucide-react';
+import { LogOut, Edit } from 'lucide-react';
 import Link from 'next/link';
 import {
   Dialog,
@@ -32,24 +31,19 @@ export function ChatHeader({ children }: { children?: React.ReactNode }) {
                     </div>
                 </Link>
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" asChild>
-                        <Link href="/">
-                            <LogOut className="w-5 h-5" />
-                        </Link>
-                    </Button>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="ghost" size="icon">
                                 <Edit className="w-5 h-5"/>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="p-0 border-0 max-w-md">
+                        <DialogContent className="p-0 border-0 max-w-md glass-pane">
                             <Tabs defaultValue="friends" className="w-full">
-                                <DialogHeader className="p-4 border-b">
+                                <DialogHeader className="p-4 border-b border-white/20">
                                     <DialogTitle>Manage Friends</DialogTitle>
-                                    <TabsList className="grid w-full grid-cols-2 mt-2">
+                                    <TabsList className="grid w-full grid-cols-2 mt-2 bg-white/10">
                                         <TabsTrigger value="friends">Friends</TabsTrigger>
-                                        <TabsTrigger value="find">Find</TabsTrigger>
+                                        <TabsTrigger value="find">Find People</TabsTrigger>
                                     </TabsList>
                                 </DialogHeader>
                                 <TabsContent value="friends" className="m-0">
@@ -61,6 +55,11 @@ export function ChatHeader({ children }: { children?: React.ReactNode }) {
                             </Tabs>
                         </DialogContent>
                     </Dialog>
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/">
+                            <LogOut className="w-5 h-5" />
+                        </Link>
+                    </Button>
                     {children}
                 </div>
             </div>
