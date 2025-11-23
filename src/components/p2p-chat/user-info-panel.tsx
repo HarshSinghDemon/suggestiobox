@@ -9,8 +9,10 @@ import { Skeleton } from "../ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { Copy, KeyRound } from "lucide-react";
+import { Copy, KeyRound, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { findOrCreateChat } from "@/lib/chat";
 
 const getInitials = (name: string | null | undefined) => {
     if (!name) return '?';
@@ -34,6 +36,7 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
     const { user: currentUser } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const router = useRouter();
 
     const roomRef = useMemoFirebase(() => firestore ? doc(firestore, 'chatRooms', roomId) : null, [firestore, roomId]);
     const { data: room, isLoading: isLoadingRoom } = useDoc<ChatRoom>(roomRef);
@@ -56,6 +59,16 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
             });
         }
     };
+    
+    const handleStartChat = async () => {
+        if (!currentUser || !otherUser) return;
+        try {
+            const newRoomId = await findOrCreateChat(firestore, currentUser.uid, otherUser.id);
+            router.push(`/messages/${newRoomId}`);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message || 'Could not start chat.' });
+        }
+    };
 
     if (isLoading) {
         return <UserInfoSkeleton />;
@@ -76,6 +89,9 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                     <h3 className="text-xl font-bold">{otherUser.displayName}</h3>
                     <p className="text-sm text-muted-foreground">{otherUser.year} Year</p>
                 </div>
+                {otherUser.bio && (
+                    <p className="text-sm text-center text-white/80 italic">"{otherUser.bio}"</p>
+                )}
             </div>
 
             <Separator className="my-6 bg-white/20" />
@@ -102,6 +118,14 @@ export function UserInfoPanel({ roomId }: { roomId: string }) {
                     <p>No files shared yet.</p>
                 </div>
             </div>
+            
+             {otherUser.id !== currentUser?.uid && (
+                <div className="mt-auto pt-6">
+                    <Button className="w-full" onClick={handleStartChat}>
+                        <MessageSquare className="w-4 h-4 mr-2" /> Message {otherUser.displayName}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

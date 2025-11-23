@@ -9,6 +9,7 @@ export type FirebaseUser = {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  bio?: string;
   lastSeen?: Timestamp;
   year?: '1st' | '2nd' | '3rd';
   role?: 'user' | 'admin';

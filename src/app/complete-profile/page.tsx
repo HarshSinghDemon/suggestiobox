@@ -32,10 +32,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfile } from 'firebase/auth';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters.'),
   year: z.enum(['1st', '2nd', '3rd'], { required_error: 'Please select your year.'}),
+  bio: z.string().max(160, 'Bio must be 160 characters or less.').optional(),
 });
 
 export default function CompleteProfilePage() {
@@ -52,6 +54,7 @@ export default function CompleteProfilePage() {
     defaultValues: {
       displayName: user?.displayName || '',
       year: '1st',
+      bio: '',
     },
   });
   
@@ -79,6 +82,7 @@ export default function CompleteProfilePage() {
           updateDoc(userDocRef, { 
               year: values.year,
               displayName: values.displayName,
+              bio: values.bio,
           }),
         ]);
 
@@ -160,6 +164,19 @@ export default function CompleteProfilePage() {
                           <SelectItem value="3rd">3rd Year</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Tell us a little about yourself..." {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -20,6 +20,10 @@
           "type": "string",
           "description": "Display name of the user."
         },
+        "bio": {
+            "type": "string",
+            "description": "A short bio about the user."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
