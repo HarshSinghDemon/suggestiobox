@@ -8,6 +8,7 @@ import { Suspense, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { UserInfoPanel } from "@/components/p2p-chat/user-info-panel";
+import { useParams } from "next/navigation";
 
 
 function ChatListSkeleton() {
@@ -26,7 +27,9 @@ function ChatListSkeleton() {
     );
 }
 
-export default function PrivateChatPage({ params }: { params: { roomId: string } }) {
+export default function PrivateChatPage() {
+    const params = useParams();
+    const roomId = params.roomId as string;
     const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
 
     const toggleInfoPanel = () => {
@@ -39,18 +42,18 @@ export default function PrivateChatPage({ params }: { params: { roomId: string }
                 <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
                     <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
                          <Suspense fallback={<ChatListSkeleton />}>
-                            <ChatList selectedRoomId={params.roomId} />
+                            <ChatList selectedRoomId={roomId} />
                         </Suspense>
                     </ResizablePanel>
                     <ResizableHandle withHandle className="hidden lg:flex"/>
                     <ResizablePanel defaultSize={isInfoPanelVisible ? 50 : 75} minSize={30}>
-                        <PrivateChatRoom roomId={params.roomId} onToggleInfoPanel={toggleInfoPanel} />
+                        <PrivateChatRoom roomId={roomId} onToggleInfoPanel={toggleInfoPanel} />
                     </ResizablePanel>
                     {isInfoPanelVisible && (
                         <>
                             <ResizableHandle withHandle className="hidden lg:flex" />
                             <ResizablePanel defaultSize={25} minSize={20} maxSize={30} className="hidden lg:block">
-                                <UserInfoPanel roomId={params.roomId} />
+                                <UserInfoPanel roomId={roomId} />
                             </ResizablePanel>
                         </>
                     )}
