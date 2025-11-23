@@ -16,7 +16,7 @@ import { importKey, decryptMessage, encryptBuffer } from "@/lib/e2ee";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
-import { useImageKit } from "@/lib/imagekit/imagekit-provider";
+import { useImageKit } from '@/lib/imagekit/imagekit-provider';
 import Image from "next/image";
 import Markdown from "react-markdown";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
@@ -421,6 +421,9 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         <div className="flex flex-col h-full md:p-4">
           <div className="flex flex-col h-full glass-pane md:rounded-2xl">
             <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20 glass-pane">
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.push('/messages')}>
+                    <ArrowLeft className="w-5 h-5" />
+                </Button>
                 <button className="relative" onClick={() => setIsInfoPanelOpen(true)}>
                     <Avatar className="w-12 h-12">
                         <AvatarImage src={otherUser.photoURL ?? undefined} />
@@ -430,8 +433,8 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </button>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>
-                     <p className="text-xs text-white/70">
-                        {isTyping ? (
+                    <p className="text-xs text-white/70">
+                         {isTyping ? (
                             <span className="flex items-center gap-1 italic text-primary">
                                 typing
                                 <span className="animate-pulse-fast [animation-delay:0.1s]">.</span>
@@ -518,9 +521,12 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
             </AlertDialog>
             <Dialog open={isInfoPanelOpen} onOpenChange={setIsInfoPanelOpen}>
                 <DialogContent className="p-0 border-0 max-w-md glass-pane">
+                    <DialogTitle className="sr-only">User Profile</DialogTitle>
                     <UserInfoPanel roomId={roomId} />
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
+
+    
