@@ -55,6 +55,27 @@ const ArcheryIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const games = [
     {
+        name: 'Buddy Kick Archer',
+        description: 'Test your aim in this fun archery game.',
+        href: '/community-games/buddy-kick-archer',
+        icon: ArcheryIcon,
+        variant: 'default',
+    },
+    {
+        name: 'Bulletman 3D',
+        description: 'Take aim and shoot your way through challenging levels.',
+        href: '/community-games/bulletman-3d',
+        icon: Rocket,
+        variant: 'fiery',
+    },
+    {
+        name: 'Party Games Mini Shooter Battle',
+        description: 'Engage in a fun and chaotic mini shooter battle.',
+        href: '/community-games/party-games-mini-shooter-battle',
+        icon: Rocket,
+        variant: 'ocean',
+    },
+    {
         name: 'Brick Breaker',
         description: 'Clear all the bricks to win.',
         href: '/community-games/brick-breaker',
@@ -165,27 +186,6 @@ const games = [
         href: '/community-games/chess',
         icon: ChessIcon,
         variant: 'fiery',
-    },
-    {
-        name: 'Buddy Kick Archer',
-        description: 'Test your aim in this fun archery game.',
-        href: '/community-games/buddy-kick-archer',
-        icon: ArcheryIcon,
-        variant: 'default',
-    },
-    {
-        name: 'Bulletman 3D',
-        description: 'Take aim and shoot your way through challenging levels.',
-        href: '/community-games/bulletman-3d',
-        icon: Rocket,
-        variant: 'fiery',
-    },
-    {
-        name: 'Party Games Mini Shooter Battle',
-        description: 'Engage in a fun and chaotic mini shooter battle.',
-        href: '/community-games/party-games-mini-shooter-battle',
-        icon: Rocket,
-        variant: 'ocean',
     },
 ];
 
