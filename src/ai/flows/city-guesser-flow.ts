@@ -9,7 +9,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const CityGuesserOutputSchema = z.object({
+const CityGuesserOutputSchema = z.object({
   city: z.string().describe('The name of the city that is the correct answer.'),
   country: z.string().describe('The country where the city is located.'),
   hint1: z.string().describe('A fascinating, non-obvious hint about the city.'),
