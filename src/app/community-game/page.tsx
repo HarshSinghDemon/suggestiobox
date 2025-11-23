@@ -7,10 +7,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
-const SnakeIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 12H12.01"/><path d="M16 8H16.01"/><path d="M12 16H12.01"/><path d="M12 8H12.01"/><path d="M8 12H8.01"/><path d="M16 12H16.01"/><path d="M12 20H12.01"/><path d="M4 16H4.01"/><path d="M8 16H8.01"/><path d="M8 20H8.01"/><path d="M4 12H4.01"/><path d="M4 8H4.01"/><path d="M8 8H8.01"/><path d="M16 16H16.01"/><path d="M20 12H20.01"/><path d="M20 16H20.01"/></svg>
-);
-
 const TicTacToeIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
 );
@@ -127,6 +123,9 @@ const communityGames = [
         icon: ChessIcon,
         variant: 'fiery',
     },
+];
+
+const teamFunGames = [
     {
         name: 'Quiz Royale (Multiplayer)',
         description: 'Challenge friends in a live trivia battle!',
@@ -155,7 +154,7 @@ const communityGames = [
         icon: Eye,
         variant: 'fiery',
     }
-];
+]
 
 
 export default function CommunityGamePage() {
@@ -169,6 +168,31 @@ export default function CommunityGamePage() {
           </div>
 
           <div className="mt-12 space-y-12">
+            <div>
+                <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Team Fun Games</h2>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {teamFunGames.sort((a, b) => a.name.localeCompare(b.name)).map((game) => (
+                        <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-2">
+                            <Card className={cn(
+                                "flex flex-col h-full transition-shadow duration-300 hover:shadow-xl",
+                                game.variant === 'default' && 'hover:border-primary/50',
+                                game.variant === 'fiery' && 'bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20',
+                                game.variant === 'ocean' && 'bg-gradient-to-br from-blue-400/10 via-violet-500/10 to-purple-600/10 border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/20'
+                            )}>
+                                <CardHeader className="flex flex-row items-center gap-4">
+                                    <game.icon className={cn("w-10 h-10", game.variant === 'fiery' ? 'text-orange-400' : game.variant === 'ocean' ? 'text-blue-400' : 'text-primary')} />
+                                    <div>
+                                        <CardTitle>{game.name}</CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                    <CardDescription>{game.description}</CardDescription>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            </div>
             <div>
               <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Community & AI Games</h2>
                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
