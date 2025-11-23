@@ -19,13 +19,6 @@ const PacManIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 12a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z"/><path d="M12 12 8 8"/></svg>
 );
 
-const PongIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <rect x="2" y="4" width="2" height="16" />
-        <rect x="20" y="4" width="2" height="16" />
-    </svg>
-);
-
 const CheckersIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <circle cx="8" cy="8" r="3" />
@@ -86,25 +79,11 @@ const communityGames = [
         variant: 'fiery',
     },
     {
-        name: 'Flappy Bird',
-        description: 'Flap your way through the pipes.',
-        href: '/community-games/flappy-bird',
-        icon: Bird,
-        variant: 'ocean',
-    },
-    {
         name: 'Sudoku',
         description: 'Fill the grid with numbers 1-9.',
         href: '/community-games/sudoku',
         icon: Columns,
         variant: 'ocean',
-    },
-    {
-        name: 'Word Search',
-        description: 'Find the hidden words in the puzzle.',
-        href: '/community-games/word-search',
-        icon: Search,
-        variant: 'fiery',
     },
      {
         name: 'City Guesser (AI)',
@@ -135,13 +114,6 @@ const communityGames = [
         variant: 'ocean',
     },
     {
-        name: 'Pong',
-        description: 'The classic two-paddle arcade game.',
-        href: '/community-games/pong',
-        icon: PongIcon,
-        variant: 'fiery',
-    },
-    {
         name: 'Checkers',
         description: 'A classic strategy board game.',
         href: '/community-games/checkers',
@@ -153,20 +125,6 @@ const communityGames = [
         description: 'The ultimate strategy board game.',
         href: '/community-games/chess',
         icon: ChessIcon,
-        variant: 'fiery',
-    },
-    {
-        name: 'Whac-A-Mole',
-        description: 'Test your reflexes and whack the moles!',
-        href: '/community-games/whac-a-mole',
-        icon: Hammer,
-        variant: 'ocean',
-    },
-    {
-        name: 'Doodle Jumper',
-        description: 'Jump your way to the top!',
-        href: '/community-games/doodle-jumper',
-        icon: ArrowUp,
         variant: 'fiery',
     },
     {
