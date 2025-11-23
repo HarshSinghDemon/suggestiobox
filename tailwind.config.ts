@@ -21,6 +21,7 @@ export default {
         headline: ['var(--font-inter)', 'sans-serif'],
         arcade: ['var(--font-press-start-2p)', 'monospace'],
         code: ['monospace'],
+        chat: ['var(--font-chat)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

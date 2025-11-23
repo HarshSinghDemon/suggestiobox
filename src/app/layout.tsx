@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { Inter, Press_Start_2P } from 'next/font/google';
+import { Inter, Press_Start_2P, Poppins } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/layout/header';
@@ -16,6 +16,11 @@ const pressStart2P = Press_Start_2P({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-press-start-2p',
+});
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-chat',
 });
 
 // Metadata must be exported from a Server Component.
@@ -35,7 +40,8 @@ export default function RootLayout({
         className={cn(
           'min-h-screen bg-background font-body antialiased',
           inter.variable,
-          pressStart2P.variable
+          pressStart2P.variable,
+          poppins.variable
         )}
       >
         <FirebaseClientProvider>
