@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -24,6 +25,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { UserInfoPanel } from "./user-info-panel";
+import { formatDistanceToNow } from "date-fns";
 
 
 type DecryptedMessage = {
@@ -407,6 +409,10 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }
     
     const isLoading = isLoadingRoom || isLoadingOtherUser;
+    
+    const otherUserLastSeen = otherUser?.lastSeen?.toDate();
+    const isOtherUserOnline = otherUserLastSeen && (new Date().getTime() - otherUserLastSeen.getTime()) < 5 * 60 * 1000;
+
     if (isLoading) return <ChatRoomSkeleton />;
     if (!room || !otherUser) {
         return ( <div className="flex flex-col items-center justify-center h-full gap-4 text-center"> <p className="text-lg text-muted-foreground">Chat not found.</p> <Button onClick={() => router.push('/messages')}>Go back to messages</Button> </div> );
@@ -416,13 +422,13 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         <div className="flex flex-col h-full md:p-4">
           <div className="flex flex-col h-full glass-pane md:rounded-2xl">
             <header className="flex items-center h-20 gap-4 px-4 border-b shrink-0 border-white/20">
-                <div className="relative">
+                <button className="relative" onClick={() => setIsInfoPanelOpen(true)}>
                     <Avatar className="w-12 h-12">
                         <AvatarImage src={otherUser.photoURL ?? undefined} />
                         <AvatarFallback>{getInitials(otherUser.displayName)}</AvatarFallback>
                     </Avatar>
-                     <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>
-                </div>
+                     {isOtherUserOnline && <div className="absolute bottom-0 right-0 w-3 h-3 border-2 rounded-full border-background bg-green-500"></div>}
+                </button>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>
                      <p className="text-xs text-white/70">
@@ -433,7 +439,13 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                                 <span className="animate-pulse-fast [animation-delay:0.2s]">.</span>
                                 <span className="animate-pulse-fast [animation-delay:0.3s]">.</span>
                             </span>
-                        ) : "Active now"}
+                        ) : isOtherUserOnline ? (
+                            "Active now"
+                        ) : otherUser.lastSeen ? (
+                             `Active ${formatDistanceToNow(otherUser.lastSeen.toDate(), { addSuffix: true })}`
+                        ) : (
+                            "Offline"
+                        )}
                     </p>
                 </div>
                 <DropdownMenu>
@@ -513,3 +525,4 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
         </div>
     );
 }
+
