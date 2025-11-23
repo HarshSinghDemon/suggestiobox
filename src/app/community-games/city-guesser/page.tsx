@@ -136,7 +136,7 @@ export default function CityGuesserPage() {
             toast({
                 variant: 'destructive',
                 title: 'Incorrect!',
-                description: `The correct answer was ${question?.city}.`,
+                description: `The correct answer was ${question?.city}, ${question?.country}.`,
             });
         }
     };
@@ -204,6 +204,11 @@ export default function CityGuesserPage() {
 
                                         {isAnswered && (
                                             <div className="pt-4 text-center">
+                                                {question.country && (
+                                                    <p className="mb-4 text-muted-foreground">
+                                                        {question.city} is in <span className="font-semibold text-foreground">{question.country}</span>.
+                                                    </p>
+                                                )}
                                                 <Button onClick={fetchNewQuestion} size="lg">
                                                     Next Question
                                                 </Button>

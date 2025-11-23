@@ -33,25 +33,26 @@ const cityGuesserPrompt = ai.definePrompt({
   name: 'cityGuesserPrompt',
   input: {schema: CityGuesserInputSchema},
   output: {schema: CityGuesserOutputSchema},
-  prompt: `You are a world geography trivia expert creating questions for a game.
+  prompt: `You are a world geography trivia expert creating a wide variety of questions for a game. It is crucial that you provide different cities and avoid repetition in your responses.
 
 Your task is to generate a single "guess the city" question based on the chosen difficulty level: {{{difficulty}}}.
 
 Difficulty & Region Guidelines:
-- **Easy & Medium:** The city MUST be from India.
+- **Easy & Medium:** The city MUST be from India. You should vary your selections and not repeatedly choose the same few cities. Explore different states and regions within India.
 - **Hard:** The city can be from anywhere in the world.
 
 Difficulty Details:
-- **Easy:** Pick a very well-known Indian Tier-1 city (e.g., Mumbai, Delhi, Bangalore). Hints should be about famous, unmissable landmarks or facts.
-- **Medium:** Pick a well-known but perhaps not Tier-1 Indian city (e.g., Jaipur, Lucknow, Kochi). Hints can be about culture, industry, or secondary landmarks.
-- **Hard:** Pick a notable but less globally famous city from anywhere in the world (e.g., Timbuktu, Petra, Samarkand). Hints should be more obscure and challenging.
+- **Easy:** Pick a very well-known Indian Tier-1 or Tier-2 city (e.g., Mumbai, Delhi, Bangalore, Chennai, Kolkata, Hyderabad, Pune, Ahmedabad). Hints should be about famous, unmissable landmarks or facts.
+- **Medium:** Pick a well-known but perhaps not Tier-1 Indian city. Choose from a diverse range of state capitals or historically significant cities (e.g., Jaipur, Lucknow, Kochi, Bhopal, Patna, Varanasi). Hints can be about culture, industry, or secondary landmarks.
+- **Hard:** Pick a notable but less globally famous city from anywhere in the world (e.g., Timbuktu, Petra, Samarkand, Cusco). Hints should be more obscure and challenging.
 
 Instructions:
-1.  **Pick a city** according to the difficulty and region rules.
-2.  **Write two distinct, interesting hints** appropriate for the difficulty. Avoid obvious hints like "This city is in [Country Name]".
-3.  **Create four multiple-choice options**. One option must be the correct city. The other three must be incorrect but plausible distractors from the same country or region.
-4.  **Ensure the correct city is one of the four options.**
-5.  Provide the output in the specified JSON format.
+1.  **Pick a city** according to the difficulty and region rules. Ensure variety in your choices.
+2.  **Provide the city's country.**
+3.  **Write two distinct, interesting hints** appropriate for the difficulty. Avoid obvious hints like "This city is in [Country Name]".
+4.  **Create four multiple-choice options**. One option must be the correct city. The other three must be incorrect but plausible distractors from the same country or region.
+5.  **Ensure the correct city is one of the four options.**
+6.  Provide the output in the specified JSON format.
 `,
 });
 
