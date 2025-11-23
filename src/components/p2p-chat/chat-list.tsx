@@ -17,6 +17,7 @@ import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -153,15 +154,41 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
             </div>
         </div>
 
-        <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow">
-            <Shield className="w-3.5 h-3.5" />
-            <span>End-to-End Encrypted</span>
-        </div>
+        <Dialog>
+            <DialogTrigger asChild>
+                <div className="flex items-center justify-center gap-2 p-1.5 mb-2 text-xs rounded-full bg-white/10 text-emerald-300 animate-pulse-slow cursor-pointer hover:bg-white/20 transition-colors">
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>End-to-End Encrypted</span>
+                </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md glass-pane">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Shield className="w-6 h-6 text-emerald-400" />
+                        Our Commitment to Your Privacy
+                    </DialogTitle>
+                     <DialogDescription>
+                        Your conversations are private, period.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 text-sm text-white/80">
+                    <p>
+                        All messages in this chat are secured with <strong className="text-emerald-300">end-to-end encryption (E2EE)</strong> using the AES-GCM standard.
+                    </p>
+                    <p>
+                        This means only you and the person you're talking to can read what's sent. No one in between, not even us, can decipher your messages.
+                    </p>
+                    <p className="p-3 text-center border rounded-lg bg-white/5 border-white/10">
+                        <span className="font-semibold text-white">"Don't worry, even the developer can't see your messages. Not even the database knows what you're up to! It's your little secret."</span> 😉
+                    </p>
+                </div>
+            </DialogContent>
+        </Dialog>
 
 
         <div className="flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
             <Button 
-              variant={!selectedRoomId ? 'ghost' : 'ghost'} 
+              variant={'ghost'} 
               className={cn(
                 "rounded-full flex-1 transition-all duration-300", 
                 !selectedRoomId && "bg-white/20 shadow-md"
@@ -181,7 +208,7 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
                       {filteredChatRooms.pookieVisible && (
                            <Link href="/messages/pookie-ai" className="block">
                               <div className={cn(
-                                  "flex items-center gap-3 p-2.5 rounded-lg transition-colors hover:bg-white/20",
+                                  "flex items-center gap-3 p-2.5 rounded-2xl transition-colors hover:bg-white/20",
                                   selectedRoomId === 'pookie-ai' && "bg-white/20"
                               )}>
                                   <Avatar className="w-12 h-12">
