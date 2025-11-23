@@ -489,6 +489,37 @@
             "drawingData": { "type": "string", "description": "Data URL of the canvas drawing." }
         },
         "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "ImposterLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ImposterLobby",
+      "type": "object",
+      "description": "Represents a real-time 'Imposter's Agenda' game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" },
+              "isAlive": { "type": "boolean" }
+            },
+            "required": ["id", "displayName", "isAlive"]
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "enum": ["hero", "saboteur"] }
+        }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
     }
   },
   "auth": {
@@ -680,6 +711,15 @@
             "schema": { "$ref": "#/backend/entities/ScribbleRoom" },
             "description": "Stores data for a real-time 'Scribble It!' game session.",
             "params": [{ "name": "roomId" }]
+        }
+      },
+      {
+        "path": "/imposterLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "ImposterLobby",
+          "schema": { "$ref": "#/backend/entities/ImposterLobby" },
+          "description": "Stores data for a real-time 'Imposter's Agenda' game session.",
+          "params": [{ "name": "lobbyId" }]
         }
       }
     ],

@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp, PenTool } from 'lucide-react';
+import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp, PenTool, Users } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -182,6 +183,13 @@ const communityGames = [
         icon: PenTool,
         variant: 'fiery',
     },
+    {
+        name: "Imposter's Agenda",
+        description: "A text-based social deduction game of heroes and saboteurs.",
+        href: '/community-games/imposters-agenda',
+        icon: Users,
+        variant: 'ocean',
+    }
 ];
 
 

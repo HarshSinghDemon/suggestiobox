@@ -21,6 +21,7 @@ export type FirebaseUser = {
   friendRequestsReceived?: string[];
   pinnedSuggestions?: string[];
   pinnedAssignments?: string[];
+  coins?: number;
 };
 
 export type ChatRoom = {
@@ -66,9 +67,9 @@ export type GroupChatRoom = {
     isUnread?: boolean;
 }
 
-export type Vote = {
+export type Investment = {
     userId: string;
-    type: 'up' | 'down';
+    amount: number;
 }
 
 export type Suggestion = {
@@ -85,7 +86,7 @@ export type Suggestion = {
   fileName?: string;
   path?: string;
   fileType?: string;
-  votes?: Vote[];
+  investments?: Investment[];
 };
 
 export type Assignment = {
@@ -102,7 +103,7 @@ export type Assignment = {
   fileName: string;
   path: string;
   fileType: string;
-  votes?: Vote[];
+  investments?: Investment[];
 };
 
 export type Reaction = {
@@ -218,4 +219,19 @@ export type ScribbleRoom = {
     currentDrawerId?: string;
     currentWord?: string;
     drawingData?: string;
+};
+
+export type ImposterLobby = {
+    id: string;
+    joinCode: string;
+    hostId: string;
+    status: 'waiting' | 'playing' | 'finished';
+    createdAt: Timestamp;
+    players: {
+        id: string;
+        displayName: string;
+        photoURL?: string;
+        isAlive: boolean;
+    }[];
+    roles: Record<string, 'hero' | 'saboteur'>;
 };
