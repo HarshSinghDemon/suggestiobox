@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, BrainCircuit, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, BrainCircuit, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { cityGuesser, type CityGuesserOutput } from '@/ai/flows/city-guesser-flow';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
+import { Leaderboard } from '@/components/game/leaderboard';
 
 function GameSkeleton() {
     return (
@@ -43,7 +46,11 @@ export default function CityGuesserPage() {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0);
+    const [hasSubmitted, setHasSubmitted] = useState(false);
     const { toast } = useToast();
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     const fetchNewQuestion = useCallback(async () => {
         setIsLoading(true);
@@ -64,6 +71,34 @@ export default function CityGuesserPage() {
             setIsLoading(false);
         }
     }, [toast]);
+    
+    const submitScore = useCallback(async () => {
+        if (!user || !firestore || score === 0 || hasSubmitted) return;
+        setHasSubmitted(true);
+        try {
+          const scoresCollection = collection(firestore, 'games', 'city-guesser', 'scores');
+          await addDocumentNonBlocking(scoresCollection, {
+            userId: user.uid,
+            userName: user.displayName || 'Anonymous',
+            userImage: user.photoURL,
+            score: score,
+            createdAt: serverTimestamp(),
+          });
+          toast({
+            title: "Score Submitted!",
+            description: `Your score of ${score} has been saved to the leaderboard.`,
+          });
+        } catch (error) {
+          console.error("Error submitting score:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not submit your score.",
+          });
+          setHasSubmitted(false); // Allow retry
+        }
+    }, [user, firestore, score, toast, hasSubmitted]);
+
 
     useEffect(() => {
         fetchNewQuestion();
@@ -73,15 +108,19 @@ export default function CityGuesserPage() {
         if (isAnswered) return;
         setSelectedOption(option);
         setIsAnswered(true);
+        setHasSubmitted(false); // Reset submission status on new answer
 
         if (option === question?.city) {
-            setScore(prev => prev + 10);
+            const points = 10 + streak * 2; // Bonus for streaks
+            setScore(prev => prev + points);
+            setStreak(prev => prev + 1);
             toast({
                 title: 'Correct!',
-                description: `+10 points! The answer was indeed ${question.city}.`,
+                description: `+${points} points! The answer was indeed ${question.city}.`,
                 className: 'bg-green-500/20 border-green-500/50',
             });
         } else {
+            setStreak(0);
             toast({
                 variant: 'destructive',
                 title: 'Incorrect!',
@@ -100,70 +139,83 @@ export default function CityGuesserPage() {
     return (
         <AuthWrapper>
             <div className="container py-8 mx-auto">
-                <Card className="max-w-2xl mx-auto">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-2xl">
-                                <BrainCircuit className="w-8 h-8 text-primary"/>
-                                AI City Guesser
-                            </CardTitle>
-                             <div className="text-right">
-                                <p className="text-sm font-medium text-muted-foreground">Score</p>
-                                <p className="text-2xl font-bold text-primary">{score}</p>
-                            </div>
-                        </div>
-                        <CardDescription>Guess the city based on the hints provided by our AI.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <GameSkeleton />
-                        ) : question ? (
-                            <div className="space-y-6">
-                                <div className="p-4 space-y-4 rounded-lg bg-muted">
-                                    <div>
-                                        <h3 className="font-semibold">Hint 1</h3>
-                                        <p className="text-muted-foreground">{question.hint1}</p>
-                                    </div>
-                                    <div className="pt-4 border-t">
-                                        <h3 className="font-semibold">Hint 2</h3>
-                                        <p className="text-muted-foreground">{question.hint2}</p>
+                 <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="md:col-span-2">
+                        <Card className="w-full">
+                            <CardHeader>
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <CardTitle className="flex items-center gap-2 text-2xl">
+                                        <BrainCircuit className="w-8 h-8 text-primary"/>
+                                        AI City Guesser
+                                    </CardTitle>
+                                     <div className="text-right">
+                                        <p className="text-sm font-medium text-muted-foreground">Score</p>
+                                        <p className="text-2xl font-bold text-primary">{score}</p>
                                     </div>
                                 </div>
+                                <CardDescription>Guess the city based on the hints provided by our AI.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? (
+                                    <GameSkeleton />
+                                ) : question ? (
+                                    <div className="space-y-6">
+                                        <div className="p-4 space-y-4 rounded-lg bg-muted">
+                                            <div>
+                                                <h3 className="font-semibold">Hint 1</h3>
+                                                <p className="text-muted-foreground">{question.hint1}</p>
+                                            </div>
+                                            <div className="pt-4 border-t">
+                                                <h3 className="font-semibold">Hint 2</h3>
+                                                <p className="text-muted-foreground">{question.hint2}</p>
+                                            </div>
+                                        </div>
 
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    {question.options.map(option => (
-                                        <Button
-                                            key={option}
-                                            variant={getButtonVariant(option)}
-                                            className={cn("h-14 text-base justify-start p-4", {
-                                                'bg-green-500/20 border-green-500 hover:bg-green-500/30': isAnswered && option === question.city,
-                                                'bg-red-500/20 border-red-500 hover:bg-red-500/30': isAnswered && option === selectedOption && option !== question.city
-                                            })}
-                                            onClick={() => handleAnswer(option)}
-                                            disabled={isAnswered}
-                                        >
-                                            {isAnswered && option === question.city && <CheckCircle className="w-5 h-5 mr-3 text-green-500"/>}
-                                            {isAnswered && option === selectedOption && option !== question.city && <XCircle className="w-5 h-5 mr-3 text-red-500"/>}
-                                            {option}
-                                        </Button>
-                                    ))}
-                                </div>
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            {question.options.map(option => (
+                                                <Button
+                                                    key={option}
+                                                    variant={getButtonVariant(option)}
+                                                    className={cn("h-14 text-base justify-start p-4", {
+                                                        'bg-green-500/20 border-green-500 hover:bg-green-500/30': isAnswered && option === question.city,
+                                                        'bg-red-500/20 border-red-500 hover:bg-red-500/30': isAnswered && option === selectedOption && option !== question.city
+                                                    })}
+                                                    onClick={() => handleAnswer(option)}
+                                                    disabled={isAnswered}
+                                                >
+                                                    {isAnswered && option === question.city && <CheckCircle className="w-5 h-5 mr-3 text-green-500"/>}
+                                                    {isAnswered && option === selectedOption && option !== question.city && <XCircle className="w-5 h-5 mr-3 text-red-500"/>}
+                                                    {option}
+                                                </Button>
+                                            ))}
+                                        </div>
 
-                                {isAnswered && (
-                                    <div className="pt-4 text-center">
-                                        <Button onClick={fetchNewQuestion} size="lg">
-                                            Next Question
-                                        </Button>
+                                        {isAnswered && (
+                                            <div className="pt-4 text-center">
+                                                <Button onClick={fetchNewQuestion} size="lg">
+                                                    Next Question
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-muted-foreground">
+                                        Could not load a question. Please try again.
                                     </div>
                                 )}
-                            </div>
-                        ) : (
-                            <div className="text-center text-muted-foreground">
-                                Could not load a question. Please try again.
-                            </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="space-y-4">
+                        {user && (
+                            <Button onClick={submitScore} disabled={hasSubmitted || score === 0} className="w-full">
+                                <Trophy className="w-4 h-4 mr-2"/>
+                                {hasSubmitted ? "Score Submitted!" : "Submit Score"}
+                            </Button>
                         )}
-                    </CardContent>
-                </Card>
+                        <Leaderboard gameId="city-guesser" />
+                    </div>
+                </div>
             </div>
         </AuthWrapper>
     );
