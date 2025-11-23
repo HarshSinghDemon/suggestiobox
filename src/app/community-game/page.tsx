@@ -48,40 +48,6 @@ const ChessIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const ArcheryIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V4l-8 4-8-4v8c0 6 8 10 8 10z"></path><path d="M12 14l-4-2"></path><path d="M12 14l4-2"></path><path d="M12 14v-4"></path></svg>
-);
-
-const html5Games = [
-    {
-        name: 'Ninja\'s Blade',
-        description: 'Slice through your enemies in this action-packed game.',
-        href: '/community-games/ninjas-blade',
-        icon: Swords,
-        variant: 'ocean',
-    },
-    {
-        name: 'Buddy Kick Archer',
-        description: 'Test your aim in this fun archery game.',
-        href: '/community-games/buddy-kick-archer',
-        icon: ArcheryIcon,
-        variant: 'default',
-    },
-    {
-        name: 'Bulletman 3D',
-        description: 'Take aim and shoot your way through challenging levels.',
-        href: '/community-games/bulletman-3d',
-        icon: Rocket,
-        variant: 'fiery',
-    },
-    {
-        name: 'Party Games Mini Shooter Battle',
-        description: 'Engage in a fun and chaotic mini shooter battle.',
-        href: '/community-games/party-games-mini-shooter-battle',
-        icon: Rocket,
-        variant: 'ocean',
-    },
-]
 
 const communityGames = [
     {
@@ -203,32 +169,6 @@ export default function CommunityGamePage() {
           </div>
 
           <div className="mt-12 space-y-12">
-            <div>
-              <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">HTML5 Games</h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  {html5Games.map((game) => (
-                      <Link href={game.href} key={game.name} className="block transition-transform duration-300 transform hover:-translate-y-2">
-                          <Card className={cn(
-                            "flex flex-col h-full transition-shadow duration-300 hover:shadow-xl",
-                            game.variant === 'default' && 'hover:border-primary/50',
-                            game.variant === 'fiery' && 'bg-gradient-to-br from-yellow-400/10 via-orange-500/10 to-red-600/10 border-orange-500/30 hover:border-orange-400 hover:shadow-orange-500/20',
-                            game.variant === 'ocean' && 'bg-gradient-to-br from-blue-400/10 via-violet-500/10 to-purple-600/10 border-blue-500/30 hover:border-blue-400 hover:shadow-blue-500/20'
-                          )}>
-                              <CardHeader className="flex flex-row items-center gap-4">
-                                  <game.icon className={cn("w-10 h-10", game.variant === 'fiery' ? 'text-orange-400' : game.variant === 'ocean' ? 'text-blue-400' : 'text-primary')} />
-                                  <div>
-                                      <CardTitle>{game.name}</CardTitle>
-                                  </div>
-                              </CardHeader>
-                              <CardContent className="flex-grow">
-                                  <CardDescription>{game.description}</CardDescription>
-                              </CardContent>
-                          </Card>
-                      </Link>
-                  ))}
-              </div>
-            </div>
-
             <div>
               <h2 className="mb-6 text-2xl font-semibold text-center border-b pb-4">Community & AI Games</h2>
                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
