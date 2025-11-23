@@ -58,7 +58,7 @@ function FriendItem({ friend }: { friend: FirebaseUser }) {
     };
     
     return (
-        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors">
+        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-colors animate-fade-in-scale">
             <div className="flex items-center gap-4">
                 <Avatar className="w-12 h-12">
                     <AvatarImage src={friend.photoURL ?? undefined} />
