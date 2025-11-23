@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -104,6 +104,13 @@ const games = [
         href: '/community-games/word-search',
         icon: Search,
         variant: 'fiery',
+    },
+     {
+        name: 'City Guesser (AI)',
+        description: 'Guess the city from the hints provided by AI.',
+        href: '/community-games/city-guesser',
+        icon: MapPin,
+        variant: 'ocean',
     },
     {
         name: 'Memory Game',
