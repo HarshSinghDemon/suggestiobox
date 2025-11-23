@@ -101,6 +101,22 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
             downloadAndDecryptFile(message.fileUrl, message.fileType || 'application/octet-stream', message.fileName, sessionKey, message.iv);
         }
     };
+    
+    const reactionsSummary = useMemo(() => {
+        if (!message.reactions || message.reactions.length === 0) return null;
+        
+        const counts = message.reactions.reduce((acc, reaction) => {
+            acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        return Object.entries(counts).map(([emoji, count]) => (
+            <div key={emoji} className="px-1.5 py-0.5 text-xs rounded-full bg-black/20 backdrop-blur-sm flex items-center gap-1">
+                <span>{emoji}</span>
+                <span>{count}</span>
+            </div>
+        ));
+    }, [message.reactions]);
 
     return (
         <div 
@@ -122,6 +138,11 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
               isCurrentUserSender 
                 ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
+                 {reactionsSummary && (
+                    <div className={cn("absolute -bottom-3 flex gap-1", isCurrentUserSender ? "right-2" : "left-2")}>
+                        {reactionsSummary}
+                    </div>
+                )}
                 {message.fileUrl && (
                     <div className="mb-2">
                          <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
@@ -404,13 +425,17 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
                 </div>
                 <div className="flex-1">
                     <p className="font-semibold">{otherUser.displayName}</p>
-                    <p className="text-xs text-white/70">
-                        {isTyping ? <span className="italic text-primary">typing...</span> : "Active now"}
+                     <p className="text-xs text-white/70">
+                        {isTyping ? (
+                            <span className="flex items-center gap-1 italic text-primary">
+                                typing
+                                <span className="animate-pulse-fast [animation-delay:0.1s]">.</span>
+                                <span className="animate-pulse-fast [animation-delay:0.2s]">.</span>
+                                <span className="animate-pulse-fast [animation-delay:0.3s]">.</span>
+                            </span>
+                        ) : "Active now"}
                     </p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsInfoPanelOpen(true)}>
-                    <UserCircle className="w-5 h-5" />
-                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                          <Button variant="ghost" size="icon"> <MoreVertical className="w-5 h-5"/> </Button>
