@@ -111,7 +111,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                 </Avatar>
              )}
             
-            <div className={cn("relative p-3 rounded-3xl max-w-[80%]", 
+            <div className={cn("relative p-3 rounded-3xl max-w-[75%]", 
               isCurrentUserSender 
                 ? "bg-gradient-to-br from-primary to-purple-500 text-white rounded-br-none" 
                 : "glass-pane rounded-bl-none border-none")}>
@@ -120,7 +120,7 @@ function ChatMessage({ message, isCurrentUserSender, author, onReact, sessionKey
                          <div className="flex items-center gap-3 p-3 rounded-lg bg-black/20 hover:bg-black/30 cursor-pointer" onClick={handleDownload}>
                                 <Download className="w-8 h-8"/>
                                 <div>
-                                    <p className="font-semibold break-all">{message.fileName}</p>
+                                    <p className="font-semibold break-words">{message.fileName}</p>
                                     <p className="text-xs">Click to download encrypted file</p>
                                 </div>
                             </div>
@@ -410,28 +410,7 @@ export function PrivateChatRoom({ roomId, onToggleInfoPanel }: { roomId: string,
             )}
             <footer className="p-4 border-t shrink-0 border-white/20">
                 <form className="relative" onSubmit={e => { e.preventDefault(); handleSendMessage(); }}>
-                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base pl-12 pr-12 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <Popover open={isAttachmentMenuOpen} onOpenChange={setIsAttachmentMenuOpen}>
-                            <PopoverTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="rounded-full w-9 h-9">
-                                    <Paperclip className="w-5 h-5" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-1 mb-2" side="top" align="start">
-                                <div className="grid grid-cols-2 gap-1">
-                                    <Button variant="ghost" className="flex flex-col w-20 h-20" onClick={() => fileInputRef.current?.click()}>
-                                        <ImageIcon className="w-6 h-6 mb-1"/>
-                                        <span className="text-xs">Image</span>
-                                    </Button>
-                                     <Button variant="ghost" className="flex flex-col w-20 h-20" onClick={() => fileInputRef.current?.click()}>
-                                        <File className="w-6 h-6 mb-1"/>
-                                        <span className="text-xs">Document</span>
-                                    </Button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
+                     <Input placeholder="Type a message..." value={messageText} onChange={e => handleTyping(e.target.value)} disabled={!currentUser || !sessionKey} className="h-12 text-base px-5 pr-12 rounded-full bg-white/10 focus-visible:ring-primary border-none" />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
                         <Button type="submit" size="icon" disabled={!messageText.trim() || !currentUser || isSending || !sessionKey} className="rounded-full bg-primary w-9 h-9">
                           {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5"/>}
