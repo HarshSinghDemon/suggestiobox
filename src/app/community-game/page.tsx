@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords } from 'lucide-react';
+import { Gamepad2, Puzzle, Bot, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -161,6 +161,13 @@ const games = [
         href: '/community-games/chess',
         icon: ChessIcon,
         variant: 'fiery',
+    },
+    {
+        name: 'New HTML5 Game',
+        description: 'A new game from GameMonetize.',
+        href: '/community-games/new-game',
+        icon: Rocket,
+        variant: 'default',
     },
 ];
 
