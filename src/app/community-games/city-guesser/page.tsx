@@ -4,13 +4,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, BrainCircuit, CheckCircle, XCircle, Trophy } from 'lucide-react';
-import { cityGuesser, type CityGuesserOutput } from '@/ai/flows/city-guesser-flow';
+import { cityGuesser, type CityGuesserInput, type CityGuesserOutput } from '@/ai/flows/city-guesser-flow';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { Leaderboard } from '@/components/game/leaderboard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
+const difficultySettings: Record<Difficulty, { multiplier: number }> = {
+    'Easy': { multiplier: 1 },
+    'Medium': { multiplier: 2 },
+    'Hard': { multiplier: 3 },
+};
 
 function GameSkeleton() {
     return (
@@ -47,6 +56,7 @@ export default function CityGuesserPage() {
     const [isAnswered, setIsAnswered] = useState(false);
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
+    const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const { toast } = useToast();
     const { user } = useUser();
@@ -58,7 +68,8 @@ export default function CityGuesserPage() {
         setSelectedOption(null);
         setQuestion(null);
         try {
-            const newQuestion = await cityGuesser();
+            const input: CityGuesserInput = { difficulty };
+            const newQuestion = await cityGuesser(input);
             setQuestion(newQuestion);
         } catch (error) {
             console.error("Failed to fetch new question:", error);
@@ -70,7 +81,7 @@ export default function CityGuesserPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, difficulty]);
     
     const submitScore = useCallback(async () => {
         if (!user || !firestore || score === 0 || hasSubmitted) return;
@@ -111,7 +122,8 @@ export default function CityGuesserPage() {
         setHasSubmitted(false); // Reset submission status on new answer
 
         if (option === question?.city) {
-            const points = 10 + streak * 2; // Bonus for streaks
+            const difficultyMultiplier = difficultySettings[difficulty].multiplier;
+            const points = (10 + streak * 2) * difficultyMultiplier;
             setScore(prev => prev + points);
             setStreak(prev => prev + 1);
             toast({
@@ -207,6 +219,19 @@ export default function CityGuesserPage() {
                         </Card>
                     </div>
                     <div className="space-y-4">
+                         <div className="space-y-2">
+                            <label className="text-sm font-medium">Difficulty</label>
+                            <Select value={difficulty} onValueChange={(value: Difficulty) => setDifficulty(value)} disabled={isLoading || isAnswered}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Difficulty" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Easy">Easy</SelectItem>
+                                    <SelectItem value="Medium">Medium</SelectItem>
+                                    <SelectItem value="Hard">Hard</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {user && (
                             <Button onClick={submitScore} disabled={hasSubmitted || score === 0} className="w-full">
                                 <Trophy className="w-4 h-4 mr-2"/>
