@@ -55,6 +55,13 @@ const ArcheryIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const games = [
     {
+        name: 'Ninja\'s Blade',
+        description: 'Slice through your enemies in this action-packed game.',
+        href: '/community-games/ninjas-blade',
+        icon: Swords,
+        variant: 'ocean',
+    },
+    {
         name: 'Buddy Kick Archer',
         description: 'Test your aim in this fun archery game.',
         href: '/community-games/buddy-kick-archer',
@@ -94,13 +101,6 @@ const games = [
         description: 'Slide tiles to get the 2048 tile.',
         href: '/community-games/2048',
         icon: Brain,
-        variant: 'ocean',
-    },
-    {
-        name: 'Ninja\'s Blade',
-        description: 'Slice through your enemies in this action-packed game.',
-        href: '/community-games/ninjas-blade',
-        icon: Swords,
         variant: 'ocean',
     },
     {
