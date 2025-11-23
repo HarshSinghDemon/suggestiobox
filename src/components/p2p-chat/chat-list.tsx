@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -152,9 +153,17 @@ export function ChatList({ selectedRoomId }: { selectedRoomId?: string }) {
             </div>
         </div>
 
-        <div className="flex items-center gap-2 py-2">
-            <Button variant={selectedRoomId ? "ghost" : "secondary"} className="rounded-full">Chats</Button>
-            <Button variant="ghost" className="rounded-full">Groups</Button>
+        <div className="flex items-center gap-1 p-1 my-2 rounded-full bg-white/10 backdrop-blur-sm">
+            <Button 
+              variant={!selectedRoomId ? 'ghost' : 'ghost'} 
+              className={cn(
+                "rounded-full flex-1 transition-all duration-300", 
+                !selectedRoomId && "bg-white/20 shadow-md"
+              )}
+            >
+              Chats
+            </Button>
+            <Button variant="ghost" className="rounded-full flex-1 text-white/60">Groups</Button>
         </div>
 
         <div className="flex-1 min-h-0 -mr-4">
