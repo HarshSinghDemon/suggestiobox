@@ -24,6 +24,10 @@
             "type": "string",
             "description": "A short bio about the user."
         },
+        "coins": {
+            "type": "number",
+            "description": "The amount of virtual currency the user has."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -194,6 +198,18 @@
           "type": "string",
           "description": "Date and time when the suggestion was uploaded.",
           "format": "date-time"
+        },
+        "investments": {
+            "type": "array",
+            "description": "An array of investment objects from users.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "userId": { "type": "string" },
+                    "amount": { "type": "number" }
+                },
+                "required": ["userId", "amount"]
+            }
         }
       },
       "required": [
@@ -242,6 +258,18 @@
           "type": "string",
           "description": "Date and time when the assignment was uploaded.",
           "format": "date-time"
+        },
+        "investments": {
+            "type": "array",
+            "description": "An array of investment objects from users.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "userId": { "type": "string" },
+                    "amount": { "type": "number" }
+                },
+                "required": ["userId", "amount"]
+            }
         }
       },
       "required": [
@@ -386,6 +414,138 @@
         "isRead",
         "createdAt"
       ]
+    },
+    "QuizLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QuizLobby",
+      "type": "object",
+      "description": "Represents a real-time quiz game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string", "description": "A short, unique code for players to join the lobby." },
+        "hostId": { "type": "string", "description": "The user ID of the player who created the lobby." },
+        "status": { "type": "string", "enum": ["waiting", "active", "finished"], "description": "The current state of the game." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "description": "List of players in the lobby.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" },
+              "score": { "type": "number" }
+            },
+            "required": ["id", "displayName", "photoURL", "score"]
+          }
+        },
+        "questions": {
+          "type": "array",
+          "description": "The list of questions for this quiz.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswer": { "type": "number", "description": "The index of the correct option." },
+              "time": { "type": "number", "description": "Time limit in seconds." }
+            },
+            "required": ["question", "options", "correctAnswer", "time"]
+          }
+        },
+        "currentQuestionIndex": { "type": "number", "default": -1 },
+        "questionStartTime": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "ScribbleRoom": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "ScribbleRoom",
+        "type": "object",
+        "description": "Represents a real-time 'Scribble It!' game room.",
+        "properties": {
+            "id": { "type": "string" },
+            "joinCode": { "type": "string", "description": "A short, unique code for players to join the room." },
+            "hostId": { "type": "string", "description": "The user ID of the player who created the room." },
+            "status": { "type": "string", "enum": ["waiting", "playing", "finished"], "description": "The current state of the game." },
+            "createdAt": { "type": "string", "format": "date-time" },
+            "players": {
+                "type": "array",
+                "description": "List of players in the room.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "displayName": { "type": "string" },
+                        "photoURL": { "type": "string", "format": "uri" },
+                        "score": { "type": "number" }
+                    },
+                    "required": ["id", "displayName", "score"]
+                }
+            },
+            "currentDrawerId": { "type": "string" },
+            "currentWord": { "type": "string" },
+            "drawingData": { "type": "string", "description": "Data URL of the canvas drawing." }
+        },
+        "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "ImposterLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ImposterLobby",
+      "type": "object",
+      "description": "Represents a real-time 'Imposter's Agenda' game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" },
+              "isAlive": { "type": "boolean" }
+            },
+            "required": ["id", "displayName", "isAlive"]
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "enum": ["hero", "saboteur"] }
+        }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
+    },
+    "SpyfallLobby": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SpyfallLobby",
+      "type": "object",
+      "description": "Represents a real-time 'Spyfall' game lobby.",
+      "properties": {
+        "id": { "type": "string" },
+        "joinCode": { "type": "string" },
+        "hostId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "finished"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "players": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "photoURL": { "type": "string", "format": "uri" }
+            },
+            "required": ["id", "displayName"]
+          }
+        }
+      },
+      "required": ["id", "joinCode", "hostId", "status", "createdAt", "players"]
     }
   },
   "auth": {
@@ -559,6 +719,42 @@
               "description": "The unique identifier for the score entry."
             }
           ]
+        }
+      },
+      {
+        "path": "/quizLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "QuizLobby",
+          "schema": { "$ref": "#/backend/entities/QuizLobby" },
+          "description": "Stores data for a real-time quiz game session.",
+          "params": [{ "name": "lobbyId" }]
+        }
+      },
+      {
+        "path": "/scribbleRooms/{roomId}",
+        "definition": {
+            "entityName": "ScribbleRoom",
+            "schema": { "$ref": "#/backend/entities/ScribbleRoom" },
+            "description": "Stores data for a real-time 'Scribble It!' game session.",
+            "params": [{ "name": "roomId" }]
+        }
+      },
+      {
+        "path": "/imposterLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "ImposterLobby",
+          "schema": { "$ref": "#/backend/entities/ImposterLobby" },
+          "description": "Stores data for a real-time 'Imposter's Agenda' game session.",
+          "params": [{ "name": "lobbyId" }]
+        }
+      },
+      {
+        "path": "/spyfallLobbies/{lobbyId}",
+        "definition": {
+          "entityName": "SpyfallLobby",
+          "schema": { "$ref": "#/backend/entities/SpyfallLobby" },
+          "description": "Stores data for a real-time 'Spyfall' game session.",
+          "params": [{ "name": "lobbyId" }]
         }
       }
     ],

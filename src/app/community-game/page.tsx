@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp, PenTool, Users } from 'lucide-react';
+import { Gamepad2, Puzzle, Palette, Languages, BotIcon, Bomb, Hand, Brain, Bird, AlignEndVertical, Search, Columns, Grip, MapPin, Swords, Rocket, Hammer, ArrowUp, PenTool, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -147,6 +147,13 @@ const communityGames = [
         href: '/community-games/imposters-agenda',
         icon: Users,
         variant: 'ocean',
+    },
+    {
+        name: "Spyfall",
+        description: "Find the spy before they figure out the location!",
+        href: '/community-games/spyfall',
+        icon: Eye,
+        variant: 'fiery',
     }
 ];
 

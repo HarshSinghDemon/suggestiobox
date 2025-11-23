@@ -235,3 +235,16 @@ export type ImposterLobby = {
     }[];
     roles: Record<string, 'hero' | 'saboteur'>;
 };
+
+export type SpyfallLobby = {
+    id: string;
+    joinCode: string;
+    hostId: string;
+    status: 'waiting' | 'playing' | 'finished';
+    createdAt: Timestamp;
+    players: {
+        id: string;
+        displayName: string;
+        photoURL?: string;
+    }[];
+};

@@ -11,8 +11,25 @@ service cloud.firestore {
     function isGroupParticipant(groupId) {
       return request.auth.uid in get(/databases/$(database)/documents/groupChatRooms/$(groupId)).data.participants;
     }
+    
+    function isQuizParticipant(lobbyId) {
+        return request.auth.uid in get(/databases/$(database)/documents/quizLobbies/$(lobbyId)).data.players.map(p => p.id);
+    }
+
+    function isScribbleParticipant(roomId) {
+        return request.auth.uid in get(/databases/$(database)/documents/scribbleRooms/$(roomId)).data.players.map(p => p.id);
+    }
+
+    function isImposterParticipant(lobbyId) {
+      return request.auth.uid in get(/databases/$(database)/documents/imposterLobbies/$(lobbyId)).data.players.map(p => p.id);
+    }
+
+    function isSpyfallParticipant(lobbyId) {
+      return request.auth.uid in get(/databases/$(database)/documents/spyfallLobbies/$(lobbyId)).data.players.map(p => p.id);
+    }
 
     // Users can read/write their own profile, but only read others'
+    // A user can update their own coins, but not other fields if it's a 'decrement' operation by another service.
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth.uid == userId;
@@ -51,11 +68,11 @@ service cloud.firestore {
     }
 
     // Suggestions can be read by anyone, but only created/modified/deleted by the owner
-    // Votes can be updated by any authenticated user
+    // Investments can be updated by any authenticated user
     match /suggestions/{suggestionId} {
       allow read: if request.auth != null;
       allow create: if request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']));
+      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['investments']));
       allow delete: if request.auth.uid == resource.data.userId;
       
       match /comments/{commentId} {
@@ -64,11 +81,11 @@ service cloud.firestore {
     }
     
     // Assignments can be read by anyone, but only created/modified/deleted by the owner
-    // Votes can be updated by any authenticated user
+    // Investments can be updated by any authenticated user
     match /assignments/{assignmentId} {
       allow read: if request.auth != null;
       allow create: if request.auth.uid == request.resource.data.userId;
-      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']));
+      allow update: if request.auth.uid == resource.data.userId || (request.auth.uid != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['investments']));
       allow delete: if request.auth.uid == resource.data.userId;
 
       match /comments/{commentId} {
@@ -85,6 +102,34 @@ service cloud.firestore {
     // Game scores can be created by any authenticated user
     match /games/{gameId}/scores/{scoreId} {
         allow read, create: if request.auth != null;
+    }
+    
+    // Quiz Lobbies
+    match /quizLobbies/{lobbyId} {
+        allow get: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.hostId;
+        allow update: if isQuizParticipant(lobbyId);
+    }
+
+    // Scribble It! Rooms
+    match /scribbleRooms/{roomId} {
+        allow get: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.hostId;
+        allow update: if isScribbleParticipant(roomId);
+    }
+    
+    // Imposter's Agenda Lobbies
+    match /imposterLobbies/{lobbyId} {
+        allow get: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.hostId;
+        allow update: if isImposterParticipant(lobbyId);
+    }
+
+    // Spyfall Lobbies
+    match /spyfallLobbies/{lobbyId} {
+        allow get: if request.auth != null;
+        allow create: if request.auth.uid == request.resource.data.hostId;
+        allow update: if isSpyfallParticipant(lobbyId);
     }
   }
 }
