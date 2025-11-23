@@ -13,7 +13,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { importKey, decryptMessage, encryptBuffer } from "@/lib/e2ee";
+import { importKey, decryptMessage, encryptBuffer, generateAndExportKey } from "@/lib/e2ee";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { useDebounce } from 'use-debounce';
@@ -266,11 +266,25 @@ export function PrivateChatRoom({ roomId }: { roomId: string }) {
     }, [encryptedMessages, currentUser, roomRef, room]);
 
     useEffect(() => {
-        if (isLoadingRoom || !room) return;
-        if (room.sessionKey_b64) {
-            importKey(room.sessionKey_b64).then(setSessionKey);
+        if (isLoadingRoom || !room || !roomRef) return;
+        
+        const initializeKey = async () => {
+            if (room.sessionKey_b64) {
+                // Key already exists, import it
+                const importedKey = await importKey(room.sessionKey_b64);
+                setSessionKey(importedKey);
+            } else {
+                // Key doesn't exist, this user is the first to open the chat
+                const newKeyB64 = await generateAndExportKey();
+                await updateDoc(roomRef, { sessionKey_b64: newKeyB64 });
+                const newKey = await importKey(newKeyB64);
+                setSessionKey(newKey);
+            }
         }
-    }, [room, isLoadingRoom]);
+        
+        initializeKey();
+
+    }, [room, isLoadingRoom, roomRef]);
     
     const processPendingMessages = useCallback(async (key: CryptoKey) => {
         if (pendingMessages.length === 0 || !currentUser || !roomRef) return;
