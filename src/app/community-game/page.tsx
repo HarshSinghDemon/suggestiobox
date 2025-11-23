@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -175,6 +174,13 @@ const communityGames = [
         href: '/community-games/quiz-royale',
         icon: Swords,
         variant: 'ocean',
+    },
+    {
+        name: 'Collaborative Canvas',
+        description: 'A shared drawing board for real-time creativity.',
+        href: '/community-games/collaborative-canvas',
+        icon: Palette,
+        variant: 'fiery',
     },
 ];
 
