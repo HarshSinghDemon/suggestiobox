@@ -116,10 +116,7 @@ export function CommunityMembersList() {
     const others = allUsers.filter(u => !adminIds.has(u.id));
 
     return { 
-        adminUser: harshAdmin ? {
-            ...harshAdmin,
-            photoURL: 'https://ryvsxwjnldugnwxjhgem.supabase.co/storage/v1/object/public/uploads/profile%20photos/124599.jpg'
-        } : null, 
+        adminUser: harshAdmin,
         coAdminUser: atrikCoAdmin || null,
         otherUsers: others,
         totalMembers: allUsers.length
