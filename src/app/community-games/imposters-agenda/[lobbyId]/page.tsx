@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Crown, Hourglass, PartyPopper } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { Crown, Hourglass, Loader2, PartyPopper } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ImposterLobby } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 function LobbySkeleton() {
     return (
@@ -47,6 +49,8 @@ export default function ImposterLobbyPage({ params }: { params: { lobbyId: strin
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
+    const [isStarting, setIsStarting] = useState(false);
 
     const lobbyRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -54,6 +58,20 @@ export default function ImposterLobbyPage({ params }: { params: { lobbyId: strin
     }, [firestore, params.lobbyId]);
 
     const { data: lobby, isLoading } = useDoc<ImposterLobby>(lobbyRef);
+
+    const handleStartGame = async () => {
+        if (!lobbyRef) return;
+        setIsStarting(true);
+        try {
+            await updateDoc(lobbyRef, { status: 'playing' });
+        } catch (error) {
+            console.error("Failed to start game:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not start the game.' });
+        } finally {
+            setIsStarting(false);
+        }
+    };
+
 
     if (isLoading) {
         return (
@@ -127,8 +145,8 @@ export default function ImposterLobbyPage({ params }: { params: { lobbyId: strin
                             
                             {isHost && (
                                 <div className="flex justify-center mt-8">
-                                    <Button size="lg" disabled={!canStart}>
-                                        <PartyPopper className="w-5 h-5 mr-2" />
+                                    <Button size="lg" onClick={handleStartGame} disabled={isStarting || !canStart}>
+                                        {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <PartyPopper className="w-5 h-5 mr-2" />}
                                         Start Game
                                     </Button>
                                 </div>

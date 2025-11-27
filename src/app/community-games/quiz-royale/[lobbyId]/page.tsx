@@ -7,11 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { Crown, Hourglass, Loader2, PartyPopper } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { QuizLobby } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { quizMaster } from '@/ai/flows/quiz-master-flow';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 function LobbySkeleton() {
     return (
@@ -47,6 +50,8 @@ export default function QuizLobbyPage({ params }: { params: { lobbyId: string } 
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
+    const [isStarting, setIsStarting] = useState(false);
 
     const lobbyRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -54,6 +59,42 @@ export default function QuizLobbyPage({ params }: { params: { lobbyId: string } 
     }, [firestore, params.lobbyId]);
 
     const { data: lobby, isLoading } = useDoc<QuizLobby>(lobbyRef);
+
+    const handleStartGame = async () => {
+        if (!lobbyRef || !lobby || lobby.players.length < 2) return;
+
+        setIsStarting(true);
+        try {
+            // Let the host generate the questions
+            const { questions } = await quizMaster({
+                category: "General Knowledge", // Or make this configurable
+                difficulty: 'Medium',
+                count: 10,
+            });
+
+            if (!questions || questions.length === 0) {
+                throw new Error("AI failed to generate quiz questions.");
+            }
+
+            await updateDoc(lobbyRef, {
+                status: 'active',
+                questions: questions.map(q => ({...q, correctAnswer: q.options.indexOf(q.correctAnswer)})), // Convert correct answer to index
+                currentQuestionIndex: 0,
+            });
+
+            // The game will start for all players via the real-time listener
+        } catch (error: any) {
+            console.error("Failed to start game:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Start Game',
+                description: error.message || 'Could not generate questions or update the lobby.',
+            });
+        } finally {
+            setIsStarting(false);
+        }
+    };
+
 
     if (isLoading) {
         return (
@@ -126,9 +167,9 @@ export default function QuizLobbyPage({ params }: { params: { lobbyId: string } 
                             
                             {isHost && (
                                 <div className="flex justify-center mt-8">
-                                    <Button size="lg" disabled={lobby.players.length < 2}>
-                                        <PartyPopper className="w-5 h-5 mr-2" />
-                                        Start Game ({lobby.players.length}/8)
+                                    <Button size="lg" onClick={handleStartGame} disabled={isStarting || lobby.players.length < 2}>
+                                        {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <PartyPopper className="w-5 h-5 mr-2" />}
+                                        {isStarting ? "Starting..." : `Start Game (${lobby.players.length}/8)`}
                                     </Button>
                                 </div>
                             )}

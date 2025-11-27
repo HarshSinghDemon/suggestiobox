@@ -1,3 +1,4 @@
+
 'use client';
 
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -6,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Crown, Hourglass, PartyPopper } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { Crown, Hourglass, Loader2, PartyPopper } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ScribbleRoom } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 function LobbySkeleton() {
     return (
@@ -46,6 +49,8 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
     const { user } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
+    const [isStarting, setIsStarting] = useState(false);
 
     const roomRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -53,6 +58,19 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
     }, [firestore, params.roomId]);
 
     const { data: room, isLoading } = useDoc<ScribbleRoom>(roomRef);
+
+    const handleStartGame = async () => {
+        if (!roomRef) return;
+        setIsStarting(true);
+        try {
+            await updateDoc(roomRef, { status: 'playing' });
+        } catch (error) {
+            console.error("Failed to start game:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not start the game.' });
+        } finally {
+            setIsStarting(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -125,9 +143,9 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
                             
                             {isHost && (
                                 <div className="flex justify-center mt-8">
-                                    <Button size="lg" disabled={room.players.length < 2}>
-                                        <PartyPopper className="w-5 h-5 mr-2" />
-                                        Start Game ({room.players.length}/8)
+                                    <Button size="lg" onClick={handleStartGame} disabled={isStarting || room.players.length < 2}>
+                                        {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <PartyPopper className="w-5 h-5 mr-2" />}
+                                        {isStarting ? "Starting..." : `Start Game (${room.players.length}/8)`}
                                     </Button>
                                 </div>
                             )}
