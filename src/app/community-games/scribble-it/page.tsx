@@ -125,7 +125,7 @@ export default function ScribbleItPage() {
                             <CardDescription>Practice your drawing skills against the clock.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button className="w-full" disabled>
+                            <Button className="w-full">
                                 <BrainCircuit className="w-4 h-4 mr-2" />
                                 Coming Soon
                             </Button>

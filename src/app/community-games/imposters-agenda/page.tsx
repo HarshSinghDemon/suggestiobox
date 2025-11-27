@@ -126,7 +126,7 @@ export default function ImpostersAgendaPage() {
                             <CardDescription>Practice your deception skills against AI opponents.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button className="w-full" disabled>
+                            <Button className="w-full">
                                 <BrainCircuit className="w-4 h-4 mr-2" />
                                 Coming Soon
                             </Button>
