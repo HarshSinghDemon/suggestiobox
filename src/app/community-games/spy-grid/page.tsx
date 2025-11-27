@@ -119,12 +119,12 @@ export default function SpyGridPage() {
                     <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle>Play Solo vs. AI</CardTitle>
-                            <CardDescription>Hone your clue-giving skills against an AI partner.</CardDescription>
+                            <CardDescription>Hone your clue-giving skills with an AI Spymaster partner.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Button className="w-full" disabled>
+                             <Button className="w-full" onClick={() => router.push('/community-games/spy-grid/solo')}>
                                 <BrainCircuit className="w-4 h-4 mr-2" />
-                                Coming Soon
+                                Start Solo Game
                             </Button>
                         </CardContent>
                     </Card>
