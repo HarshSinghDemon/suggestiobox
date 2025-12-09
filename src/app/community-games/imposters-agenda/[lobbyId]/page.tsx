@@ -14,6 +14,7 @@ import type { ImposterLobby } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { ImposterAgendaGame } from '@/components/game/imposters-agenda-game';
 
 function LobbySkeleton() {
     return (
@@ -60,10 +61,23 @@ export default function ImposterLobbyPage({ params }: { params: { lobbyId: strin
     const { data: lobby, isLoading } = useDoc<ImposterLobby>(lobbyRef);
 
     const handleStartGame = async () => {
-        if (!lobbyRef) return;
+        if (!lobbyRef || !lobby || lobby.players.length < 4) return;
         setIsStarting(true);
+        
+        // Assign roles: 1 Saboteur, rest are Heroes
+        const players = [...lobby.players];
+        const shuffledPlayers = players.sort(() => 0.5 - Math.random());
+        const saboteur = shuffledPlayers[0];
+        const roles: Record<string, 'hero' | 'saboteur'> = {};
+        shuffledPlayers.forEach(p => {
+            roles[p.id] = p.id === saboteur.id ? 'saboteur' : 'hero';
+        });
+
         try {
-            await updateDoc(lobbyRef, { status: 'playing' });
+            await updateDoc(lobbyRef, { 
+                status: 'playing',
+                roles: roles,
+            });
         } catch (error) {
             console.error("Failed to start game:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not start the game.' });
@@ -97,6 +111,10 @@ export default function ImposterLobbyPage({ params }: { params: { lobbyId: strin
         );
     }
     
+    if (lobby.status === 'playing') {
+        return <AuthWrapper><ImposterAgendaGame lobby={lobby} /></AuthWrapper>
+    }
+
     const isHost = user?.uid === lobby.hostId;
     const canStart = lobby.players.length >= 4;
 
