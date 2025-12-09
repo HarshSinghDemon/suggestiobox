@@ -14,6 +14,7 @@ import type { ScribbleRoom } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { ScribbleItGame } from '@/components/game/scribble-it-game';
 
 function LobbySkeleton() {
     return (
@@ -60,7 +61,7 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
     const { data: room, isLoading } = useDoc<ScribbleRoom>(roomRef);
 
     const handleStartGame = async () => {
-        if (!roomRef) return;
+        if (!roomRef || !room || room.players.length < 2) return;
         setIsStarting(true);
         try {
             await updateDoc(roomRef, { status: 'playing' });
@@ -95,8 +96,13 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
             </AuthWrapper>
         );
     }
+
+    if (room.status === 'playing') {
+        return <AuthWrapper><ScribbleItGame room={room} /></AuthWrapper>
+    }
     
     const isHost = user?.uid === room.hostId;
+    const canStart = room.players.length >= 2;
 
     return (
         <AuthWrapper>
@@ -120,7 +126,7 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
                             </div>
                             
                             <div>
-                                <h3 className="mb-4 text-xl font-semibold text-center">Players ({room.players.length})</h3>
+                                <h3 className="mb-4 text-xl font-semibold text-center">Players ({room.players.length} / 8)</h3>
                                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                                     {room.players.map(player => (
                                         <div key={player.id} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-background">
@@ -143,9 +149,9 @@ export default function ScribbleLobbyPage({ params }: { params: { roomId: string
                             
                             {isHost && (
                                 <div className="flex justify-center mt-8">
-                                    <Button size="lg" onClick={handleStartGame} disabled={isStarting || room.players.length < 2}>
+                                    <Button size="lg" onClick={handleStartGame} disabled={isStarting || !canStart}>
                                         {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <PartyPopper className="w-5 h-5 mr-2" />}
-                                        {isStarting ? "Starting..." : `Start Game (${room.players.length}/8)`}
+                                        Start Game
                                     </Button>
                                 </div>
                             )}

@@ -14,6 +14,7 @@ import type { SpyfallLobby } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { SpyfallGame } from '@/components/game/spyfall-game';
 
 function LobbySkeleton() {
     return (
@@ -60,7 +61,7 @@ export default function SpyfallLobbyPage({ params }: { params: { lobbyId: string
     const { data: lobby, isLoading } = useDoc<SpyfallLobby>(lobbyRef);
 
     const handleStartGame = async () => {
-        if (!lobbyRef) return;
+        if (!lobbyRef || !lobby || lobby.players.length < 3) return;
         setIsStarting(true);
         try {
             await updateDoc(lobbyRef, { status: 'playing' });
@@ -94,6 +95,10 @@ export default function SpyfallLobbyPage({ params }: { params: { lobbyId: string
                 </div>
             </AuthWrapper>
         );
+    }
+    
+    if (lobby.status === 'playing') {
+        return <AuthWrapper><SpyfallGame lobby={lobby} /></AuthWrapper>
     }
     
     const isHost = user?.uid === lobby.hostId;
